@@ -1,6 +1,6 @@
 """
-Abstract class implementing the data loading, data splitting
-and feature extraction functionalities.
+Abstract class implementing the data loading, data splitting,
+type validation and feature extraction functionalities.
 """
 
 import pandas as pd
