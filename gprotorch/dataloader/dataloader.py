@@ -68,6 +68,9 @@ class DataLoader(metaclass=ABCMeta):
 
         """
 
+        # reshape labels
+        self.labels = self.labels.reshape(-1, 1)
+
         # auxiliary function to perform scaling
         def scale(train, test):
             scaler = StandardScaler()
@@ -90,4 +93,5 @@ class DataLoader(metaclass=ABCMeta):
         else:
             labels_out = y_train, y_test, None
 
-        return features_out, labels_out
+        # return concatenated tuples
+        return features_out + labels_out
