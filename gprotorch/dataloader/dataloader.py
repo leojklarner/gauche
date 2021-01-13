@@ -11,28 +11,36 @@ from abc import ABCMeta, abstractmethod
 
 class DataLoader(metaclass=ABCMeta):
 
-    def __init__(self, task):
-        self.task = task
-        self.features = None
-        self.labels = None
+    def __init__(self):
+        self.task = None
 
     @property
     @abstractmethod
-    def data(self):
+    def features(self):
         raise NotImplementedError
 
-    @data.setter
+    @features.setter
     @abstractmethod
-    def data(self, dataset):
+    def features(self, value):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def labels(self):
+        raise NotImplementedError
+
+    @labels.setter
+    @abstractmethod
+    def labels(self, value):
         raise NotImplementedError
 
     @abstractmethod
     def validate(self, drop=True):
         """Checks whether the loaded data is a valid instance of the specified
-        data type, potentially dropping invalid entries (in-place).
+        data type, potentially dropping invalid entries.
 
         Args:
-            drop (bool):  whether to drop invalid entries (in-place)
+            drop (bool):  whether to drop invalid entries
 
         """
         raise NotImplementedError
