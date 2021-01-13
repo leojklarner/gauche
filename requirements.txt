@@ -1,2 +1,4 @@
 numpy
 pandas
+scikit-learn
+rdkit
