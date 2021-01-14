@@ -3,13 +3,17 @@ Abstract class implementing the data loading, data splitting,
 type validation and feature extraction functionalities.
 """
 
-import pandas as pd
+from abc import ABCMeta, abstractmethod
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from abc import ABCMeta, abstractmethod
 
 
 class DataLoader(metaclass=ABCMeta):
+    """
+    Abstract class implementing the data loading, data splitting,
+    type validation and feature extraction functionalities.
+    """
 
     def __init__(self):
         self.task = None
@@ -17,21 +21,33 @@ class DataLoader(metaclass=ABCMeta):
     @property
     @abstractmethod
     def features(self):
+        """
+        Abstract property for storing features.
+        """
         raise NotImplementedError
 
     @features.setter
     @abstractmethod
     def features(self, value):
+        """
+        Abstract setter for setting features.
+        """
         raise NotImplementedError
 
     @property
     @abstractmethod
     def labels(self):
+        """
+        Abstract property for storing labels
+        """
         raise NotImplementedError
 
     @labels.setter
     @abstractmethod
     def labels(self, value):
+        """
+        Abstract setter for setting labels
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -55,7 +71,7 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def split_and_scale(self, test_size=.2, scale_labels=True, scale_features=False):
+    def split_and_scale(self, test_size=0.2, scale_labels=True, scale_features=False):
         """Splits the data into training and testing sets.
 
         Args:
@@ -71,15 +87,27 @@ class DataLoader(metaclass=ABCMeta):
         # reshape labels
         self.labels = self.labels.reshape(-1, 1)
 
-        # auxiliary function to perform scaling
         def scale(train, test):
+            """
+            Auxiliary function to perform scaling on features and labels.
+            Fits the standardisation scaler on the training set and
+            transforms training and testing set
+            Args:
+                train: proportion of features/labels used for training
+                test: proportion of features/labels used for testing
+
+            Returns: a tuple of scaled training set, scaled testing set and the fitted scaler
+
+            """
             scaler = StandardScaler()
             train_scaled = scaler.fit_transform(train)
             test_scaled = scaler.transform(test)
             return train_scaled, test_scaled, scaler
 
         # split data into train and test sets
-        X_train, X_test, y_train, y_test = train_test_split(self.features, self.labels, test_size=test_size, random_state=1)
+        X_train, X_test, y_train, y_test = train_test_split(
+            self.features, self.labels, test_size=test_size, random_state=1
+        )
 
         # scale features, if requested
         if scale_features:

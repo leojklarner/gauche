@@ -5,11 +5,16 @@ molecular property prediction datasets.
 
 import numpy as np
 import pandas as pd
-from gprotorch.dataloader import DataLoader
 from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+
+from gprotorch.dataloader import DataLoader
 
 
 class DataLoaderMP(DataLoader):
+    """
+    Instantiation of the abstract data loader class for
+    molecular property prediction datasets.
+    """
 
     def __init__(self):
         super(DataLoaderMP, self).__init__()
@@ -19,18 +24,40 @@ class DataLoaderMP(DataLoader):
 
     @property
     def features(self):
+        """
+        Property for storing features.
+        Returns: currently loaded features
+
+        """
         return self._features
 
     @features.setter
     def features(self, value):
+        """
+        Setter to initialise or change features.
+        Args:
+            value: feature data
+
+        """
         self._features = value
 
     @property
     def labels(self):
+        """
+        Property for storing labels
+        Returns: currently loaded labels
+
+        """
         return self._labels
 
     @labels.setter
     def labels(self, value):
+        """
+        Setter to initialise or change labels.
+        Args:
+            value: label data
+
+        """
         self._labels = value
 
     def validate(self, drop=True):
@@ -69,16 +96,29 @@ class DataLoaderMP(DataLoader):
 
         """
 
-        # auxiliary function to calculate the fingerprint representation of a molecule
         def fingerprints():
+            """
+            Auxiliary function to transform the loaded features to a fingerprint representation
+
+            Returns: numpy array of features in fingerprint representation
+
+            """
 
             rdkit_mols = [MolFromSmiles(smiles) for smiles in self.features]
-            fps = [AllChem.GetMorganFingerprintAsBitVect(mol, bond_radius, nBits=nBits) for mol in rdkit_mols]
+            fps = [
+                AllChem.GetMorganFingerprintAsBitVect(mol, bond_radius, nBits=nBits)
+                for mol in rdkit_mols
+            ]
 
             return np.asarray(fps)
 
-        # auxiliary function to calculate the fragment representation of a molecule
         def fragments():
+            """
+            Auxiliary function to transform the loaded features to a fragment representation
+
+            Returns: numpy array of features in fragment representation
+
+            """
 
             # descList[115:] contains fragment-based features only
             # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
@@ -89,7 +129,7 @@ class DataLoaderMP(DataLoader):
                 try:
                     features = [fragments[d](mol) for d in fragments]
                 except:
-                    raise Exception('molecule {}'.format(i) + ' is not canonicalised')
+                    raise Exception("molecule {}".format(i) + " is not canonicalised")
                 frags[i, :] = features
 
             return frags
@@ -110,8 +150,10 @@ class DataLoaderMP(DataLoader):
 
         else:
 
-            raise Exception(f"The specified representation choice {representation} is not a valid option."
-                            f"Choose between {valid_representations}.")
+            raise Exception(
+                f"The specified representation choice {representation} is not a valid option."
+                f"Choose between {valid_representations}."
+            )
 
     def load_benchmark(self, benchmark, path):
         """Loads features and labels from one of the included benchmark datasets
@@ -125,29 +167,27 @@ class DataLoaderMP(DataLoader):
         """
 
         benchmarks = {
-            "Photoswitch":      {"features": "SMILES",
-                                 "labels": "E isomer pi-pi* wavelength in nm"},
-            "ESOL":             {"features": "smiles",
-                                 "labels": "measured log solubility in mols per litre"},
-            "FreeSolv":         {"features": "smiles",
-                                 "labels": "expt"},
-            "Lipophilicity":    {"features": "smiles",
-                                 "labels": "exp"},
+            "Photoswitch": {
+                "features": "SMILES",
+                "labels": "E isomer pi-pi* wavelength in nm",
+            },
+            "ESOL": {
+                "features": "smiles",
+                "labels": "measured log solubility in mols per litre",
+            },
+            "FreeSolv": {"features": "smiles", "labels": "expt"},
+            "Lipophilicity": {"features": "smiles", "labels": "exp"},
         }
 
         if benchmark not in benchmarks.keys():
 
-            raise Exception(f"The specified benchmark choice ({benchmark}) is not a valid option. "
-                            f"Choose one of {list(benchmarks.keys())}.")
+            raise Exception(
+                f"The specified benchmark choice ({benchmark}) is not a valid option. "
+                f"Choose one of {list(benchmarks.keys())}."
+            )
 
         else:
 
             df = pd.read_csv(path)
             self.features = df[benchmarks[benchmark]["features"]].to_list()
             self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
-
-
-if __name__ == '__main__':
-    loader = DataLoaderMP()
-    loader.load_benchmark("ESOL", "../../data/property_prediction/ESOL.csv")
-    print(loader)
