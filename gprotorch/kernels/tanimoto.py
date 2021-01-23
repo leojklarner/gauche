@@ -3,11 +3,11 @@
 Molecule kernels for Gaussian Process Regression implemented in PyTorch.
 """
 
-import torch
-from gpytorch.kernels import Kernel
-from gpytorch.constraints import Positive
-from gpytorch.lazy import RootLazyTensor, MatmulLazyTensor
 import gpytorch
+import torch
+from gpytorch.constraints import Positive
+from gpytorch.kernels import Kernel
+from gpytorch.lazy import MatmulLazyTensor, RootLazyTensor
 
 
 class Tanimoto(Kernel):
@@ -22,7 +22,10 @@ class Tanimoto(Kernel):
         if variance_constraint is None:
             variance_constraint = Positive()
         # initialise variance parameter, potentially different for each batch
-        self.register_parameter(name="raw_variance", parameter=torch.nn.Parameter(torch.zeros(*self.batch_shape, 1)))
+        self.register_parameter(
+            name="raw_variance",
+            parameter=torch.nn.Parameter(torch.zeros(*self.batch_shape, 1)),
+        )
         # apply variance constraint after parameter is initialised
         self.register_constraint("raw_variance", variance_constraint)
 
@@ -40,7 +43,9 @@ class Tanimoto(Kernel):
     def _set_variance(self, value):
         if not torch.is_tensor(value):
             value = torch.as_tensor(value).to(self.raw_variance)
-        self.initialize(raw_variance=self.raw_variance_constraint.inverse_transform(value))
+        self.initialize(
+            raw_variance=self.raw_variance_constraint.inverse_transform(value)
+        )
 
     def forward(self, x1, x2, diag=False, **params):
         """
@@ -65,13 +70,15 @@ class Tanimoto(Kernel):
         else:
             # if both data tensors are not identical
             # calculate the squared L2-norm over the feature dimension of the x2 data tensor
-            x2_norm = torch.unsqueeze(torch.sum(torch.square(x2), dim=-1), dim=-1)
+            x2_norm = torch.unsqueeze(
+                torch.sum(torch.square(x2), dim=-1), dim=-1
+            )
 
             # calculate the asymmetric matrix product of the different data tensors
             mat_prod = MatmulLazyTensor(x1, torch.transpose(x2, -2, -1))
 
         # calculate the matrix product without using lazy tensors
-        #mat_prod = torch.matmul(x1, torch.transpose(x2, -2, -1))
+        # mat_prod = torch.matmul(x1, torch.transpose(x2, -2, -1))
 
         # convert the lazy tensors back to normal tensors
         # as subtraction and division are not implemented in the standard
@@ -79,7 +86,9 @@ class Tanimoto(Kernel):
         mat_prod = gpytorch.lazy.LazyTensor.evaluate(mat_prod)
 
         # calculate the Tanimoto similarity
-        denominator = torch.sub(torch.add(x1_norm, torch.transpose(x2_norm, -2, -1)), mat_prod)
+        denominator = torch.sub(
+            torch.add(x1_norm, torch.transpose(x2_norm, -2, -1)), mat_prod
+        )
         result = self.variance * torch.div(mat_prod, denominator)
 
         if diag:
