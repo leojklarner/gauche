@@ -120,9 +120,11 @@ class DataLoaderMP(DataLoader):
 
             """
 
-            # descList[115:] contains fragment-based features only
+            # extract all fragment rdkit descriptors
             # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-            fragments = {d[0]: d[1] for d in Descriptors.descList[115:]}
+            fragList = [desc for desc in Descriptors.descList if desc[0].startswith('fr_')]
+
+            fragments = {d[0]: d[1] for d in fragList}
             frags = np.zeros((len(self.features), len(fragments)))
             for i in range(len(self.features)):
                 mol = MolFromSmiles(self.features[i])
@@ -198,4 +200,5 @@ if __name__ == '__main__':
     loader = DataLoaderMP()
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), "data", "property_prediction", "ESOL.csv")
     loader.load_benchmark("ESOL", path_to_data)
+    loader.featurize("fragments")
     print()
