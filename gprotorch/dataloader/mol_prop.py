@@ -191,3 +191,11 @@ class DataLoaderMP(DataLoader):
             df = pd.read_csv(path)
             self.features = df[benchmarks[benchmark]["features"]].to_list()
             self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
+
+
+if __name__ == '__main__':
+    import os
+    loader = DataLoaderMP()
+    path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), "data", "property_prediction", "ESOL.csv")
+    loader.load_benchmark("ESOL", path_to_data)
+    print()
