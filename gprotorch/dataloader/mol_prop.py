@@ -1,5 +1,5 @@
 """
-Instantiation of the abstract data loader class for
+Implementation of the abstract data loader class for
 molecular property prediction datasets.
 """
 
@@ -90,7 +90,7 @@ class DataLoaderMP(DataLoader):
         """Transforms SMILES into the specified molecular representation.
 
         Args:
-            representation: the desired molecular representation, one of [fingerprints, fragments, fragprints]
+            representation: the desired molecular representation, one of ["fingerprints", "fragments", "fragprints"]
             bond_radius: int giving the bond radius for Morgan fingerprints. Default is 3
             nBits: int giving the bit vector length for Morgan fingerprints. Default is 2048
 
