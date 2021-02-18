@@ -94,14 +94,19 @@ class DataLoaderLB(DataLoader):
     def validate(self, drop=True):
         pass
 
-    def download_dataset(self, download_dir, ligand_list=None):
+    def download_dataset(self, download_dir, ligand_codes=None):
         """
-        Downloads the pdb files corresponding to the currently
-        loaded pdb codes from the Protein Data Bank.
+        Iterate though the currently loaded PDB codes and download the respective PDB entries.
+        Extract the protein and write it into a separate .pdb file.
+        Split all (or the specified) heteroatoms, select the most drug-like (or specified) one
+        and write it into a separate .sdf file.
+        Check which PDB entries (if any) could not be downloaded.
 
         Args:
             download_dir: the directory to which to download the files
-            ligand_list: list of ligands to download
+            ligand_codes: the ligand codes of one or more molecules that should be split off as ligands.
+            Either None (select the most drug-like molecule for each structure) or
+            list/dict of lists/tuples (select the given heteroatom residues for all/the specified PDB entries).
 
         """
 
@@ -113,10 +118,26 @@ class DataLoaderLB(DataLoader):
         original_cwd = os.getcwd()
         os.chdir(download_dir)
 
+        # create a pdb_code:ligand_code dictionary for all pdb codes if a list is passed
+        if type(ligand_codes) is list:
+            assert len(ligand_codes) == len(self._features), "Ligand code list must have same length as pdb code list."
+            ligand_dict = {self._features[i]: ligand_codes[i] for i in range(len(self._features))}
+
+        # or create a pdb_code:"" dictionary of empty strings
+        # (in which case most drug-like ligand will be selected)
+        # and update it with ligand codes if dict is passed
+        else:
+            ligand_dict = {self._features[i]: "" for i in range(len(self._features))}
+            if type(ligand_codes) is dict:
+                # capitalise keys before merging ligand codes with empty dictionary
+                ligand_dict.update({k.upper(): v for k, v in ligand_codes.items()})
+
         # read in the Ligand Expo dataset from the PDB
         expo = read_ligand_expo()
 
         for pdb_code in self._features:
+
+            print(pdb_code)
 
             # split the PDB entry into proteins and ligands
             try:
@@ -128,9 +149,15 @@ class DataLoaderLB(DataLoader):
                 protein_file = write_pdb(protein, pdb_code)
                 protein_filenames.append(protein_file)
 
-                # if ligand list is specified, save the ligands in there, otw save all
-                if ligand_list:
-                    sdf_ligands = ligand_list
+                # if a ligand code is specified, proceed with the given code(s)
+                if ligand_dict[pdb_code]:
+                    # check if dict entry is a list or tuple, in case user enters multiple ligand codes
+                    if type(ligand_dict[pdb_code]) in [list, tuple]:
+                        sdf_ligands = ligand_dict[pdb_code]
+                    else:
+                        sdf_ligands = [ligand_dict[pdb_code]]
+
+                # if no ligand code is specified, proceed with all hereroatomic molecules
                 else:
                     sdf_ligands = list(set(ligand.getResnames()))
 
@@ -153,9 +180,11 @@ class DataLoaderLB(DataLoader):
                                 max_drug_likeness_res = ligand_residue
 
                         except ValueError:
-                            # parsing errors happen when atoms have valences != 4 after bond-order augmentation
-                            # such as e.g. modified residues that are denoted as hereoatoms or
+                            # parsing errors happen when atoms have valences != 4 after bond-order augmentation,
+                            # such as molecules that are covalently bound to the protein (e.g. covalent ligands
+                            # or modified residues that are denoted as hereoatoms) or
                             # ions that are not filtered out by the ProDy ion selector (for example FE)
+                            # all of them are of limited relevance to binding affinity prediction
                             print(f"Could not parse the ligand denoted as {ligand_residue} for the PDB file {pdb_code}.")
 
                     # save bond-order augmented spatial structure of most drug-like ligand to SDF
@@ -163,13 +192,15 @@ class DataLoaderLB(DataLoader):
                     ligand_filenames.append(ligand_filename)
 
                 else:
+                    ligand_filenames.append(None)
                     print(f"Could not find ligands for the PDB entry {pdb_code}.")
 
-        # change back the working directory
+        # change the working directory back to the original
         os.chdir(original_cwd)
 
         # check whether all files have been downloaded successfully
-        downloaded_pdbs = [file[:-4] for file in os.listdir(download_dir) if file.endswith(".pdb")]
+        downloaded_pdbs = [file[:-4].upper() for file in os.listdir(download_dir) if file.endswith(".pdb")]
+        print(downloaded_pdbs)
 
         if set(self._features).issubset(set(downloaded_pdbs)):
             print(f"Successfully downloaded all PDB files to {download_dir}.")
@@ -214,18 +245,15 @@ class DataLoaderLB(DataLoader):
         else:
 
             df = pd.read_csv(path)
-            self.features = df[benchmarks[benchmark]["features"]].to_list()
-            self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
+            pdb_code_list = df[benchmarks[benchmark]["features"]].to_list()
+            self._features = [pdb_code.upper() for pdb_code in pdb_code_list]
+            self._labels = df[benchmarks[benchmark]["labels"]].to_numpy()
 
 
 if __name__ == '__main__':
     loader = DataLoaderLB()
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
-    protein_filenames, ligand_filenames = loader.download_dataset(path_to_data)
-    print(protein_filenames)
-    print(ligand_filenames)
-
     protein_filenames, ligand_filenames = loader.download_dataset(path_to_data)
     print(protein_filenames)
     print(ligand_filenames)
