@@ -1,11 +1,12 @@
 """
-DataLoader classes to load, validate, transform and split datasets.
+DataLoader classes to load, validate, featurise and split datasets.
 """
 
+from .dataloader_utils import read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf
 from .dataloader import DataLoader
 from .mol_prop import DataLoaderMP
 from .prot_lig import DataLoaderLB
-from .dataloader_utils import read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf
+
 
 __all__ = [
     "DataLoader",

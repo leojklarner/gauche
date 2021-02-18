@@ -11,9 +11,7 @@ from prody import *
 import requests
 from rdkit.Chem import SDWriter
 
-from gprotorch.dataloader import DataLoader
-
-# functions for splitting pdb and
+from gprotorch.dataloader import DataLoader, read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf
 
 
 class DataLoaderLB(DataLoader):
@@ -26,7 +24,9 @@ class DataLoaderLB(DataLoader):
         super(DataLoaderLB, self).__init__()
         self.task = "PL_binding_affinity"
         self._features = None
-        self.labels = None
+        self._labels = None
+        self._protein_paths = None
+        self._ligand_paths = None
 
     @property
     def features(self):
@@ -105,33 +105,71 @@ class DataLoaderLB(DataLoader):
 
         """
 
+        protein_filenames = []
+        ligand_filenames = []
+
+        # set working directory to download_dir, as path handling for the prody
+        # functions can be a bit tricky, will be reset to original cwd later on
+        original_cwd = os.getcwd()
+        os.chdir(download_dir)
+
+        # read in the Ligand Expo dataset from the PDB
+        expo = read_ligand_expo()
+
         for pdb_code in self._features:
 
-            # splitting the PDB entry into proteins and ligands
-            pdb = parsePDB(pdb_code)
-            protein = pdb.select('protein')
-            ligand = pdb.select('not protein and not water')
-
-            # writing the protein part to a separate .pdb file
-            output_pdb_name = f"{pdb_code}_protein.pdb"
-            writePDB(output_pdb_name, protein)
-
-            # writing the non-water heteroatoms
-            if ligand_list:
-                output_ligand_name = f"{pdb_code}_{ligand_list[pdb_code]}_ligand.sdf"
-                writer = SDWriter(output_ligand_name)
-                writer.write()
+            # split the PDB entry into proteins and ligands
+            try:
+                protein, ligand = get_pdb_components(pdb_code)
+            except OSError:
+                print(f"Could not download the PDB file for {pdb_code}.")
             else:
-                resList = list(set(ligand.getResnames()))
-                for res in resList:
-                    output_ligand_name = f"{pdb_code}_{res}_ligand.sdf"
-                    writer = SDWriter(output_ligand_name)
-                    writer.write(res)
+                # writing the protein part to a .pdb file
+                protein_file = write_pdb(protein, pdb_code)
+                protein_filenames.append(protein_file)
 
+                # if ligand list is specified, save the ligands in there, otw save all
+                if ligand_list:
+                    sdf_ligands = ligand_list
+                else:
+                    sdf_ligands = list(set(ligand.getResnames()))
 
+                # check if any ligands were found for the current pdb structure
+                if sdf_ligands:
+
+                    max_drug_likeness = 0
+                    max_drug_likeness_mol = None
+                    max_drug_likeness_res = None
+
+                    for ligand_residue in sdf_ligands:
+                        try:
+                            # add bond-orders to the spatial file and calculate drug likeness
+                            new_mol, drug_likeness = process_ligand(ligand, ligand_residue, expo)
+
+                            # check if drug likeness of current ligand is higher than current max
+                            if drug_likeness > max_drug_likeness:
+                                max_drug_likeness = drug_likeness
+                                max_drug_likeness_mol = new_mol
+                                max_drug_likeness_res = ligand_residue
+
+                        except ValueError:
+                            # parsing errors happen when atoms have valences != 4 after bond-order augmentation
+                            # such as e.g. modified residues that are denoted as hereoatoms or
+                            # ions that are not filtered out by the ProDy ion selector (for example FE)
+                            print(f"Could not parse the ligand denoted as {ligand_residue} for the PDB file {pdb_code}.")
+
+                    # save bond-order augmented spatial structure of most drug-like ligand to SDF
+                    ligand_filename = write_sdf(max_drug_likeness_mol, pdb_code, max_drug_likeness_res)
+                    ligand_filenames.append(ligand_filename)
+
+                else:
+                    print(f"Could not find ligands for the PDB entry {pdb_code}.")
+
+        # change back the working directory
+        os.chdir(original_cwd)
 
         # check whether all files have been downloaded successfully
-        downloaded_pdbs = [file[3:-4] for file in os.listdir(download_dir) if file.endswith(".ent")]
+        downloaded_pdbs = [file[:-4] for file in os.listdir(download_dir) if file.endswith(".pdb")]
 
         if set(self._features).issubset(set(downloaded_pdbs)):
             print(f"Successfully downloaded all PDB files to {download_dir}.")
@@ -140,6 +178,12 @@ class DataLoaderLB(DataLoader):
             failed_pdbs = set(self._features) - set(downloaded_pdbs)
             for failed_pdb in failed_pdbs:
                 print(failed_pdb)
+
+        # save paths to protein and selected ligand files
+        self._protein_paths = [os.path.join(download_dir, protname) for protname in protein_filenames]
+        self._ligand_paths = [os.path.join(download_dir, ligname) for ligname in ligand_filenames]
+
+        return protein_filenames, ligand_filenames
 
     def load_benchmark(self, benchmark, path):
         """Loads features and labels from one of the included benchmark datasets
@@ -174,12 +218,16 @@ class DataLoaderLB(DataLoader):
             self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
 
 
-
-
 if __name__ == '__main__':
     loader = DataLoaderLB()
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
-    loader.download_dataset(path_to_data)
+    protein_filenames, ligand_filenames = loader.download_dataset(path_to_data)
+    print(protein_filenames)
+    print(ligand_filenames)
+
+    protein_filenames, ligand_filenames = loader.download_dataset(path_to_data)
+    print(protein_filenames)
+    print(ligand_filenames)
 
     print(loader)

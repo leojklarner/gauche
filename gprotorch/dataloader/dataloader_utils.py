@@ -7,8 +7,10 @@ from prody import *
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem.Descriptors import qed
 from io import StringIO
 import requests
+import os
 
 # functions adapted from Pat Walters (https://gist.github.com/PatWalters/3c0a483c030a2c75cb22c4234f206973)
 # that split a PDB entry into a .pdb file of the protein and a .sdf file of the ligand(s)
@@ -47,7 +49,9 @@ def read_ligand_expo():
 
 def get_pdb_components(pdb_id):
     """
-    Split a protein-ligand pdb into protein and ligand components
+    Split a protein-ligand pdb into protein and ligand components.
+    A useful dictionary of possible flags can be found here
+    http://prody.csb.pitt.edu/manual/reference/atomic/flags.html#flags.
 
     Args:
         pdb_id: 4-letter pdb code
@@ -58,7 +62,7 @@ def get_pdb_components(pdb_id):
 
     pdb = parsePDB(pdb_id)
     protein = pdb.select('protein')
-    ligand = pdb.select('not protein and not water')
+    ligand = pdb.select('not protein and not water and not ion')
     return protein, ligand
 
 
@@ -90,6 +94,9 @@ def process_ligand(ligand, res_name, expo_dict):
     sub_smiles = expo_dict['SMILES'][res_name]
     template = AllChem.MolFromSmiles(sub_smiles)
 
+    # calculate the rdkit drug likeness descripot for the ligand expo template
+    drug_likeness = qed(template)
+
     # stream selected ligand
     writePDBStream(output, sub_mol)
     pdb_string = output.getvalue()
@@ -98,27 +105,36 @@ def process_ligand(ligand, res_name, expo_dict):
     rd_mol = AllChem.MolFromPDBBlock(pdb_string)
     new_mol = AllChem.AssignBondOrdersFromTemplate(template, rd_mol)
 
-    return new_mol
+    return new_mol, drug_likeness
 
 
-def write_pdb(protein, pdb_name):
+def write_pdb(protein, pdb_name, overwrite=False):
     """
     Write a prody protein to a pdb file.
 
     Args:
         protein: protein object from prody
         pdb_name: base name for the pdb file
+        overwrite: whether to overwrite an already existing file
 
-    Returns: None
+    Returns: file name
 
     """
 
-    output_pdb_name = f"{pdb_name}_protein.pdb"
-    writePDB(f"{output_pdb_name}", protein)
-    print(f"wrote {output_pdb_name}")
+    output_protein_name = f"{pdb_name}.pdb"
+
+    # check if file already exists
+    if not overwrite and os.path.isfile(os.path.join(os.getcwd(), output_protein_name)):
+        print(f"The protein file for the PDB entry {pdb_name} already exists. "
+              f"Set overwrite=True if you want to overwrite it.")
+    else:
+        writePDB(output_protein_name, protein)
+        print(f"Wrote the protein file for the PDB entry {output_protein_name}.")
+
+    return output_protein_name
 
 
-def write_sdf(new_mol, pdb_name, res_name):
+def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
     """
     Write an RDKit molecule to an SD file.
 
@@ -126,11 +142,21 @@ def write_sdf(new_mol, pdb_name, res_name):
         new_mol: the molecule to write to a file
         pdb_name: the PDB entry from which it was extracted
         res_name: its residue identifier in the PDB entry
+        overwrite: whether to overwrite an already existing file
 
-    Returns: None
+    Returns: file name
 
     """
-    outfile_name = f"{pdb_name}_{res_name}_ligand.sdf"
-    writer = Chem.SDWriter(f"{outfile_name}")
-    writer.write(new_mol)
-    print(f"wrote {outfile_name}")
+
+    outfile_ligand_name = f"{pdb_name}_{res_name}_ligand.sdf"
+
+    # check if file already exists
+    if not overwrite and os.path.isfile(os.path.join(os.getcwd(), outfile_ligand_name)):
+        print(f"The ligand file for the ligand {res_name} in PDB entry {pdb_name} already exists. "
+              f"Set overwrite=True if you want to overwrite it.")
+    else:
+        writer = Chem.SDWriter(outfile_ligand_name)
+        writer.write(new_mol)
+        print(f"wrote the ligand file for the ligand {res_name} in PDB entry {pdb_name}.")
+
+    return outfile_ligand_name
