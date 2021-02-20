@@ -10,6 +10,9 @@ from Bio.PDB import *
 from prody import *
 import requests
 from rdkit.Chem import SDWriter
+import oddt
+from oddt.toolkits import rdk
+from oddt.scoring import descriptors
 
 from gprotorch.dataloader import DataLoader, read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf
 
@@ -66,30 +69,49 @@ class DataLoaderLB(DataLoader):
         """
         self._labels = value
 
-    def featurize(self, representation, data_dir):
+    def featurize(self, representation, save_features=True):
         """
         Reads in the pdb files and calculates the specified representation
+        BIANANA: finds protein-ligand atom pairs in close contact and calculates
+        numeric features for electrostatic interactions, binding-pocket flexibility,
+        hydrophobic contacts, hydrogen bonds, salt bridges, various pi interactions
+         Described in Durrant and McCammon, JMGM, Vol. 29, Issue 6, 2011
 
         Args:
             representation: the desired representation, one of ["rfscore"]
-            data_dir:
+            save_features: whether to save the computed features
 
         """
 
-        features = pd.DataFrame()
-
-
+        features = []
 
         valid_representations = ["rfscore"]
 
         if representation == "rfscore":
-            pass
+            for pdb_code, protein_path, ligand_path in zip(self._features, self._protein_paths, self._ligand_paths):
+                protein = next(rdk.readfile('pdb', protein_path))
+                protein.protein = True
+                ligand = next(rdk.readfile('sdf', ligand_path))
+
+                rfscore_engine = descriptors.close_contacts_descriptor(
+                    protein=protein,
+                    cutoff=12,
+                    ligand_types=[6, 7, 8, 9, 15, 16, 17, 35, 53],
+                    protein_types=[6, 7, 8, 16]
+                )
+
+                features.append(
+                    {name: value for name, value in zip(rfscore_engine.titles, rfscore_engine.build([ligand])[0])}
+                )
 
         else:
             raise Exception(
                 f"The specified representation choice {representation} is not a valid option."
                 f"Choose between {valid_representations}."
             )
+
+        print(features)
+
 
     def validate(self, drop=True):
         pass
@@ -254,8 +276,7 @@ if __name__ == '__main__':
     loader = DataLoaderLB()
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
-    protein_filenames, ligand_filenames = loader.download_dataset(path_to_data)
-    print(protein_filenames)
-    print(ligand_filenames)
+    loader.download_dataset(path_to_data)
+    loader.featurize('rfscore')
 
     print(loader)
