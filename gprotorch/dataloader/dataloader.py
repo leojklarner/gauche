@@ -18,7 +18,6 @@ class DataLoader(metaclass=ABCMeta):
     """
 
     def __init__(self):
-        self.task = None
         self._objects = None
         self._features = None
         self._labels = None
@@ -34,12 +33,10 @@ class DataLoader(metaclass=ABCMeta):
         return self._objects
 
     @objects.setter
-    @abstractmethod
     def objects(self, value):
         """
-        Abstract method for setting internal representation. The specific implementations
-        should check whether the provided data is a valid instance of the respective
-        representation.
+        Abstract method for setting internal representation. Runs the validate method over
+        each entry and drops invalid ones.
 
         Args:
             value: internal representations to be set
@@ -47,7 +44,19 @@ class DataLoader(metaclass=ABCMeta):
         Returns: None
 
         """
-        raise NotImplementedError
+
+        # get valid and invalid entries
+        valid, invalid = self._validate(value)
+
+        # set valid entries as internal representation
+        self._objects = valid
+
+        # print which invalid entries have been dropped
+        if invalid:
+            print(f"The entries")
+            for i in invalid:
+                print(i)
+            print(f"have been dropped, as they are invalid representations.")
 
     @property
     def features(self):
@@ -98,14 +107,17 @@ class DataLoader(metaclass=ABCMeta):
         self._labels = value
 
     @abstractmethod
-    def validate(self, drop=True):
-        """Checks whether the loaded data is a valid instance of the specified
-        data type, potentially dropping invalid entries.
+    def _validate(self, data):
+        """Check whether the provided data is a valid instance of the
+        task-specific representation
 
         Args:
-            drop (bool):  whether to drop invalid entries
+            data: the data to be checked
+
+        Returns: (valid, invalid) tuple of valid and invalid entries
 
         """
+
         raise NotImplementedError
 
     @abstractmethod

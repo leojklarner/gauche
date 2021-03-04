@@ -30,7 +30,6 @@ class DataLoaderLB(DataLoader):
 
     def __init__(self):
         super(DataLoaderLB, self).__init__()
-        self.task = "PL_binding_affinity"
         self._features = None
         self._labels = None
         self._protein_paths = None

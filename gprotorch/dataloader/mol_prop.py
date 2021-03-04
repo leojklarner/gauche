@@ -19,47 +19,10 @@ class DataLoaderMP(DataLoader):
 
     def __init__(self):
         super(DataLoaderMP, self).__init__()
-        self.task = "molecular_property_prediction"
         self._features = None
         self._labels = None
 
-    @property
-    def features(self):
-        """
-        Property for storing features.
-        Returns: currently loaded features
 
-        """
-        return self._features
-
-    @features.setter
-    def features(self, value):
-        """
-        Setter to initialise or change features.
-        Args:
-            value: feature data
-
-        """
-        self._features = value
-
-    @property
-    def labels(self):
-        """
-        Property for storing labels
-        Returns: currently loaded labels
-
-        """
-        return self._labels
-
-    @labels.setter
-    def labels(self, value):
-        """
-        Setter to initialise or change labels.
-        Args:
-            value: label data
-
-        """
-        self._labels = value
 
     def validate(self, drop=True):
         """Checks if the features are valid SMILES strings and (potentially)
