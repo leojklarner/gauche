@@ -169,7 +169,7 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
     return outfile_ligand_name
 
 
-# -------------------------------- feature calculation utilities --------------------------------
+# -------------------------------- featurisation utilities --------------------------------
 
 def molecule_fingerprints(input_mols, bond_radius, nBits):
     """
@@ -212,6 +212,7 @@ def molecule_fragments(input_mols):
 
     return frags
 
+
 def vina_binana_features(protein_paths, ligand_paths, feature_group):
     """
     Calculates the AutoDock Vina and/or BINANA features for the given
@@ -222,7 +223,7 @@ def vina_binana_features(protein_paths, ligand_paths, feature_group):
         ligand_paths: list of paths to the ligand .sdf files
         feature_group: whether to extract 'vina', 'binana' or 'all' features
 
-    Returns: dict of specified features
+    Returns: list of specified features
 
     """
 
@@ -280,7 +281,7 @@ def vina_binana_features(protein_paths, ligand_paths, feature_group):
 
         results.append(result)
 
-    return pd.DataFrame(results)
+    return results
 
 
 def plec_fingerprints(protein_paths, ligand_paths, **params):
@@ -295,7 +296,7 @@ def plec_fingerprints(protein_paths, ligand_paths, **params):
         ligand_paths: list of paths to the ligand .sdf files
         plec_params: custom parameters passed to calculate PLEC FPs
 
-    Returns: dict of specified features
+    Returns: list of specified features
 
     """
 
@@ -329,4 +330,4 @@ def plec_fingerprints(protein_paths, ligand_paths, **params):
 
         results.append(result)
 
-    return pd.DataFrame(results)
+    return results

@@ -19,38 +19,83 @@ class DataLoader(metaclass=ABCMeta):
 
     def __init__(self):
         self.task = None
+        self._objects = None
+        self._features = None
+        self._labels = None
 
     @property
+    def objects(self):
+        """
+        Internal representation of the objects being loaded (e.g. SMILES, PDB codes)
+
+        Returns: Currently loaded internal representation.
+        """
+
+        return self._objects
+
+    @objects.setter
     @abstractmethod
+    def objects(self, value):
+        """
+        Abstract method for setting internal representation. The specific implementations
+        should check whether the provided data is a valid instance of the respective
+        representation.
+
+        Args:
+            value: internal representations to be set
+
+        Returns: None
+
+        """
+        raise NotImplementedError
+
+    @property
     def features(self):
         """
-        Abstract property for storing features.
+        Property for storing features.
+
+        Returns: currently loaded features.
         """
-        raise NotImplementedError
+        return self._features
 
     @features.setter
-    @abstractmethod
     def features(self, value):
         """
-        Abstract setter for setting features.
+        An method to load a specific set of features.
+
+        Args:
+            value: the features to be loaded
+
+        Returns: None
+
         """
-        raise NotImplementedError
+
+        self._features = value
 
     @property
-    @abstractmethod
     def labels(self):
         """
-        Abstract property for storing labels
+        Property for storing labels
+
+        Returns: the currently loaded labels.
+
         """
-        raise NotImplementedError
+
+        return self._labels
 
     @labels.setter
-    @abstractmethod
     def labels(self, value):
         """
-        Abstract setter for setting labels
+        A method for loading a specific set of labels.
+
+        Args:
+            value: the labels to be loaded
+
+        Returns: None
+
         """
-        raise NotImplementedError
+
+        self._labels = value
 
     @abstractmethod
     def validate(self, drop=True):
@@ -73,7 +118,8 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def _scale(self, train, test=None):
+    @staticmethod
+    def _scale(train, test=None):
         """
         Auxiliary function to perform scaling on features and labels.
         Fits the standardisation scaler on the training set and

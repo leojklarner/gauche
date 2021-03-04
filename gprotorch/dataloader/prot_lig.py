@@ -35,6 +35,7 @@ class DataLoaderLB(DataLoader):
         self._labels = None
         self._protein_paths = None
         self._ligand_paths = None
+        self._pdbcodes = None
 
     @property
     def features(self):
@@ -74,7 +75,7 @@ class DataLoaderLB(DataLoader):
         """
         self._labels = value
 
-    def featurize(self, representations, concatenate=True, save_features=True):
+    def featurize(self, representations, concatenate=True, save_features=True, kwargs=None):
         """
         Reads in the pdb files and calculates the specified representation.
         The representations are segmented into three main groups:
@@ -92,41 +93,67 @@ class DataLoaderLB(DataLoader):
             must belong to the same group, i.e. continuous/fingerprints/graph
             concatenate: whether to concatenate the features to one data frame or return them separately
             save_features: whether to save the computed features
+            kwargs: dictionary with specific keywords to update
 
         """
 
-        continuous_representations = ['vina', 'binana']
-        fingerprint_representations = ['plec']
+        if kwargs is None:
+            kwargs = {}
 
-        for representation in representations:
+        featurisations = {
+            'vina': {
+                'func': vina_binana_features,
+                'args': [self._protein_paths, self._ligand_paths, 'vina']
+            },
+            'binana': {
+                'func': vina_binana_features,
+                'args': [self._protein_paths, self._ligand_paths, 'binana']
+            },
+            'nnscore': {
+                'func': vina_binana_features,
+                'args': [self._protein_paths, self._ligand_paths, 'all']
+            },
+            'plec': {
+                'func': plec_fingerprints,
+                'args': [self._protein_paths, self._ligand_paths, kwargs]
+            }
+        }
 
-            features = []
+        if not set(representations).issubset(featurisations.keys()):
 
-            for protein_path, ligand_path in zip(self._protein_paths, self._ligand_paths):
-                features.append(vina_binana_features(protein_path, ligand_path, representation))
+            raise Exception(f"The specified featurisation choice(s) {set(featurisations.keys())-set(representations)}"
+                            f"are not supported. Please choose between {featurisations.keys()}.")
+
+        else:
+
+            result_dfs = []
+
+            for representation in representations:
+
+                feature_func = featurisations[representation]['func']
+                feature_args = featurisations[representation]['args']
+
+                result_dfs.append(pd.DataFrame(data=feature_func(feature_args), index=self._features))
 
 
-        # clean features
+            # clean features
 
 
-        # Drop 'Ipc' from RDKit feature set
-        # It generates very large values for larger molecules. https://github.com/rdkit/rdkit/issues/1527
-        #rdkit_features = rdkit_features.drop(['Ipc'], axis='columns')
+            # Drop 'Ipc' from RDKit feature set
+            # It generates very large values for larger molecules. https://github.com/rdkit/rdkit/issues/1527
+            #rdkit_features = rdkit_features.drop(['Ipc'], axis='columns')
 
+            # drop datapoints for which one or more features are NA
+            features = features.replace([np.inf, -np.inf], pd.NA)
+            features = features.dropna()
 
-        features = pd.DataFrame(features)
+            # keep only points for which all features could be calculated
 
-        # drop datapoints for which one or more features are NA
-        features = features.replace([np.inf, -np.inf], pd.NA)
-        features = features.dropna()
+            # drop features with almost zero variance
+            zero_var_cols = features.columns[(features.var() < 1e-2)]
+            features = features.drop(labels=zero_var_cols, axis='columns')
 
-        # keep only points for which all features could be calculated
-
-        # drop features with almost zero variance
-        zero_var_cols = features.columns[(features.var() < 1e-2)]
-        features = features.drop(labels=zero_var_cols, axis='columns')
-
-        print(features)
+            print(features)
 
     def validate(self, drop=True):
         """
