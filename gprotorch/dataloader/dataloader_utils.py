@@ -12,6 +12,7 @@ from io import StringIO
 import requests
 import os
 import oddt
+import numpy as np
 from oddt.toolkits import rdk
 from oddt.scoring.descriptors import binana
 from oddt.fingerprints import PLEC

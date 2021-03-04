@@ -19,36 +19,34 @@ class DataLoaderMP(DataLoader):
 
     def __init__(self):
         super(DataLoaderMP, self).__init__()
-        self._features = None
-        self._labels = None
 
-
-
-    def validate(self, drop=True):
-        """Checks if the features are valid SMILES strings and (potentially)
-        drops the entries that are not.
+    def _validate(self, data):
+        """Checks which of the given entries are valid SMILES representations and
+        splits them into valid and invalid ones.
 
         Args:
-            drop: whether to drop invalid entries
+            data: the data to be checked
+
+        Returns: (valid, invalid) tuple of valid and invalid SMILES representations.
 
         """
 
-        invalid_idx = []
+        valid = []
+        invalid = []
 
-        # iterate through the features
-        for i in range(len(self.features)):
+        # iterate through the given data
+        for i in range(len(data)):
 
             # try to convert each SMILES to an rdkit molecule
-            mol = MolFromSmiles(self.features[i])
+            mol = MolFromSmiles(data[i])
 
-            # if it does not work, save the index and print its position to the console
+            # denote molecule as either valid or invalid
             if mol is None:
-                invalid_idx.append(i)
-                print(f"Invalid SMILES at position {i+1}: {self.features[i]}")
+                invalid.append(data[i])
+            else:
+                valid.append(data[i])
 
-        if drop:
-            self.features = np.delete(self.features, invalid_idx).tolist()
-            self.labels = np.delete(self.labels, invalid_idx)
+        return valid, invalid
 
     def featurize(self, representation, bond_radius=3, nBits=2048):
         """Transforms SMILES into the specified molecular representation.
@@ -64,15 +62,15 @@ class DataLoaderMP(DataLoader):
 
         if representation == "fingerprints":
 
-            self.features = molecule_fingerprints(self._features, bond_radius, nBits)
+            self.features = molecule_fingerprints(self.objects, bond_radius, nBits)
 
         elif representation == "fragments":
 
-            self.features = molecule_fragments(self._features)
+            self.features = molecule_fragments(self.objects)
 
         elif representation == "fragprints":
 
-            self.features = np.concatenate((molecule_fingerprints(self._features, bond_radius, nBits), molecule_fragments(self._features)), axis=1)
+            self.features = np.concatenate((molecule_fingerprints(self.objects, bond_radius, nBits), molecule_fragments(self._features)), axis=1)
 
         else:
 
@@ -115,7 +113,7 @@ class DataLoaderMP(DataLoader):
         else:
 
             df = pd.read_csv(path)
-            self.features = df[benchmarks[benchmark]["features"]].to_list()
+            self.objects = df[benchmarks[benchmark]["features"]].to_list()
             self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
 
 
