@@ -155,8 +155,8 @@ class DataLoaderLB(DataLoader):
             # valid/invalid list depending on result
 
             try:
-                next(oddt.toolkit.readfile('pdb', protein_ligand_pair[0]))
-                next(oddt.toolkit.readfile('sdf', protein_ligand_pair[1]))
+                next(oddt.toolkit.readfile('pdb', protein_ligand_pair[1]))
+                next(oddt.toolkit.readfile('sdf', protein_ligand_pair[2]))
 
                 valid.append(protein_ligand_pair)
 
@@ -184,8 +184,7 @@ class DataLoaderLB(DataLoader):
 
         """
 
-        protein_filenames = []
-        ligand_filenames = []
+        results = []
 
         # set working directory to download_dir, as path handling for the prody
         # functions can be a bit tricky, will be reset to original cwd later on
@@ -211,7 +210,7 @@ class DataLoaderLB(DataLoader):
 
         for pdb_code in self.pdb_codes:
 
-            print(pdb_code)
+            result = [pdb_code]
 
             # split the PDB entry into proteins and ligands
             try:
@@ -221,7 +220,7 @@ class DataLoaderLB(DataLoader):
             else:
                 # writing the protein part to a .pdb file
                 protein_file = write_pdb(protein, pdb_code)
-                protein_filenames.append(protein_file)
+                result.append(os.path.join(download_dir, protein_file))
 
                 # if a ligand code is specified, proceed with the given code(s)
                 if ligand_dict[pdb_code]:
@@ -263,10 +262,12 @@ class DataLoaderLB(DataLoader):
 
                     # save bond-order augmented spatial structure of most drug-like ligand to SDF
                     ligand_filename = write_sdf(max_drug_likeness_mol, pdb_code, max_drug_likeness_res)
-                    ligand_filenames.append(ligand_filename)
+                    result.append(os.path.join(download_dir, ligand_filename))
+
+                    # a pdb file with a suitable ligand was found, add them to results
+                    results.append(result)
 
                 else:
-                    ligand_filenames.append(None)
                     print(f"Could not find ligands for the PDB entry {pdb_code}.")
 
         # change the working directory back to the original
@@ -285,10 +286,7 @@ class DataLoaderLB(DataLoader):
                 print(failed_pdb)
 
         # save paths to protein and selected ligand files
-        self.objects = [
-            (os.path.join(download_dir, protname), os.path.join(download_dir, ligname))
-            for protname, ligname in zip(protein_filenames, ligand_filenames)
-        ]
+        self.objects = results
 
     def load_benchmark(self, benchmark, path):
         """Loads pdb codes and labels from one of the included benchmark datasets
