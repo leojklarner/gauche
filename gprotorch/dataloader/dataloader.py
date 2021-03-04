@@ -56,7 +56,7 @@ class DataLoader(metaclass=ABCMeta):
             print(f"The entries")
             for i in invalid:
                 print(i)
-            print(f"have been dropped, as they are invalid representations.")
+            print(f"have been dropped, as they could not be parsed into valid representations.")
 
     @property
     def features(self):

@@ -53,7 +53,7 @@ class DataLoaderLB(DataLoader):
         """
         self._pdb_codes = value
 
-    def featurize(self, representations, concatenate=True, save_features=True, kwargs=None):
+    def featurize(self, representations, concatenate=True, save_features=True, params=None):
         """
         Reads in the pdb files and calculates the specified representation.
         The representations are segmented into three main groups:
@@ -71,12 +71,15 @@ class DataLoaderLB(DataLoader):
             must belong to the same group, i.e. continuous/fingerprints/graph
             concatenate: whether to concatenate the features to one data frame or return them separately
             save_features: whether to save the computed features
-            kwargs: dictionary with specific keywords to update
+            params: dictionary with specific keywords to update
 
         """
 
-        if kwargs is None:
-            kwargs = {}
+        if type(representations) is not list:
+            representations = [representations]
+
+        if params is None:
+            params = {}
 
         featurisations = {
             'vina': {
@@ -93,14 +96,16 @@ class DataLoaderLB(DataLoader):
             },
             'plec': {
                 'func': plec_fingerprints,
-                'args': [self.objects, kwargs]
+                'args': [self.objects, params]
             }
         }
 
-        if not set(representations).issubset(featurisations.keys()):
+        if not set(representations).issubset(set(featurisations.keys())):
+            print(set(representations))
+            print(set(featurisations.keys()))
 
-            raise Exception(f"The specified featurisation choice(s) {set(featurisations.keys())-set(representations)}"
-                            f"are not supported. Please choose between {featurisations.keys()}.")
+            raise Exception(f"The specified featurisation choice(s) {set(representations)-set(featurisations.keys())} "
+                            f"are not supported. Please choose between {set(featurisations.keys())}.")
 
         else:
 
@@ -111,20 +116,22 @@ class DataLoaderLB(DataLoader):
                 feature_func = featurisations[representation]['func']
                 feature_args = featurisations[representation]['args']
 
-                result_df = feature_func(feature_args)
+                result_df = feature_func(*feature_args)
 
                 # remove entries with NA features
                 result_df = result_df.replace([np.inf, -np.inf], pd.NA)
                 result_df = result_df.dropna()
 
                 # remove features with low variance
+                # shouldn't cause any complications with fingerprints that
+                # are analysed via the Tanimoto index.
                 zero_var_cols = result_df.columns[(result_df.var() < 1e-2)]
                 result_df = result_df.drop(labels=zero_var_cols, axis='columns')
 
                 result_dfs.append(result_df)
 
         # remove entries for which not all features could be calculated
-        indices_to_use = set.intersection(*[df.index for df in result_dfs])
+        indices_to_use = set.intersection(*[set(df.index.to_list()) for df in result_dfs])
         result_dfs = [df.loc[indices_to_use] for df in result_dfs]
 
         # concatenate them if needed
@@ -193,14 +200,14 @@ class DataLoaderLB(DataLoader):
 
         # create a pdb_code:ligand_code dictionary for all pdb codes if a list is passed
         if type(ligand_codes) is list:
-            assert len(ligand_codes) == len(self._features), "Ligand code list must have same length as pdb code list."
-            ligand_dict = {self._features[i]: ligand_codes[i] for i in range(len(self._features))}
+            assert len(ligand_codes) == len(self.pdb_codes), "Ligand code list must have same length as pdb code list."
+            ligand_dict = {self.pdb_codes[i]: ligand_codes[i] for i in range(len(self.pdb_codes))}
 
         # or create a pdb_code:"" dictionary of empty strings
         # (in which case most drug-like ligand will be selected)
         # and selectively update it with ligand codes if dict is passed
         else:
-            ligand_dict = {self._features[i]: "" for i in range(len(self._features))}
+            ligand_dict = {self.pdb_codes[i]: "" for i in range(len(self.pdb_codes))}
             if type(ligand_codes) is dict:
                 # capitalise keys before merging ligand codes with empty dictionary
                 ligand_dict.update({k.upper(): v for k, v in ligand_codes.items()})
@@ -276,11 +283,11 @@ class DataLoaderLB(DataLoader):
         downloaded_pdbs = [file[:-4].upper() for file in os.listdir(download_dir) if file.endswith(".pdb")]
         print(downloaded_pdbs)
 
-        if set(self._features).issubset(set(downloaded_pdbs)):
+        if set(self.pdb_codes).issubset(set(downloaded_pdbs)):
             print(f"Successfully downloaded all PDB files to {download_dir}.")
         else:
             print("Could not download the following PDB files:")
-            failed_pdbs = set(self._features) - set(downloaded_pdbs)
+            failed_pdbs = set(self.pdb_codes) - set(downloaded_pdbs)
             for failed_pdb in failed_pdbs:
                 print(failed_pdb)
 
@@ -326,6 +333,6 @@ if __name__ == '__main__':
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
     loader.download_dataset(path_to_data)
-    loader.featurize(['all'])
+    loader.featurize(['plec'])
 
     print(loader)

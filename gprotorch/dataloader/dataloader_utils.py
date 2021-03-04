@@ -286,7 +286,7 @@ def vina_binana_features(objects, feature_group):
     return results
 
 
-def plec_fingerprints(objects, **params):
+def plec_fingerprints(objects, params):
     """
     Calculates the protein-ligand extended conncetivity fingerprints
     for the given proteins. The arguments and their standard values are
@@ -312,7 +312,7 @@ def plec_fingerprints(objects, **params):
     }
 
     # if parameter changes are passed through kwargs, apply them
-    plec_params = {k: params[k] for k, v in plec_params if k in params}
+    plec_params.update(params)
 
     for pdb_code, protein_path, ligand_path in objects:
 
@@ -326,7 +326,8 @@ def plec_fingerprints(objects, **params):
             depth_ligand=plec_params['plec_depth_ligand'],
             depth_protein=plec_params['plec_depth_protein'],
             distance_cutoff=plec_params['plec_distance_cutoff'],
-            size=plec_params['plec_size']
+            size=plec_params['plec_size'],
+            sparse=False
         )
 
         results.append(result)
