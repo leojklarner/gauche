@@ -12,9 +12,14 @@ import requests
 from rdkit.Chem import SDWriter
 import oddt
 from oddt.toolkits import rdk
-from oddt.scoring import descriptors
+from oddt.scoring.descriptors import binana
+from oddt.fingerprints import PLEC
 
-from gprotorch.dataloader import DataLoader, read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf
+from gprotorch.dataloader import DataLoader
+
+from gprotorch.dataloader.dataloader_utils import \
+    read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf, \
+    vina_binana_features, plec_fingerprints
 
 
 class DataLoaderLB(DataLoader):
@@ -69,51 +74,71 @@ class DataLoaderLB(DataLoader):
         """
         self._labels = value
 
-    def featurize(self, representation, save_features=True):
+    def featurize(self, representations, concatenate=True, save_features=True):
         """
-        Reads in the pdb files and calculates the specified representation
+        Reads in the pdb files and calculates the specified representation.
+        The representations are segmented into three main groups:
+        continuous features, categorical features/fingerprints and graph features.
+        Continuous features include: AutoDock Vina, BINANA
         BIANANA: finds protein-ligand atom pairs in close contact and calculates
         numeric features for electrostatic interactions, binding-pocket flexibility,
         hydrophobic contacts, hydrogen bonds, salt bridges, various pi interactions
          Described in Durrant and McCammon, JMGM, Vol. 29, Issue 6, 2011
+        PLEC: a combination of ligand and receptor ECFPs of close-contact atoms,
+        described in Wojcikowski et al, Bioinformatics Vol. 35, Issue 8, 2019
 
         Args:
-            representation: the desired representation, one of ["rfscore"]
+            representations: list of desired representations,
+            must belong to the same group, i.e. continuous/fingerprints/graph
+            concatenate: whether to concatenate the features to one data frame or return them separately
             save_features: whether to save the computed features
 
         """
 
-        features = []
+        continuous_representations = ['vina', 'binana']
+        fingerprint_representations = ['plec']
 
-        valid_representations = ["rfscore"]
+        for representation in representations:
 
-        if representation == "rfscore":
-            for pdb_code, protein_path, ligand_path in zip(self._features, self._protein_paths, self._ligand_paths):
-                protein = next(rdk.readfile('pdb', protein_path))
-                protein.protein = True
-                ligand = next(rdk.readfile('sdf', ligand_path))
+            features = []
 
-                rfscore_engine = descriptors.close_contacts_descriptor(
-                    protein=protein,
-                    cutoff=12,
-                    ligand_types=[6, 7, 8, 9, 15, 16, 17, 35, 53],
-                    protein_types=[6, 7, 8, 16]
-                )
+            for protein_path, ligand_path in zip(self._protein_paths, self._ligand_paths):
+                features.append(vina_binana_features(protein_path, ligand_path, representation))
 
-                features.append(
-                    {name: value for name, value in zip(rfscore_engine.titles, rfscore_engine.build([ligand])[0])}
-                )
 
-        else:
-            raise Exception(
-                f"The specified representation choice {representation} is not a valid option."
-                f"Choose between {valid_representations}."
-            )
+        # clean features
+
+
+        # Drop 'Ipc' from RDKit feature set
+        # It generates very large values for larger molecules. https://github.com/rdkit/rdkit/issues/1527
+        #rdkit_features = rdkit_features.drop(['Ipc'], axis='columns')
+
+
+        features = pd.DataFrame(features)
+
+        # drop datapoints for which one or more features are NA
+        features = features.replace([np.inf, -np.inf], pd.NA)
+        features = features.dropna()
+
+        # keep only points for which all features could be calculated
+
+        # drop features with almost zero variance
+        zero_var_cols = features.columns[(features.var() < 1e-2)]
+        features = features.drop(labels=zero_var_cols, axis='columns')
 
         print(features)
 
-
     def validate(self, drop=True):
+        """
+        Check whether all of the provided protein and ligand files can be parsed
+        into the rdkit implementation from ODDT.
+
+        Args:
+            drop: whether to drop files that cannot be parsed from the file list
+
+        Returns: None
+
+        """
         pass
 
     def download_dataset(self, download_dir, ligand_codes=None):
@@ -147,7 +172,7 @@ class DataLoaderLB(DataLoader):
 
         # or create a pdb_code:"" dictionary of empty strings
         # (in which case most drug-like ligand will be selected)
-        # and update it with ligand codes if dict is passed
+        # and selectively update it with ligand codes if dict is passed
         else:
             ligand_dict = {self._features[i]: "" for i in range(len(self._features))}
             if type(ligand_codes) is dict:
@@ -205,7 +230,7 @@ class DataLoaderLB(DataLoader):
                             # parsing errors happen when atoms have valences != 4 after bond-order augmentation,
                             # such as molecules that are covalently bound to the protein (e.g. covalent ligands
                             # or modified residues that are denoted as hereoatoms) or
-                            # ions that are not filtered out by the ProDy ion selector (for example FE)
+                            # ions that are not filtered out by the ProDy ion selector (e.g FE)
                             # all of them are of limited relevance to binding affinity prediction
                             print(f"Could not parse the ligand denoted as {ligand_residue} for the PDB file {pdb_code}.")
 
@@ -277,6 +302,6 @@ if __name__ == '__main__':
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
     loader.download_dataset(path_to_data)
-    loader.featurize('rfscore')
+    loader.featurize(['all'])
 
     print(loader)

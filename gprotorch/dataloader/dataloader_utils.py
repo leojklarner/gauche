@@ -11,6 +11,10 @@ from rdkit.Chem.Descriptors import qed
 from io import StringIO
 import requests
 import os
+import oddt
+from oddt.toolkits import rdk
+from oddt.scoring.descriptors import binana
+from oddt.fingerprints import PLEC
 
 # functions adapted from Pat Walters (https://gist.github.com/PatWalters/3c0a483c030a2c75cb22c4234f206973)
 # that split a PDB entry into a .pdb file of the protein and a .sdf file of the ligand(s)
@@ -160,3 +164,125 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
         print(f"wrote the ligand file for the ligand {res_name} in PDB entry {pdb_name}.")
 
     return outfile_ligand_name
+
+
+# feature calculation functions
+
+def vina_binana_features(protein_paths, ligand_paths, feature_group):
+    """
+    Calculates the AutoDock Vina and/or BINANA features for the given
+    protein and ligand, as implemented in ODDT.
+
+    Args:
+        protein_paths: list of paths to the protein .pdb files
+        ligand_paths: list of paths to the ligand .sdf files
+        feature_group: whether to extract 'vina', 'binana' or 'all' features
+
+    Returns: dict of specified features
+
+    """
+
+    results = []
+
+    for protein_path, ligand_path in zip(protein_paths, ligand_paths):
+
+        # initialise protein and ligand
+        protein = next(rdk.readfile('pdb', protein_path))
+        protein.protein = True
+        ligand = next(rdk.readfile('sdf', ligand_path))
+
+        # initialise binana engine
+        binana_engine = binana.binana_descriptor(protein)
+
+        features_all = {name: value for name, value in zip(binana_engine.titles, binana_engine.build([ligand])[0])}
+
+        # the ODDT names for the VINA features, missing 'num_rotors'
+        vina_feature_names = ['vina_gauss1', 'vina_gauss2', 'vina_hydrogen',
+                              'vina_hydrophobic', 'vina_repulsion', 'vina_num_rotors']
+
+        # NOTE: the feature 'num_rotors' is included in both the Vina and BINANA feature sets
+        # it will be renamed to 'vina_num_rotors' or 'binana_num_rotors' when calculating the
+        # features separately and will be renamed to 'vina_num_rotors' when calculating them both
+        features_all['vina_num_rotors'] = features_all.pop('num_rotors')
+
+        # split off the vina feature set
+        features_vina = {k: v for k, v in features_all.items() if k in vina_feature_names}
+
+        # split off the binana feature set and add 'binana_' to the feature names
+        features_binana = {'binana_' + k: v for k, v in features_all.items() if k not in vina_feature_names}
+        features_binana['binana_num_rotors'] = features_all['vina_num_rotors']
+
+        if feature_group == 'vina':
+
+            # extract AutoDock Vina features
+            result = features_vina
+
+        elif feature_group == 'binana':
+
+            # extract BINANA features
+            result = features_binana
+
+        elif feature_group == 'all':
+
+            # combine both feature sets (to keep the 'binana_' prefix for binana features)
+            result = {**features_vina, **features_binana}
+            result.pop('binana_num_rotors')
+
+        else:
+            raise Exception(
+                f"Internal error: feature selection {feature_group} not in "
+                f"['vina','binana','all'] for vina_binana_features function."
+            )
+
+        results.append(result)
+
+    return pd.DataFrame(results)
+
+
+def plec_fingerprints(protein_paths, ligand_paths, **params):
+    """
+    Calculates the protein-ligand extended conncetivity fingerprints
+    for the given proteins. The arguments and their standard values are
+    plec_depth_ligand=2, plec_depth_protein=4,
+    plec_distance_cutoff=4.5, plec_size=16384
+
+    Args:
+        protein_paths: list of paths to the protein .pdb files
+        ligand_paths: list of paths to the ligand .sdf files
+        plec_params: custom parameters passed to calculate PLEC FPs
+
+    Returns: dict of specified features
+
+    """
+
+    results = []
+
+    for protein_path, ligand_path in zip(protein_paths, ligand_paths):
+
+        # set standard parameters
+        plec_params = {
+            'plec_depth_ligand': 2,
+            'plec_depth_protein': 4,
+            'plec_distance_cutoff': 4.5,
+            'plec_size': 16384,
+        }
+
+        # if parameter changes are passed through kwargs, apply them
+        plec_params = {k: params[k] for k, v in plec_params if k in params}
+
+        protein = next(rdk.readfile('pdb', protein_path))
+        protein.protein = True
+        ligand = next(rdk.readfile('sdf', ligand_path))
+
+        result = PLEC(
+            ligand=ligand,
+            protein=protein,
+            depth_ligand=plec_params['plec_depth_ligand'],
+            depth_protein=plec_params['plec_depth_protein'],
+            distance_cutoff=plec_params['plec_distance_cutoff'],
+            size=plec_params['plec_size']
+        )
+
+        results.append(result)
+
+    return pd.DataFrame(results)
