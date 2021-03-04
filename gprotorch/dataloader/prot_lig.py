@@ -30,49 +30,28 @@ class DataLoaderLB(DataLoader):
 
     def __init__(self):
         super(DataLoaderLB, self).__init__()
-        self._features = None
-        self._labels = None
-        self._protein_paths = None
-        self._ligand_paths = None
-        self._pdbcodes = None
+        self._pdb_codes = None
 
     @property
-    def features(self):
+    def pdb_codes(self):
         """
-        Property for storing features.
-        Returns: currently loaded features
+        Property for storing a list of pdb codes.
+
+        Returns: currently loaded pdb codes
 
         """
-        return self._features
+        return self._pdb_codes
 
-    @features.setter
-    def features(self, value):
+    @pdb_codes.setter
+    def pdb_codes(self, value):
         """
-        Setter to initialise or change features.
+        Method to load a list of of pdb codes.
+
         Args:
-            value: feature data
+            value: list of of pdb codes
 
         """
-        self._features = value
-
-    @property
-    def labels(self):
-        """
-        Property for storing labels
-        Returns: currently loaded labels
-
-        """
-        return self._labels
-
-    @labels.setter
-    def labels(self, value):
-        """
-        Setter to initialise or change labels.
-        Args:
-            value: label data
-
-        """
-        self._labels = value
+        self._pdb_codes = value
 
     def featurize(self, representations, concatenate=True, save_features=True, kwargs=None):
         """
@@ -102,19 +81,19 @@ class DataLoaderLB(DataLoader):
         featurisations = {
             'vina': {
                 'func': vina_binana_features,
-                'args': [self._protein_paths, self._ligand_paths, 'vina']
+                'args': [self.objects, 'vina']
             },
             'binana': {
                 'func': vina_binana_features,
-                'args': [self._protein_paths, self._ligand_paths, 'binana']
+                'args': [self.objects, 'binana']
             },
             'nnscore': {
                 'func': vina_binana_features,
-                'args': [self._protein_paths, self._ligand_paths, 'all']
+                'args': [self.objects, 'all']
             },
             'plec': {
                 'func': plec_fingerprints,
-                'args': [self._protein_paths, self._ligand_paths, kwargs]
+                'args': [self.objects, kwargs]
             }
         }
 
@@ -154,18 +133,38 @@ class DataLoaderLB(DataLoader):
 
             print(features)
 
-    def validate(self, drop=True):
+    def _validate(self, protein_ligand_path_list):
         """
         Check whether all of the provided protein and ligand files can be parsed
         into the rdkit implementation from ODDT.
 
         Args:
-            drop: whether to drop files that cannot be parsed from the file list
+            protein_ligand_path_list: a list of (protein_path, ligand_path) tuples
 
-        Returns: None
+        Returns: (valid, invalid) tuple of parseable and inparseable pdb and sdf files.
 
         """
-        pass
+
+        valid = []
+        invalid = []
+
+        # for each of the given path pairs
+        for protein_ligand_pair in protein_ligand_path_list:
+
+            # try to parse them into oddt pdb/sdf files and add them to valid/invalid
+            # valid/invalid list depending on result
+
+            try:
+                next(oddt.toolkit.readfile('pdb', protein_ligand_pair[0]))
+                next(oddt.toolkit.readfile('sdf', protein_ligand_pair[1]))
+
+                valid.append(protein_ligand_pair)
+
+            except StopIteration:
+
+                invalid.append(protein_ligand_pair)
+
+        return valid, invalid
 
     def download_dataset(self, download_dir, ligand_codes=None):
         """
@@ -180,6 +179,8 @@ class DataLoaderLB(DataLoader):
             ligand_codes: the ligand codes of one or more molecules that should be split off as ligands.
             Either None (select the most drug-like molecule for each structure) or
             list/dict of lists/tuples (select the given heteroatom residues for all/the specified PDB entries).
+
+        Returns: None
 
         """
 
@@ -208,7 +209,7 @@ class DataLoaderLB(DataLoader):
         # read in the Ligand Expo dataset from the PDB
         expo = read_ligand_expo()
 
-        for pdb_code in self._features:
+        for pdb_code in self.pdb_codes:
 
             print(pdb_code)
 
@@ -284,13 +285,13 @@ class DataLoaderLB(DataLoader):
                 print(failed_pdb)
 
         # save paths to protein and selected ligand files
-        self._protein_paths = [os.path.join(download_dir, protname) for protname in protein_filenames]
-        self._ligand_paths = [os.path.join(download_dir, ligname) for ligname in ligand_filenames]
-
-        return protein_filenames, ligand_filenames
+        self.objects = [
+            (os.path.join(download_dir, protname), os.path.join(download_dir, ligname))
+            for protname, ligname in zip(protein_filenames, ligand_filenames)
+        ]
 
     def load_benchmark(self, benchmark, path):
-        """Loads features and labels from one of the included benchmark datasets
+        """Loads pdb codes and labels from one of the included benchmark datasets
         and feeds them into the DataLoader. PDB files still need to be downloaded
         before featurisation.
 
@@ -319,8 +320,8 @@ class DataLoaderLB(DataLoader):
 
             df = pd.read_csv(path)
             pdb_code_list = df[benchmarks[benchmark]["features"]].to_list()
-            self._features = [pdb_code.upper() for pdb_code in pdb_code_list]
-            self._labels = df[benchmarks[benchmark]["labels"]].to_numpy()
+            self.pdb_codes = [pdb_code.upper() for pdb_code in pdb_code_list]
+            self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
 
 
 if __name__ == '__main__':

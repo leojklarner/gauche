@@ -233,9 +233,9 @@ def vina_binana_features(protein_paths, ligand_paths, feature_group):
     for protein_path, ligand_path in zip(protein_paths, ligand_paths):
 
         # initialise protein and ligand
-        protein = next(rdk.readfile('pdb', protein_path))
+        protein = next(oddt.toolkit.readfile('pdb', protein_path))
         protein.protein = True
-        ligand = next(rdk.readfile('sdf', ligand_path))
+        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
 
         # initialise binana engine
         binana_engine = binana.binana_descriptor(protein)
@@ -316,9 +316,9 @@ def plec_fingerprints(protein_paths, ligand_paths, **params):
         # if parameter changes are passed through kwargs, apply them
         plec_params = {k: params[k] for k, v in plec_params if k in params}
 
-        protein = next(rdk.readfile('pdb', protein_path))
+        protein = next(oddt.toolkit.readfile('pdb', protein_path))
         protein.protein = True
-        ligand = next(rdk.readfile('sdf', ligand_path))
+        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
 
         result = PLEC(
             ligand=ligand,
