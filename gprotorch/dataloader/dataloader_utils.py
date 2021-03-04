@@ -15,6 +15,9 @@ import oddt
 from oddt.toolkits import rdk
 from oddt.scoring.descriptors import binana
 from oddt.fingerprints import PLEC
+from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+
+# -------------------------------- PDB scraping utilities --------------------------------
 
 # functions adapted from Pat Walters (https://gist.github.com/PatWalters/3c0a483c030a2c75cb22c4234f206973)
 # that split a PDB entry into a .pdb file of the protein and a .sdf file of the ligand(s)
@@ -166,7 +169,48 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
     return outfile_ligand_name
 
 
-# feature calculation functions
+# -------------------------------- feature calculation utilities --------------------------------
+
+def molecule_fingerprints(input_mols, bond_radius, nBits):
+    """
+    Auxiliary function to transform the loaded features to a fingerprint representation
+
+    Returns: numpy array of features in fingerprint representation
+
+    """
+
+    rdkit_mols = [MolFromSmiles(smiles) for smiles in input_mols]
+    fps = [
+        AllChem.GetMorganFingerprintAsBitVect(mol, bond_radius, nBits=nBits)
+        for mol in rdkit_mols
+    ]
+
+    return np.asarray(fps)
+
+
+def molecule_fragments(input_mols):
+    """
+    Auxiliary function to transform the loaded features to a fragment representation
+
+    Returns: numpy array of features in fragment representation
+
+    """
+
+    # extract all fragment rdkit descriptors
+    # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
+    fragList = [desc for desc in Descriptors.descList if desc[0].startswith('fr_')]
+
+    fragments = {d[0]: d[1] for d in fragList}
+    frags = np.zeros((len(input_mols), len(fragments)))
+    for i in range(len(input_mols)):
+        mol = MolFromSmiles(input_mols[i])
+        try:
+            features = [fragments[d](mol) for d in fragments]
+        except:
+            raise Exception("molecule {}".format(i) + " is not canonicalised")
+        frags[i, :] = features
+
+    return frags
 
 def vina_binana_features(protein_paths, ligand_paths, feature_group):
     """

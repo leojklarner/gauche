@@ -6,6 +6,7 @@ molecular property prediction datasets.
 import numpy as np
 import pandas as pd
 from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+from gprotorch.dataloader.dataloader_utils import molecule_fragments, molecule_fingerprints
 
 from gprotorch.dataloader import DataLoader
 
@@ -96,59 +97,19 @@ class DataLoaderMP(DataLoader):
 
         """
 
-        def fingerprints():
-            """
-            Auxiliary function to transform the loaded features to a fingerprint representation
-
-            Returns: numpy array of features in fingerprint representation
-
-            """
-
-            rdkit_mols = [MolFromSmiles(smiles) for smiles in self.features]
-            fps = [
-                AllChem.GetMorganFingerprintAsBitVect(mol, bond_radius, nBits=nBits)
-                for mol in rdkit_mols
-            ]
-
-            return np.asarray(fps)
-
-        def fragments():
-            """
-            Auxiliary function to transform the loaded features to a fragment representation
-
-            Returns: numpy array of features in fragment representation
-
-            """
-
-            # extract all fragment rdkit descriptors
-            # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-            fragList = [desc for desc in Descriptors.descList if desc[0].startswith('fr_')]
-
-            fragments = {d[0]: d[1] for d in fragList}
-            frags = np.zeros((len(self.features), len(fragments)))
-            for i in range(len(self.features)):
-                mol = MolFromSmiles(self.features[i])
-                try:
-                    features = [fragments[d](mol) for d in fragments]
-                except:
-                    raise Exception("molecule {}".format(i) + " is not canonicalised")
-                frags[i, :] = features
-
-            return frags
-
         valid_representations = ["fingerprints", "fragments", "fragprints"]
 
         if representation == "fingerprints":
 
-            self.features = fingerprints()
+            self.features = molecule_fingerprints(self._features, bond_radius, nBits)
 
         elif representation == "fragments":
 
-            self.features = fragments()
+            self.features = molecule_fragments(self._features)
 
         elif representation == "fragprints":
 
-            self.features = np.concatenate((fingerprints(), fragments()), axis=1)
+            self.features = np.concatenate((molecule_fingerprints(self._features, bond_radius, nBits), molecule_fragments(self._features)), axis=1)
 
         else:
 
