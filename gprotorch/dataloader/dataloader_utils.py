@@ -214,14 +214,13 @@ def molecule_fragments(input_mols):
     return frags
 
 
-def vina_binana_features(protein_paths, ligand_paths, feature_group):
+def vina_binana_features(objects, feature_group):
     """
     Calculates the AutoDock Vina and/or BINANA features for the given
     protein and ligand, as implemented in ODDT.
 
     Args:
-        protein_paths: list of paths to the protein .pdb files
-        ligand_paths: list of paths to the ligand .sdf files
+        objects: a list of (pdb_code, protein_path, ligand_path) tuples
         feature_group: whether to extract 'vina', 'binana' or 'all' features
 
     Returns: list of specified features
@@ -230,7 +229,7 @@ def vina_binana_features(protein_paths, ligand_paths, feature_group):
 
     results = []
 
-    for protein_path, ligand_path in zip(protein_paths, ligand_paths):
+    for pdb_code, protein_path, ligand_path in objects:
 
         # initialise protein and ligand
         protein = next(oddt.toolkit.readfile('pdb', protein_path))
@@ -282,10 +281,12 @@ def vina_binana_features(protein_paths, ligand_paths, feature_group):
 
         results.append(result)
 
+    results = pd.DataFrame(data=results, index=[i[0] for i in objects])
+
     return results
 
 
-def plec_fingerprints(protein_paths, ligand_paths, **params):
+def plec_fingerprints(objects, **params):
     """
     Calculates the protein-ligand extended conncetivity fingerprints
     for the given proteins. The arguments and their standard values are
@@ -293,9 +294,8 @@ def plec_fingerprints(protein_paths, ligand_paths, **params):
     plec_distance_cutoff=4.5, plec_size=16384
 
     Args:
-        protein_paths: list of paths to the protein .pdb files
-        ligand_paths: list of paths to the ligand .sdf files
-        plec_params: custom parameters passed to calculate PLEC FPs
+        objects: a list of (pdb_code, protein_path, ligand_path) tuples
+        params: custom parameters passed to calculate PLEC FPs
 
     Returns: list of specified features
 
@@ -303,18 +303,18 @@ def plec_fingerprints(protein_paths, ligand_paths, **params):
 
     results = []
 
-    for protein_path, ligand_path in zip(protein_paths, ligand_paths):
+    # set standard parameters
+    plec_params = {
+        'plec_depth_ligand': 2,
+        'plec_depth_protein': 4,
+        'plec_distance_cutoff': 4.5,
+        'plec_size': 16384,
+    }
 
-        # set standard parameters
-        plec_params = {
-            'plec_depth_ligand': 2,
-            'plec_depth_protein': 4,
-            'plec_distance_cutoff': 4.5,
-            'plec_size': 16384,
-        }
+    # if parameter changes are passed through kwargs, apply them
+    plec_params = {k: params[k] for k, v in plec_params if k in params}
 
-        # if parameter changes are passed through kwargs, apply them
-        plec_params = {k: params[k] for k, v in plec_params if k in params}
+    for pdb_code, protein_path, ligand_path in objects:
 
         protein = next(oddt.toolkit.readfile('pdb', protein_path))
         protein.protein = True
@@ -330,5 +330,10 @@ def plec_fingerprints(protein_paths, ligand_paths, **params):
         )
 
         results.append(result)
+
+    results = pd.DataFrame(
+        data=results,
+        index=[i[0] for i in objects],
+        columns=["plec_"+str(i) for i in range(plec_params['plec_size'])])
 
     return results

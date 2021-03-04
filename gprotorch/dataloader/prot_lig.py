@@ -111,27 +111,27 @@ class DataLoaderLB(DataLoader):
                 feature_func = featurisations[representation]['func']
                 feature_args = featurisations[representation]['args']
 
-                result_dfs.append(pd.DataFrame(data=feature_func(feature_args), index=self._features))
+                result_df = feature_func(feature_args)
 
+                # remove entries with NA features
+                result_df = result_df.replace([np.inf, -np.inf], pd.NA)
+                result_df = result_df.dropna()
 
-            # clean features
+                # remove features with low variance
+                zero_var_cols = result_df.columns[(result_df.var() < 1e-2)]
+                result_df = result_df.drop(labels=zero_var_cols, axis='columns')
 
+                result_dfs.append(result_df)
 
-            # Drop 'Ipc' from RDKit feature set
-            # It generates very large values for larger molecules. https://github.com/rdkit/rdkit/issues/1527
-            #rdkit_features = rdkit_features.drop(['Ipc'], axis='columns')
+        # remove entries for which not all features could be calculated
+        indices_to_use = set.intersection(*[df.index for df in result_dfs])
+        result_dfs = [df.loc[indices_to_use] for df in result_dfs]
 
-            # drop datapoints for which one or more features are NA
-            features = features.replace([np.inf, -np.inf], pd.NA)
-            features = features.dropna()
+        # concatenate them if needed
+        if concatenate:
+            result_dfs = pd.concat(result_dfs, axis=1)
 
-            # keep only points for which all features could be calculated
-
-            # drop features with almost zero variance
-            zero_var_cols = features.columns[(features.var() < 1e-2)]
-            features = features.drop(labels=zero_var_cols, axis='columns')
-
-            print(features)
+        self.features = result_dfs
 
     def _validate(self, protein_ligand_path_list):
         """
@@ -210,8 +210,6 @@ class DataLoaderLB(DataLoader):
 
         for pdb_code in self.pdb_codes:
 
-            result = [pdb_code]
-
             # split the PDB entry into proteins and ligands
             try:
                 protein, ligand = get_pdb_components(pdb_code)
@@ -219,8 +217,7 @@ class DataLoaderLB(DataLoader):
                 print(f"Could not download the PDB file for {pdb_code}.")
             else:
                 # writing the protein part to a .pdb file
-                protein_file = write_pdb(protein, pdb_code)
-                result.append(os.path.join(download_dir, protein_file))
+                protein_filename = write_pdb(protein, pdb_code)
 
                 # if a ligand code is specified, proceed with the given code(s)
                 if ligand_dict[pdb_code]:
@@ -262,10 +259,12 @@ class DataLoaderLB(DataLoader):
 
                     # save bond-order augmented spatial structure of most drug-like ligand to SDF
                     ligand_filename = write_sdf(max_drug_likeness_mol, pdb_code, max_drug_likeness_res)
-                    result.append(os.path.join(download_dir, ligand_filename))
 
                     # a pdb file with a suitable ligand was found, add them to results
-                    results.append(result)
+                    results.append((
+                        pdb_code,
+                        os.path.join(download_dir, protein_filename),
+                        os.path.join(download_dir, ligand_filename)))
 
                 else:
                     print(f"Could not find ligands for the PDB entry {pdb_code}.")
