@@ -304,14 +304,14 @@ def vina_features(objects):
     return results
 
 
-def vina_binana_features(objects, feature_group):
+def binana_nnscore_features(objects, feature_group):
     """
-    Calculates the AutoDock Vina and/or BINANA features for the given
-    protein and ligand, as implemented in ODDT.
+    Calulates either the BINANA features or the features used in NNScore v2
+    (BINANA and AutoDock Vina features)
 
     Args:
         objects: a list of (pdb_code, protein_path, ligand_path) tuples
-        feature_group: whether to extract 'vina', 'binana' or 'all' features
+        feature_group: whether to extract 'binana' or 'nnscorev2' features
 
     Returns: list of specified features
 
@@ -333,45 +333,30 @@ def vina_binana_features(objects, feature_group):
 
         # the ODDT names for the VINA features, missing 'num_rotors'
         vina_feature_names = ['vina_gauss1', 'vina_gauss2', 'vina_hydrogen',
-                              'vina_hydrophobic', 'vina_repulsion', 'vina_num_rotors']
+                              'vina_hydrophobic', 'vina_repulsion']
 
-        # NOTE: the feature 'num_rotors' is included in both the Vina and BINANA feature sets
-        # it will be renamed to 'vina_num_rotors' or 'binana_num_rotors' when calculating the
-        # features separately and will be renamed to 'vina_num_rotors' when calculating them both
-        features_all['vina_num_rotors'] = features_all.pop('num_rotors')
+        if feature_group == 'binana':
 
-        # split off the vina feature set
-        features_vina = {k: v for k, v in features_all.items() if k in vina_feature_names}
+            # remove AutoDock Vina features and add "binana_" prefix to all features
+            result = {'binana_' + k: v for k, v in features_all.items() if k not in vina_feature_names}
 
-        # split off the binana feature set and add 'binana_' to the feature names
-        features_binana = {'binana_' + k: v for k, v in features_all.items() if k not in vina_feature_names}
-        features_binana['binana_num_rotors'] = features_all['vina_num_rotors']
+        elif feature_group == 'nnscorev2':
 
-        if feature_group == 'vina':
-
-            # extract AutoDock Vina features
-            result = features_vina
-
-        elif feature_group == 'binana':
-
-            # extract BINANA features
-            result = features_binana
-
-        elif feature_group == 'all':
-
-            # combine both feature sets (to keep the 'binana_' prefix for binana features)
-            result = {**features_vina, **features_binana}
-            result.pop('binana_num_rotors')
+            # keep AutoDock Vina features and add "nnscorev2_" prefix to all features
+            result = {'nnscorev2_' + k: v for k, v in features_all.items()}
 
         else:
             raise Exception(
                 f"Internal error: feature selection {feature_group} not in "
-                f"['vina','binana','all'] for vina_binana_features function."
+                f"['binana', 'nnscorev2'] for binana_nnscore_features function."
             )
 
         results.append(result)
 
-    results = pd.DataFrame(data=results, index=[i[0] for i in objects])
+    results = pd.DataFrame(
+        data=results,
+        index=[i[0] for i in objects]
+    )
 
     return results
 

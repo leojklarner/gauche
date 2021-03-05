@@ -85,17 +85,13 @@ class DataLoaderLB(DataLoader):
                 'func': vina_features,
                 'args': [self.objects]
             },
-            'vina1': {
-                'func': vina_binana_features,
-                'args': [self.objects, 'vina']
-            },
             'binana': {
-                'func': vina_binana_features,
+                'func': binana_nnscore_features,
                 'args': [self.objects, 'binana']
             },
             'nnscore_v2': {
-                'func': vina_binana_features,
-                'args': [self.objects, 'all']
+                'func': binana_nnscore_features,
+                'args': [self.objects, 'nnscorev2']
             },
             'plec': {
                 'func': plec_fingerprints,
