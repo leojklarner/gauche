@@ -181,7 +181,7 @@ class DataLoaderLB(DataLoader):
 
         return valid, invalid
 
-    def download_dataset(self, download_dir, ligand_codes=None):
+    def download_dataset(self, download_dir, ligand_codes=None, keep_source=False):
         """
         Iterate though the currently loaded PDB codes and download the respective PDB entries.
         Extract the protein and write it into a separate .pdb file.
@@ -194,6 +194,8 @@ class DataLoaderLB(DataLoader):
             ligand_codes: the ligand codes of one or more molecules that should be split off as ligands.
             Either None (select the most drug-like molecule for each structure) or
             list/dict of lists/tuples (select the given heteroatom residues for all/the specified PDB entries).
+            keep_source: whether to keep the .pdb.gz file containing both the protein and ligend
+            or delete it and only keep the split files
 
         Returns: None
 
@@ -284,11 +286,15 @@ class DataLoaderLB(DataLoader):
                 else:
                     print(f"Could not find ligands for the PDB entry {pdb_code}.")
 
+            # delete the .pdb.gz source file, if selected
+            if not keep_source:
+                os.remove(f'{pdb_code}.pdb.gz')
+
         # change the working directory back to the original
         os.chdir(original_cwd)
 
         # check whether all files have been downloaded successfully
-        downloaded_pdbs = [file[:-4].upper() for file in os.listdir(download_dir) if file.endswith(".pdb")]
+        downloaded_pdbs = [file[:4].upper() for file in os.listdir(download_dir) if file.endswith("_protein.pdb")]
         print(downloaded_pdbs)
 
         if set(self.pdb_codes).issubset(set(downloaded_pdbs)):
@@ -330,10 +336,93 @@ class DataLoaderLB(DataLoader):
 
         else:
 
-            df = pd.read_csv(path)
-            pdb_code_list = df[benchmarks[benchmark]["features"]].to_list()
-            self.pdb_codes = [pdb_code.upper() for pdb_code in pdb_code_list]
-            self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
+            benchmark_df = pd.read_csv(path, index_col='pdb')
+            benchmark_df.index = benchmark_df.index.map(str.upper)
+            self.pdb_codes = [pdb_code.upper() for pdb_code in benchmark_df.index.to_list()]
+            self.labels = benchmark_df
+
+    def save_paths(self, file_path):
+        """
+        Saves the paths to the downloaded .pdb protein and .sdf ligand files,
+        as well as the labels. Only saves labels for valid protein-ligand pairs
+        (might be fewer than initial list in case of parsing errors).
+
+        Args:
+            file_path: the path to which the file should be saved
+
+        Returns: None
+
+        """
+
+        with open(file_path, 'w') as file:
+            file.write('pdb_code,protein_path,ligand_path,label\n')
+            for pair in self.objects:
+                file.write(f'{pair[0]},{pair[1]},{pair[2]},{self.labels.loc[pair[0]].to_numpy()[0]}\n')
+
+    def load_paths(self, file_path):
+        """
+        Loads the log created by the save_paths method to load all pdb_codes
+        and the corresponding protein and ligand file paths, as well as the labels.
+
+        Args:
+            file_path: file path of the saved paths
+
+        Returns: None
+
+        """
+
+        df = pd.read_csv(file_path, index_col='pdb_code')
+        self.objects = list(
+            zip(
+                df.index.to_list(),
+                df['protein_path'].to_list(),
+                df['ligand_path'].to_list()
+            )
+        )
+        self.labels = df['label']
+
+    def save_features(self, file_paths):
+        """
+        A method for saving the calculated features to a .csv. Creates multiple
+        .csv files if features are not concatenated.
+
+        Args:
+            file_paths: list of file paths to store the feature dataframes to
+
+        Returns: None
+
+        """
+
+        assert self.features is not None, "Tried to save features, but none were found."
+
+        if type(self.features) is list:
+            assert len(self.features) == len(file_paths), \
+                "Number of given file paths does not match number of feature dataframes. " \
+                "Check whether features were concatenated during featurisation."
+
+            for df, filepath in zip(self.features, file_paths):
+                df = df.join(self.labels, how='inner')
+                df.to_csv(filepath, index_label='pdb_codes')
+
+        else:
+
+            df = self.features.join(self.labels, how='inner')
+            df.to_csv(file_paths, index_label='pdb_codes')
+
+    def load_features(self, file_path):
+        """
+        Loads a single dataframe containing features and labels.
+
+        Args:
+            file_path: a single file path to the DataFrame to be loaded
+
+        Returns: None
+
+        """
+
+        df = pd.read_csv(file_path, index_col='pdb_codes')
+        self.features = df.loc[:, df.columns != 'label']
+        self.labels = df['label']
 
 
 if __name__ == '__main__':
@@ -342,5 +431,7 @@ if __name__ == '__main__':
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
     loader.download_dataset(path_to_data)
     loader.featurize(['vina'])
+    loader.save_features('features.csv')
+    loader.load_features('features.csv')
 
     print(loader)
