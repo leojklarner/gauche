@@ -113,7 +113,11 @@ def process_ligand(ligand, res_name, expo_dict):
 
     # add bond orders
     rd_mol = AllChem.MolFromPDBBlock(pdb_string)
-    new_mol = AllChem.AssignBondOrdersFromTemplate(template, rd_mol)
+
+    if template is not None and rd_mol is not None:
+        new_mol = AllChem.AssignBondOrdersFromTemplate(template, rd_mol)
+    else:
+        raise ValueError
 
     return new_mol, drug_likeness
 
