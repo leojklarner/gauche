@@ -18,6 +18,8 @@ from oddt.scoring.descriptors import binana
 from oddt.fingerprints import PLEC
 from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
 
+confProDy(verbosity='none')
+
 # -------------------------------- PDB scraping utilities --------------------------------
 
 # functions adapted from Pat Walters (https://gist.github.com/PatWalters/3c0a483c030a2c75cb22c4234f206973)
@@ -70,7 +72,7 @@ def get_pdb_components(pdb_id):
 
     pdb = parsePDB(pdb_id)
     protein = pdb.select('protein')
-    ligand = pdb.select('not protein and not water and not ion')
+    ligand = pdb.select('hetatm and not water and not ion')
     return protein, ligand
 
 

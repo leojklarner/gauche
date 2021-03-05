@@ -233,58 +233,69 @@ class DataLoaderLB(DataLoader):
             except OSError:
                 print(f"Could not download the PDB file for {pdb_code}.")
             else:
-                # writing the protein part to a .pdb file
-                protein_filename = write_pdb(protein, pdb_code)
 
-                # if a ligand code is specified, proceed with the given code(s)
-                if ligand_dict[pdb_code]:
-                    # check if dict entry is a list or tuple, in case user enters multiple ligand codes
-                    if type(ligand_dict[pdb_code]) in [list, tuple]:
-                        sdf_ligands = ligand_dict[pdb_code]
+                if protein is not None and ligand is not None:
+
+                    # writing the protein part to a .pdb file
+                    protein_filename = write_pdb(protein, pdb_code)
+
+                    # if a ligand code is specified, proceed with the given code(s)
+                    if ligand_dict[pdb_code]:
+                        # check if dict entry is a list or tuple, in case user enters multiple ligand codes
+                        if type(ligand_dict[pdb_code]) in [list, tuple]:
+                            sdf_ligands = ligand_dict[pdb_code]
+                        else:
+                            sdf_ligands = [ligand_dict[pdb_code]]
+
+                    # if no ligand code is specified, proceed with all hereroatomic molecules
                     else:
-                        sdf_ligands = [ligand_dict[pdb_code]]
+                        sdf_ligands = list(set(ligand.getResnames()))
 
-                # if no ligand code is specified, proceed with all hereroatomic molecules
+                    # check if any ligands were found for the current pdb structure
+                    if sdf_ligands:
+
+                        max_drug_likeness = 0
+                        max_drug_likeness_mol = None
+                        max_drug_likeness_res = None
+
+                        for ligand_residue in sdf_ligands:
+                            try:
+                                # add bond-orders to the spatial file and calculate drug likeness
+                                new_mol, drug_likeness = process_ligand(ligand, ligand_residue, expo)
+
+                                # check if drug likeness of current ligand is higher than current max
+                                if drug_likeness > max_drug_likeness:
+                                    max_drug_likeness = drug_likeness
+                                    max_drug_likeness_mol = new_mol
+                                    max_drug_likeness_res = ligand_residue
+
+                            except ValueError:
+                                # parsing errors happen when atoms have valences != 4 after bond-order augmentation,
+                                # such as molecules that are covalently bound to the protein (e.g. covalent ligands
+                                # or modified residues that are denoted as hereoatoms) or
+                                # ions that are not filtered out by the ProDy ion selector (e.g FE)
+                                # all of them are of limited relevance to binding affinity prediction
+                                print(f"Could not parse the heteroatom denoted as {ligand_residue} for the PDB file {pdb_code}.")
+
+                        if max_drug_likeness_mol is not None and max_drug_likeness_res is not None:
+
+                            # save bond-order augmented spatial structure of most drug-like ligand to SDF
+                            ligand_filename = write_sdf(max_drug_likeness_mol, pdb_code, max_drug_likeness_res)
+
+                            # a pdb file with a suitable ligand was found, add them to results
+                            results.append((
+                                pdb_code,
+                                os.path.join(download_dir, protein_filename),
+                                os.path.join(download_dir, ligand_filename)))
+
+                        else:
+                            print(f"Could not parse any ligands for PDB entry {pdb_code}.")
+
+                    else:
+                        print(f"Could not find ligands for the PDB entry {pdb_code}.")
+
                 else:
-                    sdf_ligands = list(set(ligand.getResnames()))
-
-                # check if any ligands were found for the current pdb structure
-                if sdf_ligands:
-
-                    max_drug_likeness = 0
-                    max_drug_likeness_mol = None
-                    max_drug_likeness_res = None
-
-                    for ligand_residue in sdf_ligands:
-                        try:
-                            # add bond-orders to the spatial file and calculate drug likeness
-                            new_mol, drug_likeness = process_ligand(ligand, ligand_residue, expo)
-
-                            # check if drug likeness of current ligand is higher than current max
-                            if drug_likeness > max_drug_likeness:
-                                max_drug_likeness = drug_likeness
-                                max_drug_likeness_mol = new_mol
-                                max_drug_likeness_res = ligand_residue
-
-                        except ValueError:
-                            # parsing errors happen when atoms have valences != 4 after bond-order augmentation,
-                            # such as molecules that are covalently bound to the protein (e.g. covalent ligands
-                            # or modified residues that are denoted as hereoatoms) or
-                            # ions that are not filtered out by the ProDy ion selector (e.g FE)
-                            # all of them are of limited relevance to binding affinity prediction
-                            print(f"Could not parse the ligand denoted as {ligand_residue} for the PDB file {pdb_code}.")
-
-                    # save bond-order augmented spatial structure of most drug-like ligand to SDF
-                    ligand_filename = write_sdf(max_drug_likeness_mol, pdb_code, max_drug_likeness_res)
-
-                    # a pdb file with a suitable ligand was found, add them to results
-                    results.append((
-                        pdb_code,
-                        os.path.join(download_dir, protein_filename),
-                        os.path.join(download_dir, ligand_filename)))
-
-                else:
-                    print(f"Could not find ligands for the PDB entry {pdb_code}.")
+                    print(f"Could not separate protein and ligand for PDB entry {pdb_code}.")
 
             # delete the .pdb.gz source file, if selected
             if not keep_source:
@@ -297,9 +308,9 @@ class DataLoaderLB(DataLoader):
         downloaded_pdbs = [file[:4].upper() for file in os.listdir(download_dir) if file.endswith("_protein.pdb")]
 
         if set(self.pdb_codes).issubset(set(downloaded_pdbs)):
-            print(f"Successfully downloaded all PDB files to {download_dir}.")
+            print(f"Successfully processed all PDB files to {download_dir}.")
         else:
-            print("Could not download the following PDB files:")
+            print("Could not process the following PDB files:")
             failed_pdbs = set(self.pdb_codes) - set(downloaded_pdbs)
             for failed_pdb in failed_pdbs:
                 print(failed_pdb)
