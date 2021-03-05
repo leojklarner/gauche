@@ -170,6 +170,38 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
     return outfile_ligand_name
 
 
+def sdf_to_smiles(paths):
+    """
+    Extracts the SMILES representation from the molecules described
+    in a list of paths to .sdf files.
+
+    Args:
+        paths: a list of paths to .sdf file containing molecules to be transcribed
+
+    Returns: a list of SMILES.
+
+    """
+
+    if type(paths) is not list:
+        paths = [paths]
+
+    smiles_list = []
+
+    # for all .sdf file paths
+    for ligand_path in paths:
+        # read in each molecule in the current .sdf file (should be just one)
+        sppl = Chem.SDMolSupplier(ligand_path)
+
+        # check if any molecules could be parsed, and if so
+        # add them to SMILES list
+        for mol in sppl:
+            if mol is None:
+                print(f"Could not parse SMILES representation of molecule in {ligand_path}.")
+            else:
+                smiles_list.append(Chem.MolToSmiles(mol))
+
+    return smiles_list
+
 # -------------------------------- featurisation utilities --------------------------------
 
 def molecule_fingerprints(input_mols, bond_radius, nBits):
@@ -189,11 +221,16 @@ def molecule_fingerprints(input_mols, bond_radius, nBits):
     return np.asarray(fps)
 
 
-def molecule_fragments(input_mols):
+def molecule_fragments(input_mols, to_df=None):
     """
-    Auxiliary function to transform the loaded features to a fragment representation
+    Accepts a list of SMILES and calculates all rdkit fragment descriptorsd
 
-    Returns: numpy array of features in fragment representation
+    Args:
+        input_mols: a list of SMILES to be convertes
+        to_df: whether to return a DataFrame; if None, returns a numpy array,
+        if not None, expects an index with which to create the dataframe
+
+    Returns:
 
     """
 
@@ -211,7 +248,17 @@ def molecule_fragments(input_mols):
             raise Exception("molecule {}".format(i) + " is not canonicalised")
         frags[i, :] = features
 
-    return frags
+    if to_df is None:
+        result = frags
+
+    else:
+        result = pd.DataFrame(
+            data=frags,
+            index=to_df,
+            columns=[frag_desc[0] for frag_desc in fragments.items()]
+        )
+
+    return result
 
 
 def vina_binana_features(objects, feature_group):
@@ -285,6 +332,40 @@ def vina_binana_features(objects, feature_group):
 
     return results
 
+
+def rfscore_descriptors(objects):
+    """
+    Calculates the features from RFScore v3, which are close-contact descriptors
+    plus the AutoDock Vina features.
+
+    Args:
+        objects: a list of (pdb_code, protein_path, ligand_path) tuples
+
+    Returns: list of specified features
+
+    """
+
+    results = []
+
+    for pdb_code, protein_path, ligand_path in objects:
+
+        # initialise protein and ligand
+        protein = next(oddt.toolkit.readfile('pdb', protein_path))
+        protein.protein = True
+        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
+
+        rfscore_engine = oddt.scoring.descriptors.close_contacts_descriptor(
+            protein=protein,
+            cutoff=12,
+            ligand_types=[6, 7, 8, 9, 15, 16, 17, 35, 53],
+            protein_types=[6, 7, 8, 16])
+        result = {name: value for name, value in zip(rfscore_engine.titles, rfscore_engine.build([ligand])[0])}
+
+        results.append(result)
+
+    results = pd.DataFrame(data=results, index=[i[0] for i in objects])
+
+    return results
 
 def plec_fingerprints(objects, params):
     """

@@ -14,12 +14,11 @@ import oddt
 from oddt.toolkits import rdk
 from oddt.scoring.descriptors import binana
 from oddt.fingerprints import PLEC
+from rdkit.Chem.PandasTools import LoadSDF
 
 from gprotorch.dataloader import DataLoader
 
-from gprotorch.dataloader.dataloader_utils import \
-    read_ligand_expo, get_pdb_components, process_ligand, write_pdb, write_sdf, \
-    vina_binana_features, plec_fingerprints
+from gprotorch.dataloader.dataloader_utils import *
 
 
 class DataLoaderLB(DataLoader):
@@ -90,14 +89,23 @@ class DataLoaderLB(DataLoader):
                 'func': vina_binana_features,
                 'args': [self.objects, 'binana']
             },
-            'nnscore': {
+            'nnscore_v2': {
                 'func': vina_binana_features,
                 'args': [self.objects, 'all']
             },
             'plec': {
                 'func': plec_fingerprints,
                 'args': [self.objects, params]
-            }
+            },
+            'rfscore_v3': {
+                'func': rfscore_descriptors,
+                'args': [self.objects, params]
+            },
+            'fragments': {
+                'func': molecule_fragments,
+                'args': [sdf_to_smiles([lig_path for _, _, lig_path in self.objects]),
+                         [pdb_codes for pdb_codes, _, _ in self.objects]]
+            },
         }
 
         if not set(representations).issubset(set(featurisations.keys())):
@@ -333,6 +341,6 @@ if __name__ == '__main__':
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
     loader.download_dataset(path_to_data)
-    loader.featurize(['plec'])
+    loader.featurize(['fragments'])
 
     print(loader)
