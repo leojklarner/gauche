@@ -261,6 +261,49 @@ def molecule_fragments(input_mols, to_df=None):
     return result
 
 
+def vina_features(objects):
+    """
+    Calculates the AutoDock Vina fetures for a list of
+    protein and ligand files.
+
+    Args:
+        objects: a list of (pdb_code, protein_path, ligand_path) tuples
+
+    Returns: pandas DataFrame with the specified features
+
+    """
+
+    results = []
+
+    vina_names = ['vina_gauss1', 'vina_gauss2', 'vina_repulsion',
+                     'vina_hydrophobic', 'vina_hydrogen', 'vina_num_rotors']
+
+    for pdb_code, protein_path, ligand_path in objects:
+
+        # initialise protein and ligand
+        protein = next(oddt.toolkit.readfile('pdb', protein_path))
+        protein.protein = True
+        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
+
+        # initialise Vina feature engine for current protein
+        vina_engine = oddt.scoring.descriptors.oddt_vina_descriptor(
+            protein=protein,
+            vina_scores=vina_names
+        )
+
+        # calculate vina features for respective ligand
+        result = {name: value for name, value in zip(vina_engine.titles, vina_engine.build([ligand])[0])}
+
+        results.append(result)
+
+    results = pd.DataFrame(
+        data=results,
+        index=[i[0] for i in objects]
+    )
+
+    return results
+
+
 def vina_binana_features(objects, feature_group):
     """
     Calculates the AutoDock Vina and/or BINANA features for the given
@@ -366,6 +409,7 @@ def rfscore_descriptors(objects):
     results = pd.DataFrame(data=results, index=[i[0] for i in objects])
 
     return results
+
 
 def plec_fingerprints(objects, params):
     """

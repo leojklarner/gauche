@@ -82,6 +82,10 @@ class DataLoaderLB(DataLoader):
 
         featurisations = {
             'vina': {
+                'func': vina_features,
+                'args': [self.objects]
+            },
+            'vina1': {
                 'func': vina_binana_features,
                 'args': [self.objects, 'vina']
             },
@@ -341,6 +345,6 @@ if __name__ == '__main__':
     path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'data', 'binding_affinity', 'PDBbind')
     loader.load_benchmark("PDBbind_refined", os.path.join(path_to_data, 'pdbbind_test.csv'))
     loader.download_dataset(path_to_data)
-    loader.featurize(['fragments'])
+    loader.featurize(['vina'])
 
     print(loader)
