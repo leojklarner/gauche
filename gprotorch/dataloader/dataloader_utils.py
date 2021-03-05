@@ -129,7 +129,7 @@ def write_pdb(protein, pdb_name, overwrite=False):
 
     """
 
-    output_protein_name = f"{pdb_name}.pdb"
+    output_protein_name = f"{pdb_name}_protein.pdb"
 
     # check if file already exists
     if not overwrite and os.path.isfile(os.path.join(os.getcwd(), output_protein_name)):
@@ -165,7 +165,7 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
     else:
         writer = Chem.SDWriter(outfile_ligand_name)
         writer.write(new_mol)
-        print(f"wrote the ligand file for the ligand {res_name} in PDB entry {pdb_name}.")
+        print(f"Wrote the ligand file for the ligand {res_name} in PDB entry {pdb_name}.")
 
     return outfile_ligand_name
 

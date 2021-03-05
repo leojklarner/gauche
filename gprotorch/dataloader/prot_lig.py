@@ -295,7 +295,6 @@ class DataLoaderLB(DataLoader):
 
         # check whether all files have been downloaded successfully
         downloaded_pdbs = [file[:4].upper() for file in os.listdir(download_dir) if file.endswith("_protein.pdb")]
-        print(downloaded_pdbs)
 
         if set(self.pdb_codes).issubset(set(downloaded_pdbs)):
             print(f"Successfully downloaded all PDB files to {download_dir}.")
