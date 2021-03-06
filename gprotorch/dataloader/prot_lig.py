@@ -482,7 +482,7 @@ class DataLoaderLB(DataLoader):
 
         df = pd.read_csv(file_path, index_col='pdb_codes')
         self.features = df.loc[:, df.columns != 'label']
-        self.labels = df['label']
+        self.labels = df[['label']]
 
 
 if __name__ == '__main__':

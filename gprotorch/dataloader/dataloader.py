@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.model_selection import KFold, ShuffleSplit, StratifiedKFold, StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.multiclass import type_of_target
+import pandas as pd
 
 
 class DataLoader(metaclass=ABCMeta):
@@ -160,11 +161,21 @@ class DataLoader(metaclass=ABCMeta):
             (potentially standardized) training and testing sets with associated scalers
         """
 
+        if isinstance(self.labels, pd.DataFrame):
+            labels = self.labels.to_numpy()
+        else:
+            labels = self.labels
+
+        if isinstance(self.features, pd.DataFrame):
+            features = self.features.numpy()
+        else:
+            features = self.features
+
         # reshape labels
-        self.labels = self.labels.reshape(-1, 1)
+        labels = labels.reshape(-1, 1)
 
         # use non-stratified methods if labels are continuous
-        if type_of_target(self.labels) == 'continuous':
+        if type_of_target(labels) == 'continuous':
 
             if kfold_shuffle:
                 splitter = KFold(
@@ -191,13 +202,13 @@ class DataLoader(metaclass=ABCMeta):
         splits = []
 
         # convert features from SMILES list into numpy array
-        self.features = np.array(self.features)
+        self.features = np.array(features)
 
-        for train_index, test_index in splitter.split(self.features, self.labels):
-            X_train = self.features[train_index]
-            X_test = self.features[test_index]
-            y_train = self.labels[train_index]
-            y_test = self.labels[test_index]
+        for train_index, test_index in splitter.split(features, labels):
+            X_train = features[train_index]
+            X_test = features[test_index]
+            y_train = labels[train_index]
+            y_test = labels[test_index]
 
             # scale features, if requested
             if scale_features:
