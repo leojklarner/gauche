@@ -376,12 +376,14 @@ class DataLoaderLB(DataLoader):
                 delim_whitespace=True,
                 skiprows=6,
                 header=None,
+                index_col=False,
+                names=['pdb_code', 'resolution', 'release_year', 'label', 'Kd/Ki', 'slashes', 'reference', 'ligand_name']
             )
 
-            index_df = index_df.set_index(index_df.columns[0])
+            self.pdb_codes = index_df['pdb_code'].to_list()
 
-            self.pdb_codes = index_df.index.to_list()
-            self.labels = index_df.iloc[:, 2]
+            index_df = index_df.set_index(index_df['pdb_code'])
+            self.labels = index_df['label']
 
             protein_paths = [
                 os.path.join(path, pdb_code, f'{pdb_code}_pocket.pdb') for pdb_code in self.pdb_codes
