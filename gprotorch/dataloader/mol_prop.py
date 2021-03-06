@@ -17,8 +17,8 @@ class DataLoaderMP(DataLoader):
     molecular property prediction datasets.
     """
 
-    def __init__(self):
-        super(DataLoaderMP, self).__init__()
+    def __init__(self, validate_internal_rep):
+        super(DataLoaderMP, self).__init__(validate_internal_rep=validate_internal_rep)
 
     def _validate(self, data):
         """Checks which of the given entries are valid SMILES representations and

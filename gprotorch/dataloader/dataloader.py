@@ -18,10 +18,11 @@ class DataLoader(metaclass=ABCMeta):
     type validation and feature extraction functionalities.
     """
 
-    def __init__(self):
+    def __init__(self, validate_internal_rep=True):
         self._objects = None
         self._features = None
         self._labels = None
+        self.validate_internal_rep = validate_internal_rep
 
     @property
     def objects(self):
@@ -46,18 +47,23 @@ class DataLoader(metaclass=ABCMeta):
 
         """
 
-        # get valid and invalid entries
-        valid, invalid = self._validate(value)
+        if self.validate_internal_rep:
 
-        # set valid entries as internal representation
-        self._objects = valid
+            # get valid and invalid entries
+            valid, invalid = self._validate(value)
 
-        # print which invalid entries have been dropped
-        if invalid:
-            print(f"The entries")
-            for i in invalid:
-                print(i)
-            print(f"have been dropped, as they could not be parsed into valid representations.")
+            # set valid entries as internal representation
+            self._objects = valid
+
+            # print which invalid entries have been dropped
+            if invalid:
+                print(f"The entries")
+                for i in invalid:
+                    print(i)
+                print(f"have been dropped, as they could not be parsed into valid representations.")
+
+        else:
+            self._objects = value
 
     @property
     def features(self):

@@ -28,8 +28,8 @@ class DataLoaderLB(DataLoader):
     protein-ligand binding affinity prediction datasets.
     """
 
-    def __init__(self):
-        super(DataLoaderLB, self).__init__()
+    def __init__(self, validate_internal_rep):
+        super(DataLoaderLB, self).__init__(validate_internal_rep=validate_internal_rep)
         self._pdb_codes = None
 
     @property
@@ -349,10 +349,9 @@ class DataLoaderLB(DataLoader):
         if set(self.pdb_codes).issubset(set(downloaded_pdbs)):
             print(f"Successfully processed all PDB files to {download_dir}.")
         else:
-            print("Could not process the following PDB files:")
             failed_pdbs = set(self.pdb_codes) - set(downloaded_pdbs)
-            for failed_pdb in failed_pdbs:
-                print(failed_pdb)
+            print(f"Could not process the following {failed_pdbs} PDB files:")
+            print(failed_pdbs)
 
         # save paths to protein and selected ligand files
         self.objects = results
@@ -401,7 +400,7 @@ class DataLoaderLB(DataLoader):
                 f"Choose one of [PDBbind_refined]."
             )
 
-    def save_paths(self, file_path):
+    def save_objects(self, file_path):
         """
         Saves the paths to the downloaded .pdb protein and .sdf ligand files,
         as well as the labels. Only saves labels for valid protein-ligand pairs
@@ -417,9 +416,9 @@ class DataLoaderLB(DataLoader):
         with open(file_path, 'w') as file:
             file.write('pdb_code,protein_path,ligand_path,label\n')
             for pair in self.objects:
-                file.write(f'{pair[0]},{pair[1]},{pair[2]},{self.labels.loc[pair[0]]}\n')
+                file.write(f'{pair[0]},{pair[1]},{pair[2]},{self.labels.loc[pair[0]].to_numpy()[0]}\n')
 
-    def load_paths(self, file_path):
+    def load_objects(self, file_path):
         """
         Loads the log created by the save_paths method to load all pdb_codes
         and the corresponding protein and ligand file paths, as well as the labels.
@@ -434,11 +433,12 @@ class DataLoaderLB(DataLoader):
         df = pd.read_csv(file_path, index_col='pdb_code')
         self.objects = list(
             zip(
-                df.index.to_list(),
-                df['protein_path'].to_list(),
-                df['ligand_path'].to_list()
+                df.index,
+                df['protein_path'],
+                df['ligand_path']
             )
         )
+
         self.labels = df['label']
 
     def save_features(self, file_paths):
