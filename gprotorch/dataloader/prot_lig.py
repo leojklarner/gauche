@@ -104,8 +104,10 @@ class DataLoaderLB(DataLoader):
             },
             'fragments': {
                 'func': molecule_fragments,
-                'args': [sdf_to_smiles([lig_path for _, _, lig_path in self.objects]),
-                         [pdb_codes for pdb_codes, _, _ in self.objects]]
+                'args': sdf_to_smiles(
+                    [pdb_codes for pdb_codes, _, _ in self.objects],
+                    [lig_path for _, _, lig_path in self.objects]
+                )
             },
         }
 

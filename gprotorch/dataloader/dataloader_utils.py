@@ -176,13 +176,14 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
     return outfile_ligand_name
 
 
-def sdf_to_smiles(paths):
+def sdf_to_smiles(pdb_codes, ligand_paths):
     """
     Extracts the SMILES representation from the molecules described
     in a list of paths to .sdf files.
 
     Args:
-        paths: a list of paths to .sdf file containing molecules to be transcribed
+        pdb_codes: a list of pdb codes for which ligands should be parsed
+        ligand_paths: a list of paths to .sdf file containing molecules to be transcribed
 
     Returns: a list of SMILES.
 
@@ -190,12 +191,13 @@ def sdf_to_smiles(paths):
 
     unparseable = []
 
-    if type(paths) is not list:
-        paths = [paths]
+    if type(ligand_paths) is not list:
+        paths = [ligand_paths]
 
-    smiles_list = []
+    parsed_pdbs = []
+    parsed_smiles = []
 
-    for ligand_path in paths:
+    for pdb_code, ligand_path in zip(pdb_codes, ligand_paths):
 
         # try to parse ligand from SDF file
         mol = next(Chem.SDMolSupplier(ligand_path, removeHs=False))
@@ -206,13 +208,15 @@ def sdf_to_smiles(paths):
 
         # either append ligand if it could be read in or skip it
         if mol is None:
-            unparseable.append(ligand_path)
+            unparseable.append(pdb_code)
         else:
-            smiles_list.append(Chem.MolToSmiles(mol))
+            parsed_pdbs.append(pdb_code)
+            parsed_smiles.append(Chem.MolToSmiles(mol))
 
-    print(f'Could not parse SMILES for the following {len(unparseable)} ligand files:')
+    print(f'Could not parse SMILES for the following {len(unparseable)} PDB entries:')
+    print(unparseable)
 
-    return smiles_list
+    return parsed_smiles, parsed_pdbs
 
 # -------------------------------- featurisation utilities --------------------------------
 
