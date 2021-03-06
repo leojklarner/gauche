@@ -149,13 +149,14 @@ class DataLoader(metaclass=ABCMeta):
 
         return train_scaled, test_scaled, scaler
 
-    def split_and_scale(self, kfold_shuffle=True, num_splits=5, test_size=0.2, scale_labels=True, scale_features=False):
+    def split_and_scale(self, kfold_shuffle=True, num_splits=5, test_size=0.2, scale_labels=True, label_dim=True, scale_features=False):
         """Splits the data into training and test sets.
         Args:
             kfold_shuffle: whether to split the data into k folds (True) or k re-shuffled splits (False)
             num_splits: number of folds or re-shuffled splits
             test_size: size of the test set for re-shuffled splits
             scale_labels: whether to standardize the labels (after splitting)
+            label_dim: whether to unsqueeze labels and add dummy dimension
             scale_features: whether to standardize the features (after splitting)
         Returns:
             (potentially standardized) training and testing sets with associated scalers
@@ -178,7 +179,13 @@ class DataLoader(metaclass=ABCMeta):
             features = self.features
 
         # reshape labels
-        labels = labels.reshape(-1, 1)
+
+        # adjust whether labels have extra dimension
+        if len(labels.shape) > 1 and not label_dim:
+            labels = np.squeeze(labels)
+
+        if len(labels.shape) == 1 and label_dim:
+            labels = np.expand_dims(labels)
 
         # use non-stratified methods if labels are continuous
         if type_of_target(labels) == 'continuous':
