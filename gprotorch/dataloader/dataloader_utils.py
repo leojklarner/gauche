@@ -188,23 +188,29 @@ def sdf_to_smiles(paths):
 
     """
 
+    unparseable = []
+
     if type(paths) is not list:
         paths = [paths]
 
     smiles_list = []
 
-    # for all .sdf file paths
     for ligand_path in paths:
-        # read in each molecule in the current .sdf file (should be just one)
-        sppl = Chem.SDMolSupplier(ligand_path)
 
-        # check if any molecules could be parsed, and if so
-        # add them to SMILES list
-        for mol in sppl:
-            if mol is None:
-                print(f"Could not parse SMILES representation of molecule in {ligand_path}.")
-            else:
-                smiles_list.append(Chem.MolToSmiles(mol))
+        # try to parse ligand from SDF file
+        mol = next(Chem.SDMolSupplier(ligand_path, removeHs=False))
+
+        # if no ligand was found in the .sdf file, trz to parse the .mol2 file
+        if mol is None:
+            mol = Chem.MolFromMol2File(ligand_path[:-3]+'mol2', removeHs=False)
+
+        # either append ligand if it could be read in or skip it
+        if mol is None:
+            unparseable.append(ligand_path)
+        else:
+            smiles_list.append(Chem.MolToSmiles(mol))
+
+    print(f'Could not parse SMILES for the following {len(unparseable)} ligand files:')
 
     return smiles_list
 

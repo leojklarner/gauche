@@ -139,6 +139,8 @@ class DataLoaderLB(DataLoader):
 
                 result_dfs.append(result_df)
 
+                print(f'Calculated {representation} features.')
+
         # remove entries for which not all features could be calculated
         indices_to_use = set.intersection(*[set(df.index.to_list()) for df in result_dfs])
         result_dfs = [df.loc[indices_to_use] for df in result_dfs]
@@ -365,26 +367,35 @@ class DataLoaderLB(DataLoader):
 
         """
 
-        benchmarks = {
-            "PDBbind_refined": {
-                "features": "pdb",
-                "labels": "label",
-            }
-        }
+        if benchmark == 'PDBbind_refined':
 
-        if benchmark not in benchmarks.keys():
-
-            raise Exception(
-                f"The specified benchmark choice ({benchmark}) is not a valid option. "
-                f"Choose one of {list(benchmarks.keys())}."
+            index_df = pd.read_csv(
+                os.path.join(path, 'index', 'INDEX_refined_data.2019'),
+                delim_whitespace=True,
+                skiprows=6,
+                header=None,
             )
+
+            index_df = index_df.set_index(index_df.columns[0])
+
+            self.pdb_codes = index_df.index.to_list()
+            self.labels = index_df.iloc[:, 2]
+
+            protein_paths = [
+                os.path.join(path, pdb_code, f'{pdb_code}_pocket.pdb') for pdb_code in self.pdb_codes
+            ]
+            ligand_paths = [
+                os.path.join(path, pdb_code, f'{pdb_code}_ligand.sdf') for pdb_code in self.pdb_codes
+            ]
+
+            self.objects = list(zip(self.pdb_codes, protein_paths, ligand_paths))
 
         else:
 
-            benchmark_df = pd.read_csv(path, index_col='pdb')
-            benchmark_df.index = benchmark_df.index.map(str.upper)
-            self.pdb_codes = [pdb_code.upper() for pdb_code in benchmark_df.index.to_list()]
-            self.labels = benchmark_df
+            raise Exception(
+                f"The specified benchmark choice ({benchmark}) is not a valid option. "
+                f"Choose one of [PDBbind_refined]."
+            )
 
     def save_paths(self, file_path):
         """
@@ -402,7 +413,7 @@ class DataLoaderLB(DataLoader):
         with open(file_path, 'w') as file:
             file.write('pdb_code,protein_path,ligand_path,label\n')
             for pair in self.objects:
-                file.write(f'{pair[0]},{pair[1]},{pair[2]},{self.labels.loc[pair[0]].to_numpy()[0]}\n')
+                file.write(f'{pair[0]},{pair[1]},{pair[2]},{self.labels.loc[pair[0]]}\n')
 
     def load_paths(self, file_path):
         """
