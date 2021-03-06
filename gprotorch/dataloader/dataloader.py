@@ -161,15 +161,17 @@ class DataLoader(metaclass=ABCMeta):
             (potentially standardized) training and testing sets with associated scalers
         """
 
+        # returned splits are copies in order to allow multiple splitting
+
         if isinstance(self.labels, pd.DataFrame):
-            labels = self.labels.to_numpy()
+            labels = self.labels.to_numpy().copy()
         else:
-            labels = self.labels
+            labels = self.labels.copy()
 
         if isinstance(self.features, pd.DataFrame):
-            features = self.features.numpy()
+            features = self.features.to_numpy().copy()
         else:
-            features = self.features
+            features = self.features.copy()
 
         # reshape labels
         labels = labels.reshape(-1, 1)
