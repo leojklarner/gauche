@@ -164,14 +164,18 @@ class DataLoader(metaclass=ABCMeta):
         # returned splits are copies in order to allow multiple splitting
 
         if isinstance(self.labels, pd.DataFrame):
-            labels = self.labels.to_numpy().copy()
+            labels = self.labels.to_numpy(copy=True)
+        elif isinstance(self.labels, list):
+            labels = np.array(self.labels)
         else:
-            labels = self.labels.copy()
+            labels = self.labels
 
         if isinstance(self.features, pd.DataFrame):
-            features = self.features.to_numpy().copy()
+            features = self.features.to_numpy(copy=True)
+        elif isinstance(self.features, list):
+            features = np.array(self.features)
         else:
-            features = self.features.copy()
+            features = self.features
 
         # reshape labels
         labels = labels.reshape(-1, 1)
@@ -202,9 +206,6 @@ class DataLoader(metaclass=ABCMeta):
                 )
 
         splits = []
-
-        # convert features from SMILES list into numpy array
-        self.features = np.array(features)
 
         for train_index, test_index in splitter.split(features, labels):
             X_train = features[train_index]
