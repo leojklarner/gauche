@@ -1,46 +1,64 @@
 """
-Implementation of the abstract data loader class for
-molecular property prediction datasets.
+Implementation of the abstract DataLoader class for
+molecular property prediction tasks.
+
+Author: Leo Klarner (https://github.com/leojklarner), March 2021
 """
 
 import numpy as np
 import pandas as pd
-from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
-from gprotorch.dataloader.dataloader_utils import molecule_fragments, molecule_fingerprints
+from rdkit.Chem import MolFromSmiles
 
 from gprotorch.dataloader import DataLoader
+from gprotorch.dataloader.dataloader_utils import (molecule_fingerprints,
+                                                   molecule_fragments)
 
 
 class DataLoaderMP(DataLoader):
     """
-    Instantiation of the abstract data loader class for
-    molecular property prediction datasets.
+    Task-specific implementation of the abstract DataLoader base class
+    for molecular property prediction datasets.
+    Reads in and stores molecules as SMILES representations and featurises them
+    by calculating physicochemical descriptors, molecular fingerprints and others.
     """
 
-    def __init__(self, validate_internal_rep):
+    def __init__(self, validate_internal_rep=True):
+        """
+        Class initialisation.
+
+        Args:
+            validate_internal_rep: whether to verify that the provided objects are valid
+            SMILES representations by attempting to parse them to rdkit Mol objects.
+
+        """
+
         super(DataLoaderMP, self).__init__(validate_internal_rep=validate_internal_rep)
 
     def _validate(self, data):
-        """Checks which of the given entries are valid SMILES representations and
-        splits them into valid and invalid ones.
+        """
+        Checks whether the provided SMILES represenations are valid by attempting to parse
+        them to rdkit Mol objects, discarding invalid ones.
 
         Args:
-            data: the data to be checked
+            data: the SMILES representations to be checked
 
-        Returns: (valid, invalid) tuple of valid and invalid SMILES representations.
+        Returns: (valid, invalid) tuple of lists, containing the
+        valid and invalid SMILES representations
 
         """
 
         valid = []
         invalid = []
 
-        # iterate through the given data
+        # iterate through the provided SMILES representaions
+
         for i in range(len(data)):
 
-            # try to convert each SMILES to an rdkit molecule
+            # denote the given SMILES representation as valid or invalid
+            # depending on whether an rdkit Mol object could be parsed
+
             mol = MolFromSmiles(data[i])
 
-            # denote molecule as either valid or invalid
             if mol is None:
                 invalid.append(data[i])
             else:
@@ -49,12 +67,15 @@ class DataLoaderMP(DataLoader):
         return valid, invalid
 
     def featurize(self, representation, bond_radius=3, nBits=2048):
-        """Transforms SMILES into the specified molecular representation.
+        """
+        Applies the specified transformation to the currently loaded objects and
+        stores the resulting features in self.features.
 
         Args:
-            representation: the desired molecular representation, one of ["fingerprints", "fragments", "fragprints"]
-            bond_radius: int giving the bond radius for Morgan fingerprints. Default is 3
-            nBits: int giving the bit vector length for Morgan fingerprints. Default is 2048
+            representation: the desired molecular representation,
+            one of ["fingerprints", "fragments", "fragprints"]
+            bond_radius: the bond radius for Morgan fingerprints, default is 3
+            nBits: the bit vector length for Morgan fingerprints, default is 2048
 
         """
 
@@ -70,7 +91,13 @@ class DataLoaderMP(DataLoader):
 
         elif representation == "fragprints":
 
-            self.features = np.concatenate((molecule_fingerprints(self.objects, bond_radius, nBits), molecule_fragments(self._features)), axis=1)
+            self.features = np.concatenate(
+                (
+                    molecule_fingerprints(self.objects, bond_radius, nBits),
+                    molecule_fragments(self._features),
+                ),
+                axis=1,
+            )
 
         else:
 
@@ -80,15 +107,17 @@ class DataLoaderMP(DataLoader):
             )
 
     def load_benchmark(self, benchmark, path):
-        """Loads features and labels from one of the included benchmark datasets
-        and feeds them into the DataLoader.
+        """
+        Loads the SMILES representations and labels for the specified benchmark dataset.
 
         Args:
-            benchmark: the benchmark dataset to be loaded, one of
-            [Photoswitch, ESOL, FreeSolv, Lipophilicity]
+            benchmark: the benchmark dataset to be loaded,
+            one of ['Photoswitch', 'ESOL', 'FreeSolv', 'Lipophilicity']
             path: the path to the dataset in csv format
 
         """
+
+        # dictionary specifying which columns to read in for which benchmark dataset
 
         benchmarks = {
             "Photoswitch": {
@@ -103,6 +132,8 @@ class DataLoaderMP(DataLoader):
             "Lipophilicity": {"features": "smiles", "labels": "exp"},
         }
 
+        # read in the specified benchmark dataset, if a valid one was chosen
+
         if benchmark not in benchmarks.keys():
 
             raise Exception(
@@ -115,12 +146,3 @@ class DataLoaderMP(DataLoader):
             df = pd.read_csv(path)
             self.objects = df[benchmarks[benchmark]["features"]].to_list()
             self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
-
-
-if __name__ == '__main__':
-    import os
-    loader = DataLoaderMP()
-    path_to_data = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), "data", "property_prediction", "ESOL.csv")
-    loader.load_benchmark("ESOL", path_to_data)
-    loader.featurize("fragments")
-    print()

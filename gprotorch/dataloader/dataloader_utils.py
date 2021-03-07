@@ -1,24 +1,26 @@
 """
 A script containing utilities for the different data loader classes.
+The first part consists of functions related to PDB scraping and ligand extraction.
+The second part consists of featurisation functions.
+
+Author: Leo Klarner (https://github.com/leojklarner), March 2021
 """
 
-import sys
-from prody import *
-import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem.Descriptors import qed
-from io import StringIO
-import requests
 import os
-import oddt
-import numpy as np
-from oddt.toolkits import rdk
-from oddt.scoring.descriptors import binana
-from oddt.fingerprints import PLEC
-from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+from io import StringIO
 
-confProDy(verbosity='none')
+import numpy as np
+import oddt
+import pandas as pd
+import requests
+from oddt.fingerprints import PLEC
+from oddt.scoring.descriptors import binana
+from prody import *
+from rdkit import Chem
+from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+from rdkit.Chem.Descriptors import qed
+
+confProDy(verbosity="none")
 
 # -------------------------------- PDB scraping utilities --------------------------------
 
@@ -40,18 +42,18 @@ def read_ligand_expo():
 
     # read file if it already exists
     try:
-        df = pd.read_csv(file_name, sep="\t",
-                         header=None,
-                         names=["SMILES", "ID", "Name"])
+        df = pd.read_csv(
+            file_name, sep="\t", header=None, names=["SMILES", "ID", "Name"]
+        )
 
     # otherwise download it and read it in afterwards
     except FileNotFoundError:
         url = f"http://ligand-expo.rcsb.org/dictionaries/{file_name}"
         r = requests.get(url, allow_redirects=True)
-        open('Components-smiles-stereo-oe.smi', 'wb').write(r.content)
-        df = pd.read_csv(file_name, sep="\t",
-                         header=None,
-                         names=["SMILES", "ID", "Name"])
+        open("Components-smiles-stereo-oe.smi", "wb").write(r.content)
+        df = pd.read_csv(
+            file_name, sep="\t", header=None, names=["SMILES", "ID", "Name"]
+        )
     df.set_index("ID", inplace=True)
 
     return df.to_dict()
@@ -71,8 +73,8 @@ def get_pdb_components(pdb_id):
     """
 
     pdb = parsePDB(pdb_id)
-    protein = pdb.select('protein')
-    ligand = pdb.select('hetatm and not water and not ion')
+    protein = pdb.select("protein")
+    ligand = pdb.select("hetatm and not water and not ion")
     return protein, ligand
 
 
@@ -81,6 +83,7 @@ def process_ligand(ligand, res_name, expo_dict):
     Add bond orders to a pdb ligand through the following process
     1. Select the ligand component with name "res_name"
     2. Get the corresponding SMILES from the Ligand Expo dictionary
+    3. Calculate the drug-likeness with rdkit's "Quantitative Estimation of Drug-Likeness" Descriptor
     3. Create a template molecule from the SMILES in step 2
     4. Write the PDB file to a stream
     5. Read the stream into an RDKit molecule
@@ -101,7 +104,7 @@ def process_ligand(ligand, res_name, expo_dict):
     sub_mol = ligand.select(f"resname {res_name}")
 
     # extract corresponding SMILES and read it into rdkit
-    sub_smiles = expo_dict['SMILES'][res_name]
+    sub_smiles = expo_dict["SMILES"][res_name]
     template = AllChem.MolFromSmiles(sub_smiles)
 
     # calculate the rdkit drug likeness descripot for the ligand expo template
@@ -139,8 +142,10 @@ def write_pdb(protein, pdb_name, overwrite=False):
 
     # check if file already exists
     if not overwrite and os.path.isfile(os.path.join(os.getcwd(), output_protein_name)):
-        print(f"The protein file for the PDB entry {pdb_name} already exists. "
-              f"Set overwrite=True if you want to overwrite it.")
+        print(
+            f"The protein file for the PDB entry {pdb_name} already exists. "
+            f"Set overwrite=True if you want to overwrite it."
+        )
     else:
         writePDB(output_protein_name, protein)
         print(f"Wrote the protein file for the PDB entry {output_protein_name}.")
@@ -166,12 +171,16 @@ def write_sdf(new_mol, pdb_name, res_name, overwrite=False):
 
     # check if file already exists
     if not overwrite and os.path.isfile(os.path.join(os.getcwd(), outfile_ligand_name)):
-        print(f"The ligand file for the ligand {res_name} in PDB entry {pdb_name} already exists. "
-              f"Set overwrite=True if you want to overwrite it.")
+        print(
+            f"The ligand file for the ligand {res_name} in PDB entry {pdb_name} already exists. "
+            f"Set overwrite=True if you want to overwrite it."
+        )
     else:
         writer = Chem.SDWriter(outfile_ligand_name)
         writer.write(new_mol)
-        print(f"Wrote the ligand file for the ligand {res_name} in PDB entry {pdb_name}.")
+        print(
+            f"Wrote the ligand file for the ligand {res_name} in PDB entry {pdb_name}."
+        )
 
     return outfile_ligand_name
 
@@ -192,7 +201,7 @@ def sdf_to_smiles(pdb_codes, ligand_paths):
     unparseable = []
 
     if type(ligand_paths) is not list:
-        paths = [ligand_paths]
+        ligand_paths = [ligand_paths]
 
     parsed_pdbs = []
     parsed_smiles = []
@@ -204,7 +213,7 @@ def sdf_to_smiles(pdb_codes, ligand_paths):
 
         # if no ligand was found in the .sdf file, trz to parse the .mol2 file
         if mol is None:
-            mol = Chem.MolFromMol2File(ligand_path[:-3]+'mol2', removeHs=False)
+            mol = Chem.MolFromMol2File(ligand_path[:-3] + "mol2", removeHs=False)
 
         # either append ligand if it could be read in or skip it
         if mol is None:
@@ -213,16 +222,24 @@ def sdf_to_smiles(pdb_codes, ligand_paths):
             parsed_pdbs.append(pdb_code)
             parsed_smiles.append(Chem.MolToSmiles(mol))
 
-    print(f'Could not parse SMILES for the following {len(unparseable)} PDB entries:')
+    print(f"Could not parse SMILES for the following {len(unparseable)} PDB entries:")
     print(unparseable)
 
     return parsed_smiles, parsed_pdbs
 
+
 # -------------------------------- featurisation utilities --------------------------------
+
 
 def molecule_fingerprints(input_mols, bond_radius, nBits):
     """
-    Auxiliary function to transform the loaded features to a fingerprint representation
+    Auxiliary function to calculate the extended
+    connectivity fingerprints of the given SMILES representations.
+
+    Args:
+        input_mols: a list of SMILES representations to be converted
+        bond_radius: radius parameter for ECFP algorithm
+        nBits: fingerprint size
 
     Returns: numpy array of features in fingerprint representation
 
@@ -239,20 +256,21 @@ def molecule_fingerprints(input_mols, bond_radius, nBits):
 
 def molecule_fragments(input_mols, to_df=None):
     """
-    Accepts a list of SMILES and calculates all rdkit fragment descriptorsd
+    Auxiliary function to calculate the rdkit fragment
+    descriptors of the given SMILES representations.
 
     Args:
-        input_mols: a list of SMILES to be convertes
+        input_mols: a list of SMILES representations to be converted
         to_df: whether to return a DataFrame; if None, returns a numpy array,
         if not None, expects an index with which to create the dataframe
 
-    Returns:
+    Returns: numpy array or pandas DataFrame of fragment descriptors
 
     """
 
     # extract all fragment rdkit descriptors
     # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-    fragList = [desc for desc in Descriptors.descList if desc[0].startswith('fr_')]
+    fragList = [desc for desc in Descriptors.descList if desc[0].startswith("fr_")]
 
     fragments = {d[0]: d[1] for d in fragList}
     frags = np.zeros((len(input_mols), len(fragments)))
@@ -271,7 +289,7 @@ def molecule_fragments(input_mols, to_df=None):
         result = pd.DataFrame(
             data=frags,
             index=to_df,
-            columns=[frag_desc[0] for frag_desc in fragments.items()]
+            columns=[frag_desc[0] for frag_desc in fragments.items()],
         )
 
     return result
@@ -291,31 +309,36 @@ def vina_features(objects):
 
     results = []
 
-    vina_names = ['vina_gauss1', 'vina_gauss2', 'vina_repulsion',
-                     'vina_hydrophobic', 'vina_hydrogen', 'vina_num_rotors']
+    vina_names = [
+        "vina_gauss1",
+        "vina_gauss2",
+        "vina_repulsion",
+        "vina_hydrophobic",
+        "vina_hydrogen",
+        "vina_num_rotors",
+    ]
 
     for pdb_code, protein_path, ligand_path in objects:
 
         # initialise protein and ligand
-        protein = next(oddt.toolkit.readfile('pdb', protein_path))
+        protein = next(oddt.toolkit.readfile("pdb", protein_path))
         protein.protein = True
-        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
+        ligand = next(oddt.toolkit.readfile("sdf", ligand_path))
 
         # initialise Vina feature engine for current protein
         vina_engine = oddt.scoring.descriptors.oddt_vina_descriptor(
-            protein=protein,
-            vina_scores=vina_names
+            protein=protein, vina_scores=vina_names
         )
 
         # calculate vina features for respective ligand
-        result = {name: value for name, value in zip(vina_engine.titles, vina_engine.build([ligand])[0])}
+        result = {
+            name: value
+            for name, value in zip(vina_engine.titles, vina_engine.build([ligand])[0])
+        }
 
         results.append(result)
 
-    results = pd.DataFrame(
-        data=results,
-        index=[i[0] for i in objects]
-    )
+    results = pd.DataFrame(data=results, index=[i[0] for i in objects])
 
     return results
 
@@ -338,28 +361,42 @@ def binana_nnscore_features(objects, feature_group):
     for pdb_code, protein_path, ligand_path in objects:
 
         # initialise protein and ligand
-        protein = next(oddt.toolkit.readfile('pdb', protein_path))
+        protein = next(oddt.toolkit.readfile("pdb", protein_path))
         protein.protein = True
-        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
+        ligand = next(oddt.toolkit.readfile("sdf", ligand_path))
 
         # initialise binana engine
         binana_engine = binana.binana_descriptor(protein)
 
-        features_all = {name: value for name, value in zip(binana_engine.titles, binana_engine.build([ligand])[0])}
+        features_all = {
+            name: value
+            for name, value in zip(
+                binana_engine.titles, binana_engine.build([ligand])[0]
+            )
+        }
 
         # the ODDT names for the VINA features, missing 'num_rotors'
-        vina_feature_names = ['vina_gauss1', 'vina_gauss2', 'vina_hydrogen',
-                              'vina_hydrophobic', 'vina_repulsion']
+        vina_feature_names = [
+            "vina_gauss1",
+            "vina_gauss2",
+            "vina_hydrogen",
+            "vina_hydrophobic",
+            "vina_repulsion",
+        ]
 
-        if feature_group == 'binana':
+        if feature_group == "binana":
 
             # remove AutoDock Vina features and add "binana_" prefix to all features
-            result = {'binana_' + k: v for k, v in features_all.items() if k not in vina_feature_names}
+            result = {
+                "binana_" + k: v
+                for k, v in features_all.items()
+                if k not in vina_feature_names
+            }
 
-        elif feature_group == 'nnscorev2':
+        elif feature_group == "nnscorev2":
 
             # keep AutoDock Vina features and add "nnscorev2_" prefix to all features
-            result = {'nnscorev2_' + k: v for k, v in features_all.items()}
+            result = {"nnscorev2_" + k: v for k, v in features_all.items()}
 
         else:
             raise Exception(
@@ -369,18 +406,15 @@ def binana_nnscore_features(objects, feature_group):
 
         results.append(result)
 
-    results = pd.DataFrame(
-        data=results,
-        index=[i[0] for i in objects]
-    )
+    results = pd.DataFrame(data=results, index=[i[0] for i in objects])
 
     return results
 
 
 def rfscore_descriptors(objects):
     """
-    Calculates the features from RFScore v3, which are close-contact descriptors
-    plus the AutoDock Vina features.
+    Calculates the features from RFScore v3, which empirical
+    close-contact descriptors plus the AutoDock Vina features.
 
     Args:
         objects: a list of (pdb_code, protein_path, ligand_path) tuples
@@ -394,16 +428,22 @@ def rfscore_descriptors(objects):
     for pdb_code, protein_path, ligand_path in objects:
 
         # initialise protein and ligand
-        protein = next(oddt.toolkit.readfile('pdb', protein_path))
+        protein = next(oddt.toolkit.readfile("pdb", protein_path))
         protein.protein = True
-        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
+        ligand = next(oddt.toolkit.readfile("sdf", ligand_path))
 
         rfscore_engine = oddt.scoring.descriptors.close_contacts_descriptor(
             protein=protein,
             cutoff=12,
             ligand_types=[6, 7, 8, 9, 15, 16, 17, 35, 53],
-            protein_types=[6, 7, 8, 16])
-        result = {name: value for name, value in zip(rfscore_engine.titles, rfscore_engine.build([ligand])[0])}
+            protein_types=[6, 7, 8, 16],
+        )
+        result = {
+            name: value
+            for name, value in zip(
+                rfscore_engine.titles, rfscore_engine.build([ligand])[0]
+            )
+        }
 
         results.append(result)
 
@@ -431,10 +471,10 @@ def plec_fingerprints(objects, params):
 
     # set standard parameters
     plec_params = {
-        'plec_depth_ligand': 2,
-        'plec_depth_protein': 4,
-        'plec_distance_cutoff': 4.5,
-        'plec_size': 16384,
+        "plec_depth_ligand": 2,
+        "plec_depth_protein": 4,
+        "plec_distance_cutoff": 4.5,
+        "plec_size": 16384,
     }
 
     # if parameter changes are passed through kwargs, apply them
@@ -442,18 +482,18 @@ def plec_fingerprints(objects, params):
 
     for pdb_code, protein_path, ligand_path in objects:
 
-        protein = next(oddt.toolkit.readfile('pdb', protein_path))
+        protein = next(oddt.toolkit.readfile("pdb", protein_path))
         protein.protein = True
-        ligand = next(oddt.toolkit.readfile('sdf', ligand_path))
+        ligand = next(oddt.toolkit.readfile("sdf", ligand_path))
 
         result = PLEC(
             ligand=ligand,
             protein=protein,
-            depth_ligand=plec_params['plec_depth_ligand'],
-            depth_protein=plec_params['plec_depth_protein'],
-            distance_cutoff=plec_params['plec_distance_cutoff'],
-            size=plec_params['plec_size'],
-            sparse=False
+            depth_ligand=plec_params["plec_depth_ligand"],
+            depth_protein=plec_params["plec_depth_protein"],
+            distance_cutoff=plec_params["plec_distance_cutoff"],
+            size=plec_params["plec_size"],
+            sparse=False,
         )
 
         results.append(result)
@@ -461,6 +501,7 @@ def plec_fingerprints(objects, params):
     results = pd.DataFrame(
         data=results,
         index=[i[0] for i in objects],
-        columns=["plec_"+str(i) for i in range(plec_params['plec_size'])])
+        columns=["plec_" + str(i) for i in range(plec_params["plec_size"])],
+    )
 
     return results

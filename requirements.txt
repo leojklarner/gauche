@@ -2,3 +2,6 @@ numpy
 pandas
 scikit-learn
 rdkit
+prody
+requests
+oddt
