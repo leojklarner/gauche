@@ -11,7 +11,7 @@ from rdkit.Chem import MolFromSmiles
 
 from gprotorch.dataloader import DataLoader
 from gprotorch.dataloader.dataloader_utils import (molecule_fingerprints,
-                                                   molecule_fragments)
+                                                   molecule_descriptors)
 
 
 class DataLoaderMP(DataLoader):
@@ -87,14 +87,14 @@ class DataLoaderMP(DataLoader):
 
         elif representation == "fragments":
 
-            self.features = molecule_fragments(self.objects)
+            self.features = molecule_descriptors(self.objects, fragments=True)
 
         elif representation == "fragprints":
 
             self.features = np.concatenate(
                 (
                     molecule_fingerprints(self.objects, bond_radius, nBits),
-                    molecule_fragments(self._features),
+                    molecule_descriptors(self._features, fragments=True),
                 ),
                 axis=1,
             )

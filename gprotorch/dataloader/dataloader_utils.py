@@ -254,81 +254,49 @@ def molecule_fingerprints(input_mols, bond_radius, nBits):
     return np.asarray(fps)
 
 
-def molecule_fragments(input_mols, to_df=None):
+def molecule_descriptors(input_mols, to_df=None, fragments=True):
     """
-    Auxiliary function to calculate the rdkit fragment
+    Auxiliary function to calculate the rdkit
     descriptors of the given SMILES representations.
 
     Args:
         input_mols: a list of SMILES representations to be converted
         to_df: whether to return a DataFrame; if None, returns a numpy array,
         if not None, expects an index with which to create the dataframe
+        fragments: whether to only calculate fragment descriptors or all rdkit descriptors
 
-    Returns: numpy array or pandas DataFrame of fragment descriptors
+    Returns: numpy array or pandas DataFrame of calculated descriptors
 
     """
 
-    # extract all fragment rdkit descriptors
-    # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-    fragList = [desc for desc in Descriptors.descList if desc[0].startswith("fr_")]
+    if fragments:
+        # extract all fragment rdkit descriptors
+        # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
+        fragList = [desc for desc in Descriptors.descList if desc[0].startswith("fr_")]
+        descriptors = {d[0]: d[1] for d in fragList}
 
-    fragments = {d[0]: d[1] for d in fragList}
-    frags = np.zeros((len(input_mols), len(fragments)))
+    else:
+        descriptors = {d[0]: d[1] for d in Descriptors.descList}
+
+    results = np.zeros((len(input_mols), len(descriptors)))
+
     for i in range(len(input_mols)):
+
         mol = MolFromSmiles(input_mols[i])
         try:
-            features = [fragments[d](mol) for d in fragments]
+            features = [descriptors[d](mol) for d in descriptors]
         except:
             raise Exception("molecule {}".format(i) + " is not canonicalised")
-        frags[i, :] = features
+        results[i, :] = features
 
     if to_df is None:
-        result = frags
+        result = results
 
     else:
         result = pd.DataFrame(
-            data=frags,
+            data=results,
             index=to_df,
-            columns=[frag_desc[0] for frag_desc in fragments.items()],
-        )
-
-    return result
-
-
-def rdkit_descriptors(input_mols, to_df=None):
-    """
-    Auxiliary function to calculate all rdkit
-    descriptors of the given SMILES representations.
-
-    Args:
-        input_mols: a list of SMILES representations to be converted
-        to_df: whether to return a DataFrame; if None, returns a numpy array,
-        if not None, expects an index with which to create the dataframe
-
-    Returns: numpy array or pandas DataFrame of rdkit descriptors
-
-    """
-
-    rdkit_descr = {d[0]: d[1] for d in Descriptors.descList}
-
-    descriptors = np.zeros((len(input_mols), len(rdkit_descr)))
-
-    for i in range(len(input_mols)):
-        mol = MolFromSmiles(input_mols[i])
-        try:
-            features = [rdkit_descr[d](mol) for d in rdkit_descr]
-        except:
-            raise Exception("molecule {}".format(i) + " is not canonicalised")
-        descriptors[i, :] = features
-
-    if to_df is None:
-        result = descriptors
-
-    else:
-        result = pd.DataFrame(
-            data=descriptors,
-            index=to_df,
-            columns=[frag_desc[0] for frag_desc in rdkit_descr.items()],
+            columns=[desc[0] for desc in descriptors.items()],
         )
 
     return result
@@ -450,13 +418,14 @@ def binana_nnscore_features(objects, feature_group):
     return results
 
 
-def rfscore_descriptors(objects):
+def rfscore_descriptors(objects, params):
     """
     Calculates the features from RFScore v3, which empirical
     close-contact descriptors plus the AutoDock Vina features.
 
     Args:
         objects: a list of (pdb_code, protein_path, ligand_path) tuples
+        params: a dict of featurisation params
 
     Returns: list of specified features
 

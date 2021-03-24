@@ -10,12 +10,13 @@ import re
 
 import oddt
 import pandas as pd
+from numpy import inf
 from prody import *
 
 from gprotorch.dataloader import DataLoader
 from gprotorch.dataloader.dataloader_utils import (binana_nnscore_features,
                                                    get_pdb_components,
-                                                   molecule_fragments,
+                                                   molecule_descriptors,
                                                    plec_fingerprints,
                                                    process_ligand,
                                                    read_ligand_expo,
@@ -159,15 +160,19 @@ class DataLoaderLB(DataLoader):
             "plec": {"func": plec_fingerprints, "args": [self.objects, params]},
             "rfscore_v3": {"func": rfscore_descriptors, "args": [self.objects, params]},
             "fragments": {
-                "func": molecule_fragments,
+                "func": molecule_descriptors,
                 "args": sdf_to_smiles(
                     [pdb_codes for pdb_codes, _, _ in self.objects],
                     [lig_path for _, _, lig_path in self.objects],
-                ),
+                )+(True,),
             },
             "rdkit": {
-
-            }
+                "func": molecule_descriptors,
+                "args": sdf_to_smiles(
+                    [pdb_codes for pdb_codes, _, _ in self.objects],
+                    [lig_path for _, _, lig_path in self.objects],
+                )+(False,),
+            },
         }
 
         # check if specified representation is valid
@@ -195,7 +200,7 @@ class DataLoaderLB(DataLoader):
                 result_df = feature_func(*feature_args)
 
                 # remove entries with NA features
-                result_df = result_df.replace([np.inf, -np.inf], pd.NA)
+                result_df = result_df.replace([inf, -inf], pd.NA)
                 result_df = result_df.dropna()
 
                 # remove features with low variance,
@@ -620,6 +625,5 @@ if __name__ == "__main__":
     loader.load_benchmark(
         "PDBbind_refined", os.path.join(path_to_data, "2019_refined_set")
     )
-    loader.featurize(["vina"])
-    loader.save_features("features.csv")
-    loader.load_features("features.csv")
+    loader.featurize(["rfscore_v3", 'rdkit'])
+    loader.save_features("rfscore_rdkit_features.csv")
