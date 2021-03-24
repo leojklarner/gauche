@@ -295,6 +295,45 @@ def molecule_fragments(input_mols, to_df=None):
     return result
 
 
+def rdkit_descriptors(input_mols, to_df=None):
+    """
+    Auxiliary function to calculate all rdkit
+    descriptors of the given SMILES representations.
+
+    Args:
+        input_mols: a list of SMILES representations to be converted
+        to_df: whether to return a DataFrame; if None, returns a numpy array,
+        if not None, expects an index with which to create the dataframe
+
+    Returns: numpy array or pandas DataFrame of rdkit descriptors
+
+    """
+
+    rdkit_descr = {d[0]: d[1] for d in Descriptors.descList}
+
+    descriptors = np.zeros((len(input_mols), len(rdkit_descr)))
+
+    for i in range(len(input_mols)):
+        mol = MolFromSmiles(input_mols[i])
+        try:
+            features = [rdkit_descr[d](mol) for d in rdkit_descr]
+        except:
+            raise Exception("molecule {}".format(i) + " is not canonicalised")
+        descriptors[i, :] = features
+
+    if to_df is None:
+        result = descriptors
+
+    else:
+        result = pd.DataFrame(
+            data=descriptors,
+            index=to_df,
+            columns=[frag_desc[0] for frag_desc in rdkit_descr.items()],
+        )
+
+    return result
+
+
 def vina_features(objects):
     """
     Calculates the AutoDock Vina fetures for a list of

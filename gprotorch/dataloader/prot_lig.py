@@ -165,6 +165,9 @@ class DataLoaderLB(DataLoader):
                     [lig_path for _, _, lig_path in self.objects],
                 ),
             },
+            "rdkit": {
+
+            }
         }
 
         # check if specified representation is valid
