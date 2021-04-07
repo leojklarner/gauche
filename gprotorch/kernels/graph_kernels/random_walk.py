@@ -1,12 +1,6 @@
 """
-Contains GPyTorch implementations of random walk kernels,
-efficiently calculated through the methods introduced in
-Vishwanathan et al JLMR, 11:1201–1242, 2010.
-
-
-
-Notes: requires pytorch 1.8.0+, assumes graphs are undirected,
-pseudoprobablities assumes to be one
+Contains GPyTorch random walk kernels on undirected graphs.
+Notes: requires pytorch 1.8.0+ for torch.kron()
 """
 
 import torch
