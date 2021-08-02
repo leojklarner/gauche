@@ -7,8 +7,13 @@ We recommend using a conda virtual environment.
 
 ```
 conda create -n gprotorch python==3.8
-pip3 install torch torchvision
 pip install gpytorch
+pip install scikit-learn pandas pytest
 conda install -c conda-forge rdkit
-conda install scikit-learn pandas pytest
+```
+
+Optional for running tests.
+
+```
+pip install gpflow
 ```

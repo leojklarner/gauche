@@ -42,17 +42,19 @@ class BitDistance(torch.nn.Module):
 
         if metric == 'tanimoto':
 
-            x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)  # Compute the squared L2-norm of each datapoint
+            # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
+
+            x1_norm = x1.pow(2).sum(dim=-2, keepdim=False)  # Compute the squared L2-norm of each datapoint
             if x1_eq_x2 and not x1.requires_grad and not x2.requires_grad:
                 x2_norm = x1_norm
             else:
-                x2_norm = x2.pow(2).sum(dim=-1, keepdim=True)
+                x2_norm = x2.pow(2).sum(dim=-2, keepdim=False)
 
             # The following code works for both the batch and non-batch cases
-            cross_product = x1.matmul(x2.transpose(-2, -1))
+            cross_product = x1.transpose(-2, -1).matmul(x2)
 
             # Analogue of denominator in Tanimoto formula
-            denominator = torch.add(x1_norm, x2_norm) - cross_product
+            denominator = x1_norm[..., None] + x2_norm[..., None, :] - cross_product
 
             res = cross_product/denominator
 
@@ -177,10 +179,3 @@ class TanimotoKernel(BitKernel):
 
     def forward(self, x1, x2, **params):
         return self.covar_dist(x1, x2, **params)
-
-
-if __name__ == '__main__':
-    x = torch.randint(0, 2, (10, 5))
-    covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
-    covar = covar_module(x)
-    print(covar.evaluate)
