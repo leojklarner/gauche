@@ -49,19 +49,56 @@ def test_tanimoto_similarity_with_very_unequal_inputs():
     Test the Tanimoto similarity metric between two tensors that are unequal in every dimension.
     """
 
-    x1 = torch.tensor([[1, 2], [3, 4]], dtype=torch.float64)
-    x2 = torch.tensor([[4, 3], [2, 1]], dtype=torch.float64)
+    x1 = torch.tensor([[1, 3], [2, 4]], dtype=torch.float64)
+    x2 = torch.tensor([[4, 2], [3, 1]], dtype=torch.float64)
     dist_object = BitDistance()
     tan_similarity = dist_object._sim(x1, x2, postprocess=False, metric='tanimoto')
 
-    assert torch.allclose(tan_similarity.squeeze(0), torch.tensor([[0.5, 6/14], [2/3, 0.5]], dtype=torch.float64))
+    assert torch.allclose(tan_similarity, torch.tensor([[0.5, 6/14], [2/3, 0.5]], dtype=torch.float64))
+
+
+def test_tanimoto_similarity_with_batch_dimension():
+    """
+    Test the Tanimoto similarity metric between two tensors that are unequal and have a batch dimension.
+    """
+
+    x1 = torch.tensor([[1, 3], [2, 4]], dtype=torch.float64)
+    x2 = torch.tensor([[4, 2], [3, 1]], dtype=torch.float64)
+
+    # Add a batch dimension
+    x1 = x1[None, :]
+    x2 = x2[None, :]
+
+    dist_object = BitDistance()
+    tan_similarity = dist_object._sim(x1, x2, postprocess=False, metric='tanimoto')
+
+    assert torch.allclose(tan_similarity, torch.tensor([[0.5, 6/14], [2/3, 0.5]], dtype=torch.float64))
+
+
+def test_tanimoto_kernel():
+    """
+    Test the Tanimoto kernel when integrated with GP.
+    """
+
+    x = torch.randint(0, 2, (10, 5))
+    # Non-batch: Simple option
+    covar_module = ScaleKernel(TanimotoKernel())
+    covar = covar_module(x)  # Output: LazyTensor of size (10 x 10)
+    assert covar.size() == torch.Size([10, 10])
+    batch_x = torch.randint(0, 2, (2, 10, 5))
+    # Batch: Simple option
+    covar_module = ScaleKernel(TanimotoKernel())
+    covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
+    assert covar.size() == torch.Size([2, 10, 10])
 
 
 def test_against_tf_implementation():
     """
     Tests the GPyTorch Tanimoto kernel against the TensorFlow implementation
     """
-    x = torch.randint(0, 2, (100, 1000))
+    torch.set_printoptions(precision=8)
+    torch.manual_seed(0)
+    x = torch.randint(0, 2, (100, 1000), dtype=torch.float64)
 
     covar_module = TanimotoKernel()
     covar = covar_module(x)
@@ -74,8 +111,10 @@ def test_against_tf_implementation():
     tf_covar = tf_covar_module.K(tf_x, tf_x)
     print(tf_covar)
 
+    assert torch.allclose(torch.tensor(tf_covar.numpy()), torch_res)
 
-# GPflow Tanimoto kernel implementation below
+
+# GPflow Tanimoto kernel implementation below used for testing.
 
 
 class Tanimoto(gpflow.kernels.Kernel):
