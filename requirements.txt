@@ -5,3 +5,4 @@ rdkit
 torch
 gpytorch
 pytest
+tqdm
