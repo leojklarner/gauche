@@ -37,15 +37,22 @@ def get_molecular_edge_labels(mol):
 
     """
 
-    edge_labels = dict()
+    edge_src = []
+    edge_dst = []
+    edge_label = []
 
     for idx, bond in enumerate(mol.GetBonds()):
-        bond_edge_label = [bond.GetBeginAtom().GetSymbol(), bond.GetEndAtom().GetSymbol()]
-        bond_edge_label.sort()  # sort atom symbols to re-introduce symmetry between rdkit begin and end atoms
-        bond_edge_label.append(bond.GetBondTypeAsDouble())
-        edge_labels[(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())] = tuple(bond_edge_label)
+        bond_edge_label = hash(frozenset([
+            bond.GetBeginAtom().GetSymbol(),
+            bond.GetEndAtom().GetSymbol(),
+            bond.GetBondTypeAsDouble()
+        ]))
 
-    return pd.Series(edge_labels)
+        edge_src.append(bond.GetBeginAtomIdx())
+        edge_dst.append(bond.GetEndAtomIdx())
+        edge_label.append(bond_edge_label)
+
+    return edge_src, edge_dst, edge_label
 
 
 def get_sparse_adj_mat(index_tuples, shape_tuple):
