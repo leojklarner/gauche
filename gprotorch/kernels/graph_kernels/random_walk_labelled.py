@@ -16,9 +16,17 @@ from gpytorch.kernels import Kernel
 from gpytorch.kernels.kernel import default_postprocess_script
 from math import factorial
 from gpytorch.utils import linear_cg
+from gpytorch.lazy import kronecker_product_lazy_tensor
 from gpytorch.constraints import Positive
-from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, get_molecular_edge_labels, get_sparse_adj_mat
+from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, get_label_adj_mats, LinearCG, sp_adj_mats
 from rdkit.Chem import MolFromSmiles, rdmolops, GetAdjacencyMatrix
+
+from scipy.sparse.linalg import LinearOperator
+from scipy.sparse.linalg import cg
+from numpy.linalg import multi_dot
+
+
+linear_cg_solver = LinearCG.apply
 
 
 class RandomWalk(Kernel):
@@ -111,46 +119,12 @@ class RandomWalk(Kernel):
 
         # Step 1a: pre-compute all unique atom-bond-atom combinations for all molecules
 
-        #x1_edge_labels = [get_molecular_edge_labels(mol) for mol in x1]
-
-        #if x1_equals_x2:
-        #    x2_edge_labels = x1_edge_labels
-        #else:
-        #    x2_edge_labels = [get_molecular_edge_labels(mol) for mol in x2]
-
-        # Step 1b: pre-compute all adjacency matrices
-        edge_lists1 = []
-        for mol in x1:
-            adj_mat = GetAdjacencyMatrix(mol)
-            adj_mat = adj_mat @ np.diag(1 / adj_mat.sum(1))
-            edge_list = pd.DataFrame(
-                data=adj_mat[adj_mat.astype(bool)],
-                index=pd.MultiIndex.from_arrays(adj_mat.nonzero(), names=['src', 'dst']),
-                columns=['weight']
-            )
-            edge_src, edge_dst, edge_label = get_molecular_edge_labels(mol)
-            edge_list.loc[zip(edge_src, edge_dst), 'label'] = edge_label
-            edge_list.loc[zip(edge_dst, edge_src), 'label'] = edge_label
-            edge_list = edge_list.reset_index()
-            edge_lists1.append({k:np.hsplit(v.values[:, :-1], 3) for k,v in edge_list.groupby('label')})
+        x1_adj_mats = [get_label_adj_mats(x) for x in x1]
 
         if x1_equals_x2:
-            edge_lists2 = edge_lists1
+            x2_adj_mats = x1_adj_mats
         else:
-            edge_lists2 = []
-            for mol in x2:
-                adj_mat = GetAdjacencyMatrix(mol)
-                adj_mat = adj_mat @ np.diag(1 / adj_mat.sum(1))
-                edge_list = pd.DataFrame(
-                    data=adj_mat[adj_mat.astype(bool)],
-                    index=pd.MultiIndex.from_arrays(adj_mat.nonzero(), names=['src', 'dst']),
-                    columns=['weight']
-                )
-                edge_src, edge_dst, edge_label = get_molecular_edge_labels(mol)
-                edge_list.loc[zip(edge_src, edge_dst), 'label'] = edge_label
-                edge_list.loc[zip(edge_dst, edge_src), 'label'] = edge_label
-                edge_list = edge_list.reset_index()
-                edge_lists2.append({k: np.hsplit(v.values[:, :-1], 3) for k, v in edge_list.groupby('label')})
+            x2_adj_mats = [get_label_adj_mats(x) for x in x2]
 
         # Step 2: populate the covariance matrix
 
@@ -166,66 +140,61 @@ class RandomWalk(Kernel):
 
                 else:
 
-                    # calculate label-filtered adjacency matrices
+                    adj_mat1, adj_mat2 = x1_adj_mats[idx1], x2_adj_mats[idx2]
 
-                    edge_list1 = edge_lists1[idx1]
-                    edge_list2 = edge_lists2[idx2]
-                    common_labels = edge_list1.keys() & edge_list2.keys()
-                    num_atoms1, num_atoms2 = x1[idx1].GetNumAtoms(), x2[idx2].GetNumAtoms()
-                    kron_size = num_atoms1*num_atoms2
-
-                    # derive the cartesian product of the two edge lists for all
-                    # entries with identical augmented edge labels and
-                    # derive the indices of the corresponding Kronecker product
-                    #common_labels = edge_list1.merge(edge_list2, on='label', suffixes=('_1', '_2'))
+                    common_labels = adj_mat1.keys() & adj_mat2.keys()
 
                     if not common_labels:
                         covar_mat[idx1, idx2] = torch.zeros(1)
-                        continue
 
-                    kron_row = []
-                    kron_col = []
-                    kron_data = []
+                    else:
+                        num_atoms1, num_atoms2 = x1[idx1].GetNumAtoms(), x2[idx2].GetNumAtoms()
+                        kron_size = num_atoms1 * num_atoms2
+                        start_stop_probs = torch.ones(kron_size).unsqueeze(1)
+                        if self.uniform_probabilities:
+                            start_stop_probs /= kron_size
 
-                    for label in common_labels:
-                        i1, j1, k1 = edge_list1[label]
-                        i2, j2, k2 = edge_list2[label]
 
-                        kron_row.append((num_atoms2 * i1 + i2.T).flatten())
-                        kron_col.append((num_atoms2 * j1 + j2.T).flatten())
-                        kron_data.append((k1 * k2.T).flatten())
+                        #inv_vec = linear_cg_solver(
+                        #    adj_mat1, num_atoms1, adj_mat2, num_atoms2,
+                        #    common_labels, start_stop_probs, self.weight,
+                        #)
 
-                    kron_row = np.concatenate(kron_row)
-                    kron_col = np.concatenate(kron_col)
-                    kron_data = torch.from_numpy(np.concatenate(kron_data)).float()
+                        if False:
 
-                    if False:
+                            def lsf(x):
+                                y = 0
+                                xm = x.reshape((num_atoms1, num_atoms2), order='F')
+                                for label in common_labels:
+                                    y += np.reshape(adj_mat1[label] @ xm @ adj_mat2[label], (kron_size,),
+                                                    order='F')
+                                return x - self.weight.detach().numpy() * y
 
-                        kron_mat = torch.sparse_coo_tensor(
-                            indices=torch.LongTensor([kron_row, kron_col]), values=kron_data,
-                            size=(kron_size, kron_size)
-                        ).coalesce()
+                            A = LinearOperator((kron_size, kron_size), matvec=lsf)
+                            b = np.ones(num_atoms1 * num_atoms2)
+                            inv_vec, _ = cg(A, b, tol=1.0e-6, maxiter=20, atol='legacy')
 
-                        # construct a fitting diagonal Tensor and calculate (I - lambda * W)
-                        diag = torch.sparse_coo_tensor(
-                            indices=torch.LongTensor([range(kron_size), range(kron_size)]),
-                            values=torch.ones(kron_size), size=(kron_size, kron_size),
-                        )
 
-                    kron_mat = torch.zeros([kron_size, kron_size])
-                    kron_mat[kron_row, kron_col] = kron_data
+                            max_diff = (inv_vec - correct_solve).abs().max().item()
+                            #if not max_diff < 1e-5:
+                            #    print(idx1, idx2)
+                            #    for label in common_labels:
+                            #        print(adj_mat1[label])
+                            #        print(adj_mat2[label])
+                            #    print()
 
-                    kron_mat = torch.diag(torch.ones(kron_size)) - self. weight * kron_mat
+                        kron_mat = torch.zeros((num_atoms1 * num_atoms2, num_atoms1 * num_atoms2))
+                        for label in common_labels:
+                            mat1 = adj_mat1[label].to_dense()
+                            mat2 = adj_mat2[label].to_dense()
+                            kron_mat += torch.kron(mat1, mat2)
 
-                    start_stop_probs = torch.ones(kron_size).unsqueeze(1)
-                    if self.uniform_probabilities:
-                        start_stop_probs.div_(kron_size)
+                        kron_mat = torch.diag(torch.ones((num_atoms1 * num_atoms2))) - self.weight * kron_mat
+                        correct_solve = torch.linalg.solve(kron_mat, start_stop_probs)
 
-                    #result = linear_cg(kron_mat.matmul, start_stop_probs)
-                    result = torch.linalg.solve(kron_mat, start_stop_probs)
-                    result = start_stop_probs.T @ result
+                        covar_mat[idx1, idx2] = start_stop_probs.T @ correct_solve
 
-                    covar_mat[idx1, idx2] = result
+                        #self.weight.backward()
 
         if self.normalise:
             covar_mat = normalise_covariance(covar_mat)
@@ -241,6 +210,6 @@ if __name__ == '__main__':
     mols = [MolFromSmiles(mol) for mol in dataloader.features]
 
     rw_kernel = RandomWalk()
-    rw_kernel.weight = 0.2
-    cov_mat = rw_kernel.forward(x1=mols[:100], x2=mols[:100])
+    rw_kernel.weight = 1/16
+    cov_mat = rw_kernel.forward(x1=mols[:300], x2=mols[:300])
     print(cov_mat)
