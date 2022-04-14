@@ -7,12 +7,38 @@ Author: Leo Klarner (https://github.com/leojklarner), April 2022
 """
 
 import torch
+import numpy as np
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops
+from torch_geometric.data import Data
 import torch.nn.functional as F
 from torch_scatter import scatter_add
+from rdkit import Chem
 
+# define the allowable node and edge labels as used in Hu et al.
+allowable_features = {
+    'possible_atomic_num_list': list(range(1, 119)),
+    'possible_chirality_list': [
+        Chem.rdchem.ChiralType.CHI_UNSPECIFIED,
+        Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW,
+        Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW,
+        Chem.rdchem.ChiralType.CHI_OTHER
+    ],
+    'possible_bonds': [
+        Chem.rdchem.BondType.SINGLE,
+        Chem.rdchem.BondType.DOUBLE,
+        Chem.rdchem.BondType.TRIPLE,
+        Chem.rdchem.BondType.AROMATIC
+    ],
+    # (E)/(Z) double bond stereo information
+    'possible_bond_dirs': [
+        Chem.rdchem.BondDir.NONE,
+        Chem.rdchem.BondDir.ENDUPRIGHT,
+        Chem.rdchem.BondDir.ENDDOWNRIGHT
+    ]
+}
 
+# define additional tokens for label masking
 num_atom_type = 120  # including the extra mask tokens
 num_chirality_tag = 3
 
@@ -20,6 +46,54 @@ num_bond_type = 6  # including aromatic and self-loop edge, and extra masked tok
 num_bond_direction = 3
 self_loop_token = 4  # bond type for self-loop edge
 masked_bond_token = 5  # bond type for masked edges
+
+
+def mol_to_pyg(mol):
+    """
+    A featuriser that accepts an rdkit mol instance and
+    converts it to a PyTorch Geometric data object that
+    is compatible with the GNN modules below.
+
+    Args:
+        mol: rdkit mol object
+
+    Returns: PyTorch Geometric data object
+
+    """
+
+    # derive atom features: atomic number + chirality tag
+    atom_features = []
+    for atom in mol.GetAtoms():
+        atom_features.append([
+            allowable_features['possible_atomic_num_list'].index(atom.GetAtomicNum()),
+            allowable_features['possible_chirality_list'].index(atom.GetChiralTag())
+        ])
+    atom_features = torch.tensor(np.array(atom_features), dtype=torch.long)
+
+    # derive bond features: bond type + bond direction
+    # PyTorch Geometric only uses directed edges,
+    # so feature information needs to be added twice
+    edge_index = []
+    edge_attr = []
+    for bond in mol.GetBonds():
+        i = bond.GetBeginAtomIdx()
+        j = bond.GetEndAtomIdx()
+        edge_index.append((i, j))
+        edge_index.append((j, i))
+
+        # calculate edge features and append them to feature list
+        edge_feature = [allowable_features['possible_bonds'].index(bond.GetBondType()),
+                        allowable_features['possible_bond_dirs'].index(bond.GetBondDir())]
+        edge_attr.append(edge_feature)
+        edge_attr.append(edge_feature)
+
+    # set data.edge_index: Graph connectivity in COO format with shape [2, num_edges]
+    edge_index = torch.tensor(np.array(edge_index).T, dtype=torch.long)
+
+    # set data.edge_attr: Edge feature matrix with shape [num_edges, num_edge_features]
+    edge_attr = torch.tensor(np.array(edge_attr), dtype=torch.long)
+
+    return Data(x=atom_features, edge_index=edge_index, edge_attr=edge_attr)
 
 
 class GINConv(MessagePassing):
