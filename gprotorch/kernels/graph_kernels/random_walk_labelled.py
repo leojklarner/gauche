@@ -4,29 +4,17 @@ Notes: requires pytorch 1.8.0+ for torch.kron()
 """
 
 import torch
-import cProfile
-import pstats
-from pstats import SortKey
-import itertools
-import pandas as pd
+import gpytorch
 import numpy as np
-from copy import copy
 from tqdm import tqdm
 from gpytorch.kernels import Kernel
-from gpytorch.kernels.kernel import default_postprocess_script
-from math import factorial
-from gpytorch.utils import linear_cg
-from gpytorch.lazy import kronecker_product_lazy_tensor
 from gpytorch.constraints import Positive
-from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, get_label_adj_mats, LinearCG, sp_adj_mats
-from rdkit.Chem import MolFromSmiles, rdmolops, GetAdjacencyMatrix
+from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, get_label_adj_mats
+from rdkit.Chem import MolFromSmiles
+from line_profiler_pycharm import profile
 
-from scipy.sparse.linalg import LinearOperator
-from scipy.sparse.linalg import cg
-from numpy.linalg import multi_dot
-
-
-linear_cg_solver = LinearCG.apply
+from gpytorch import settings
+settings.lazily_evaluate_kernels(False)
 
 
 class RandomWalk(Kernel):
@@ -98,9 +86,10 @@ class RandomWalk(Kernel):
             value = torch.as_tensor(value).to(self.raw_weight)
         self.initialize(raw_weight=self.raw_weight_constraint.inverse_transform(value))
 
+    @profile
     def forward(self,
-                x1: list,
-                x2: list,
+                x1: torch.Tensor,
+                x2: torch.Tensor,
                 **params) -> torch.Tensor:
         """
         Calculates the covariance matrix between x1 and x2.
@@ -115,18 +104,33 @@ class RandomWalk(Kernel):
         """
 
         # check if the matrices are identical (order-dependent)
-        x1_equals_x2 = (x1 == x2)
+        x1_equals_x2 = torch.equal(x1, x2)
 
-        # Step 1a: pre-compute all unique atom-bond-atom combinations for all molecules
+        x1_size = int(np.sqrt(x1.shape[1]))
+        if x1_equals_x2:
+            x2_size = x1_size
+        else:
+            x2_size = int(np.sqrt(x1.shape[2]))
 
-        x1_adj_mats = [get_label_adj_mats(x) for x in x1]
+        rw_probs = torch.ones(x1_size * x2_size)
+
+        # reshape adjacency matrices
+        x1 = x1.view((x1.shape[0], x1_size, x1_size))
 
         if x1_equals_x2:
-            x2_adj_mats = x1_adj_mats
+            x2 = x1
         else:
-            x2_adj_mats = [get_label_adj_mats(x) for x in x2]
+            x2 = x2.view((x2.shape[0], x2_size, x2_size))
 
-        # Step 2: populate the covariance matrix
+        # derive nonzero elements
+        nnz1 = [(torch.nonzero(x, as_tuple=False), x[torch.nonzero(x, as_tuple=True)]) for x in x1]
+        unique1 = [torch.unique(z) for _, z in nnz1]
+        if x1_equals_x2:
+            nnz2 = nnz1
+            unique2 = unique1
+        else:
+            nnz2 = [(torch.nonzero(x, as_tuple=False), x[torch.nonzero(x, as_tuple=True)]) for x in x2]
+            unique2 = [torch.unique(z) for _, z in nnz2]
 
         covar_mat = torch.zeros([len(x1), len(x2)])
 
@@ -135,66 +139,50 @@ class RandomWalk(Kernel):
 
                 # if applicable, fill lower triangular part
                 # with already calculated upper triangular part
-                if x1_equals_x2 and idx2 < idx1:
+                if x1_equals_x2 and idx1 == idx2:
+                    covar_mat[idx1, idx2] = 1
+
+                elif x1_equals_x2 and idx2 < idx1:
                     covar_mat[idx1, idx2] = covar_mat[idx2, idx1]
 
                 else:
 
-                    adj_mat1, adj_mat2 = x1_adj_mats[idx1], x2_adj_mats[idx2]
+                    kron_i = []
+                    kron_j = []
 
-                    common_labels = adj_mat1.keys() & adj_mat2.keys()
+                    nnz_id1, nnz_val1 = nnz1[idx1]
+                    nnz_id2, nnz_val2 = nnz2[idx1]
 
-                    if not common_labels:
-                        covar_mat[idx1, idx2] = torch.zeros(1)
+                    common_labels = np.intersect1d(unique1[idx1], unique2[idx2])
 
-                    else:
-                        num_atoms1, num_atoms2 = x1[idx1].GetNumAtoms(), x2[idx2].GetNumAtoms()
-                        kron_size = num_atoms1 * num_atoms2
-                        start_stop_probs = torch.ones(kron_size).unsqueeze(1)
-                        if self.uniform_probabilities:
-                            start_stop_probs /= kron_size
+                    if common_labels.size == 0:
+                        covar_mat[idx1, idx2] = 0
+                        continue
 
+                    for label in common_labels:
+                        label_ids1 = nnz_id1[torch.where(nnz_val1 == label)]
+                        label_ids2 = nnz_id2[torch.where(nnz_val2 == label)]
+                        kron_i.append(
+                            torch.cartesian_prod(label_ids1[:, 0] * x2_size, label_ids2[:, 0]).sum(1))
+                        kron_j.append(torch.cartesian_prod(label_ids1[:, 1] * x2_size, label_ids2[:, 1]).sum(1))
 
-                        #inv_vec = linear_cg_solver(
-                        #    adj_mat1, num_atoms1, adj_mat2, num_atoms2,
-                        #    common_labels, start_stop_probs, self.weight,
-                        #)
+                    kron_i = torch.cat(kron_i)
+                    kron_j = torch.cat(kron_j)
 
-                        if False:
+                    # creating the Kronecker product matrix as a sparse
+                    # tensor and converting it to dense is faster than
+                    # directly instantiating or overwriting a dense one
+                    kron_mat = torch.sparse_coo_tensor(
+                        torch.vstack([kron_i, kron_j]),
+                        torch.ones(len(kron_i)),
+                        size=(kron_i.max()+1, kron_j.max()+1)
+                    ).to_dense()
 
-                            def lsf(x):
-                                y = 0
-                                xm = x.reshape((num_atoms1, num_atoms2), order='F')
-                                for label in common_labels:
-                                    y += np.reshape(adj_mat1[label] @ xm @ adj_mat2[label], (kron_size,),
-                                                    order='F')
-                                return x - self.weight.detach().numpy() * y
+                    rw_probs_reduced = rw_probs[:kron_i.max()+1]
+                    kron_mat = torch.diag(rw_probs_reduced) - self.weight * kron_mat
 
-                            A = LinearOperator((kron_size, kron_size), matvec=lsf)
-                            b = np.ones(num_atoms1 * num_atoms2)
-                            inv_vec, _ = cg(A, b, tol=1.0e-6, maxiter=20, atol='legacy')
-
-
-                            max_diff = (inv_vec - correct_solve).abs().max().item()
-                            #if not max_diff < 1e-5:
-                            #    print(idx1, idx2)
-                            #    for label in common_labels:
-                            #        print(adj_mat1[label])
-                            #        print(adj_mat2[label])
-                            #    print()
-
-                        kron_mat = torch.zeros((num_atoms1 * num_atoms2, num_atoms1 * num_atoms2))
-                        for label in common_labels:
-                            mat1 = adj_mat1[label].to_dense()
-                            mat2 = adj_mat2[label].to_dense()
-                            kron_mat += torch.kron(mat1, mat2)
-
-                        kron_mat = torch.diag(torch.ones((num_atoms1 * num_atoms2))) - self.weight * kron_mat
-                        correct_solve = torch.linalg.solve(kron_mat, start_stop_probs)
-
-                        covar_mat[idx1, idx2] = start_stop_probs.T @ correct_solve
-
-                        #self.weight.backward()
+                    correct_solve = torch.linalg.solve(kron_mat, rw_probs_reduced)
+                    covar_mat[idx1, idx2] = rw_probs_reduced.T @ correct_solve
 
         if self.normalise:
             covar_mat = normalise_covariance(covar_mat)
@@ -207,9 +195,58 @@ if __name__ == '__main__':
 
     dataloader = DataLoaderMP()
     dataloader.load_benchmark("FreeSolv", "../../../data/property_prediction/FreeSolv.csv")
-    mols = [MolFromSmiles(mol) for mol in dataloader.features]
+    train_mols = [MolFromSmiles(mol) for mol in dataloader.features]
+    train_y = torch.from_numpy(dataloader.labels)
 
-    rw_kernel = RandomWalk()
-    rw_kernel.weight = 1/16
-    cov_mat = rw_kernel.forward(x1=mols[:300], x2=mols[:300])
-    print(cov_mat)
+    train_adj_mats = [get_label_adj_mats(x) for x in train_mols][:300]
+    largest_mol = max(mol.GetNumAtoms() for mol in train_mols)
+    train_labels = {label for mol in train_adj_mats for label in mol}
+    train_labels = {label: i for i, label in enumerate(train_labels)}
+
+    new_adj_mats = []
+
+    for train_adj_mat in train_adj_mats:
+        new_adj_mats_labels = []
+        for label, adj_mat in train_adj_mat.items():
+            new_adj_mat = torch.sparse_coo_tensor(
+                indices=adj_mat.indices(),
+                values=torch.full_like(adj_mat.values(), train_labels[label]),
+                size=(largest_mol, largest_mol)
+            )
+            new_adj_mats_labels.append(new_adj_mat)
+
+        if len(new_adj_mats_labels) == 1:
+            new_adj_mats.append(new_adj_mats_labels[0].coalesce().to_dense())
+        elif len(new_adj_mats_labels) > 1:
+            new_adj_mat = new_adj_mats_labels[0]
+            for adj_mat in new_adj_mats_labels[1:]:
+                new_adj_mat += adj_mat
+            new_adj_mats.append(new_adj_mat.coalesce().to_dense())
+        else:
+            pass
+
+    new_adj_mats = torch.stack([adj_mat.flatten() for adj_mat in new_adj_mats])
+
+    class ExactGPModel(gpytorch.models.ExactGP):
+        def __init__(self, train_x, train_y, likelihood):
+            super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
+            self.mean_module = gpytorch.means.ConstantMean()
+            self.covar_module = RandomWalk()
+
+        def forward(self, x):
+            mean_x = self.mean_module(x)
+            settings.lazily_evaluate_kernels._set_state(False)
+            covar_x = self.covar_module(x)
+            return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+    likelihood = gpytorch.likelihoods.GaussianLikelihood()
+    model = ExactGPModel(new_adj_mats, train_y, likelihood)
+
+    model.train()
+    likelihood.train()
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+    mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+
+    output = model(new_adj_mats)
+
