@@ -6,13 +6,17 @@ Strategies for Pre-training Graph Neural Networks. ICLR 2020
 Author: Leo Klarner (https://github.com/leojklarner), April 2022
 """
 
-import torch
+import os
 import numpy as np
+
+import torch
+import torch.nn.functional as F
+
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops
 from torch_geometric.data import Data
-import torch.nn.functional as F
 from torch_scatter import scatter_add
+
 from rdkit import Chem
 
 # define the allowable node and edge labels as used in Hu et al.
@@ -196,34 +200,53 @@ class GNN(torch.nn.Module):
     Combine multiple GNN layers into a network.
     """
 
-    def __init__(self, args):
+    def __init__(
+            self,
+            num_layers=5,
+            embed_dim=300,
+            gnn_type='gin'
+    ):
+
+        self.num_layers = num_layers
+        self.embed_dim = embed_dim
+        self.gnn_type = gnn_type
 
         super(GNN, self).__init__()
-        self.args = args
-
-        if self.args.num_layer < 2:
-            raise ValueError("Number of GNN layers must be greater than 1.")
 
         # initialise label embeddings
-        self.x_embedding1 = torch.nn.Embedding(num_atom_type, self.args.emb_dim)
-        self.x_embedding2 = torch.nn.Embedding(num_chirality_tag, self.args.emb_dim)
+        self.x_embedding1 = torch.nn.Embedding(num_atom_type, self.embed_dim)
+        self.x_embedding2 = torch.nn.Embedding(num_chirality_tag, self.embed_dim)
         torch.nn.init.xavier_uniform_(self.x_embedding1.weight.data)
         torch.nn.init.xavier_uniform_(self.x_embedding2.weight.data)
 
         # initialise GNN layers
         self.gnns = torch.nn.ModuleList()
-        for layer in range(self.args.num_layer):
-            if self.args.gnn_type == "gin":
-                self.gnns.append(GINConv(emb_dim=self.args.emb_dim))
-            elif self.args.gnn_type == "gcn":
-                self.gnns.append(GCNConv(emb_dim=self.args.emb_dim))
+        for layer in range(self.num_layers):
+            if gnn_type == "gin":
+                self.gnns.append(GINConv(emb_dim=self.embed_dim))
+            elif gnn_type == "gcn":
+                self.gnns.append(GCNConv(emb_dim=self.embed_dim))
             else:
                 raise NotImplementedError('Invalid GNN layer type.')
 
         # initialise BatchNorm layers
         self.batch_norms = torch.nn.ModuleList()
-        for layer in range(self.args.num_layer):
-            self.batch_norms.append(torch.nn.BatchNorm1d(self.args.emb_dim))
+        for layer in range(self.num_layers):
+            self.batch_norms.append(torch.nn.BatchNorm1d(self.embed_dim))
+
+    def load_pretrained(self, pretrain_type, device):
+        pretrain_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'pretrained_params',
+            f'hu_iclr_2020_{self.gnn_type}_{pretrain_type}.pth'
+        )
+        if not os.path.isfile(pretrain_path):
+            raise FileNotFoundError(
+                f'Specified GNN type ({self.gnn_type}) was not pretrained '
+                f'with requested approach ({pretrain_type}).')
+        else:
+            pretrained_state_dict = torch.load(pretrain_path, map_location=device)
+            self.load_state_dict(pretrained_state_dict)
 
     def forward(self, x, edge_index, edge_attr):
 
@@ -231,13 +254,12 @@ class GNN(torch.nn.Module):
         # x[:, 1] corresponds to 'possible_chirality_list'
         x = self.x_embedding1(x[:, 0]) + self.x_embedding2(x[:, 1])
 
-        for layer in range(self.args.num_layer):
+        for layer in range(self.num_layers):
             # x are atom features of the molecule and edge_attr the atomic features of the molecule
             x = self.gnns[layer](x, edge_index, edge_attr)
             x = self.batch_norms[layer](x)
-            if layer != self.args.num_layer - 1:
+            if layer != self.num_layers - 1:
                 x = F.relu(x)
-            x = F.dropout(x, self.args.dropout_ratio, training=self.training)
 
         return x
 
