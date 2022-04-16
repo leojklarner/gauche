@@ -9,12 +9,9 @@ import numpy as np
 from tqdm import tqdm
 from gpytorch.kernels import Kernel
 from gpytorch.constraints import Positive
-from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, get_label_adj_mats
+from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, get_label_adj_mats, kronecker_inner_product
 from rdkit.Chem import MolFromSmiles
-from line_profiler_pycharm import profile
-
 from gpytorch import settings
-settings.lazily_evaluate_kernels(False)
 
 
 class RandomWalk(Kernel):
@@ -25,9 +22,7 @@ class RandomWalk(Kernel):
     """
 
     def __init__(self,
-                 normalise=True,
-                 uniform_probabilities=True,
-                 num_fixed_point_iters=10,
+                 label_dimension,
                  weight_constraint=None,
                  weight_prior=None,
                  **kwargs):
@@ -48,9 +43,7 @@ class RandomWalk(Kernel):
 
         super(RandomWalk, self).__init__(**kwargs)
 
-        self.normalise = normalise
-        self.uniform_probabilities = uniform_probabilities
-        self.num_fixed_point_iters = num_fixed_point_iters
+        self.label_dimension = label_dimension
 
         self.register_parameter(
             name='raw_weight', parameter=torch.nn.Parameter(torch.zeros(1))
@@ -79,14 +72,11 @@ class RandomWalk(Kernel):
                ) -> None:
         self._set_weight(value)
 
-    def _set_weight(self,
-                    value: torch.Tensor
-                    ) -> None:
+    def _set_weight(self, value: torch.Tensor) -> None:
         if not torch.is_tensor(value):
             value = torch.as_tensor(value).to(self.raw_weight)
         self.initialize(raw_weight=self.raw_weight_constraint.inverse_transform(value))
 
-    @profile
     def forward(self,
                 x1: torch.Tensor,
                 x2: torch.Tensor,
@@ -103,139 +93,118 @@ class RandomWalk(Kernel):
 
         """
 
-        # check if the matrices are identical (order-dependent)
+        # check if the matrices are identical
         x1_equals_x2 = torch.equal(x1, x2)
 
-        x1_size = int(np.sqrt(x1.shape[1]))
-        if x1_equals_x2:
-            x2_size = x1_size
-        else:
-            x2_size = int(np.sqrt(x1.shape[2]))
+        # Step 1: pre-process flattened adjacency matrices
 
-        rw_probs = torch.ones(x1_size * x2_size)
+        # get the dimensions of the padded adjacency matrices
+        # and check that they are identical, this is irrelevant
+        # for this kernel but may lead to issues with GPyTorch
+        x1_padding_dim = int(np.sqrt(x1.shape[1] / self.label_dimension))
+        if not x1_equals_x2:
+            x2_padding_dim = int(np.sqrt(x2.shape[1] / self.label_dimension))
+            assert x1_padding_dim == x2_padding_dim, 'Dimension mismatch of padded adjacency matrices.'
 
-        # reshape adjacency matrices
-        x1 = x1.view((x1.shape[0], x1_size, x1_size))
-
+        # unflatten the flattened adjacency matrices and
+        # remove padding added in preprocessing
+        x1 = [x.view(x1_padding_dim, x1_padding_dim, self.label_dimension) for x in x1]
         if x1_equals_x2:
             x2 = x1
         else:
-            x2 = x2.view((x2.shape[0], x2_size, x2_size))
+            x2 = [x.view(x2_padding_dim, x2_padding_dim, self.label_dimension) for x in x2]
 
-        # derive nonzero elements
-        nnz1 = [(torch.nonzero(x, as_tuple=False), x[torch.nonzero(x, as_tuple=True)]) for x in x1]
-        unique1 = [torch.unique(z) for _, z in nnz1]
+        x1_node_num = [x.nonzero().max(0).values[0] for x in x1]
+        x1 = [x[:node_num, :node_num, :] for x, node_num in zip(x1, x1_node_num)]
+
         if x1_equals_x2:
-            nnz2 = nnz1
-            unique2 = unique1
+            x2_node_num = x1_node_num
+            x2 = x1
         else:
-            nnz2 = [(torch.nonzero(x, as_tuple=False), x[torch.nonzero(x, as_tuple=True)]) for x in x2]
-            unique2 = [torch.unique(z) for _, z in nnz2]
+            x2_node_num = [x.nonzero().max(0).values[0] for x in x2]
+            x2 = [x[:node_num, :node_num, :] for x, node_num in zip(x2, x2_node_num)]
+
+        # initialise random walk start and stop probabilities,
+        # to avoid re-initialisation in loop
+        rw_probs = torch.ones(max(x1_node_num) * max(x2_node_num), device=x1[0].device)
+
+        # Step 2: fill kernel matrix for all (x1, x2) pairs
 
         covar_mat = torch.zeros([len(x1), len(x2)])
 
         for idx1 in tqdm(range(len(x1))):
             for idx2 in range(len(x2)):
 
-                # if applicable, fill lower triangular part
-                # with already calculated upper triangular part
-                if x1_equals_x2 and idx1 == idx2:
-                    covar_mat[idx1, idx2] = 1
-
-                elif x1_equals_x2 and idx2 < idx1:
+                if x1_equals_x2 and idx2 < idx1:
                     covar_mat[idx1, idx2] = covar_mat[idx2, idx1]
 
                 else:
 
-                    kron_i = []
-                    kron_j = []
+                    # calculate the Kronecker inner product
+                    # formulating this as an einsum function
+                    # is much faster than alternatives, such as
+                    # pre-splitting the matrices by labels
+                    kron_mat = kronecker_inner_product(x1[idx1], x2[idx2])
 
-                    nnz_id1, nnz_val1 = nnz1[idx1]
-                    nnz_id2, nnz_val2 = nnz2[idx1]
-
-                    common_labels = np.intersect1d(unique1[idx1], unique2[idx2])
-
-                    if common_labels.size == 0:
-                        covar_mat[idx1, idx2] = 0
-                        continue
-
-                    for label in common_labels:
-                        label_ids1 = nnz_id1[torch.where(nnz_val1 == label)]
-                        label_ids2 = nnz_id2[torch.where(nnz_val2 == label)]
-                        kron_i.append(
-                            torch.cartesian_prod(label_ids1[:, 0] * x2_size, label_ids2[:, 0]).sum(1))
-                        kron_j.append(torch.cartesian_prod(label_ids1[:, 1] * x2_size, label_ids2[:, 1]).sum(1))
-
-                    kron_i = torch.cat(kron_i)
-                    kron_j = torch.cat(kron_j)
-
-                    # creating the Kronecker product matrix as a sparse
-                    # tensor and converting it to dense is faster than
-                    # directly instantiating or overwriting a dense one
-                    kron_mat = torch.sparse_coo_tensor(
-                        torch.vstack([kron_i, kron_j]),
-                        torch.ones(len(kron_i)),
-                        size=(kron_i.max()+1, kron_j.max()+1)
-                    ).to_dense()
-
-                    rw_probs_reduced = rw_probs[:kron_i.max()+1]
+                    # adjust the shape of the start and stop probability
+                    # vector and calculate the geometric sum expression
+                    rw_probs_reduced = rw_probs[:x1_node_num[idx1]*x2_node_num[idx2]]
                     kron_mat = torch.diag(rw_probs_reduced) - self.weight * kron_mat
 
+                    # calculate the random walk kernel
                     correct_solve = torch.linalg.solve(kron_mat, rw_probs_reduced)
-                    covar_mat[idx1, idx2] = rw_probs_reduced.T @ correct_solve
+                    covar_mat[idx1, idx2] = correct_solve.sum()
 
-        if self.normalise:
-            covar_mat = normalise_covariance(covar_mat)
+        # normalise the covariance matrix
+        covar_mat = normalise_covariance(covar_mat)
 
         return covar_mat
 
 
 if __name__ == '__main__':
+
     from gprotorch.dataloader.mol_prop import DataLoaderMP
 
     dataloader = DataLoaderMP()
     dataloader.load_benchmark("FreeSolv", "../../../data/property_prediction/FreeSolv.csv")
     train_mols = [MolFromSmiles(mol) for mol in dataloader.features]
-    train_y = torch.from_numpy(dataloader.labels)
+    train_y = torch.from_numpy(dataloader.labels).float()
 
-    train_adj_mats = [get_label_adj_mats(x) for x in train_mols][:300]
-    largest_mol = max(mol.GetNumAtoms() for mol in train_mols)
-    train_labels = {label for mol in train_adj_mats for label in mol}
-    train_labels = {label: i for i, label in enumerate(train_labels)}
+    train_adj_mats = [get_label_adj_mats(x, 'torch_sparse') for x in train_mols]
 
     new_adj_mats = []
+    y_inds = []
 
-    for train_adj_mat in train_adj_mats:
-        new_adj_mats_labels = []
-        for label, adj_mat in train_adj_mat.items():
-            new_adj_mat = torch.sparse_coo_tensor(
-                indices=adj_mat.indices(),
-                values=torch.full_like(adj_mat.values(), train_labels[label]),
-                size=(largest_mol, largest_mol)
-            )
-            new_adj_mats_labels.append(new_adj_mat)
+    for i, adj_mat in enumerate(train_adj_mats):
+        if adj_mat:
+            indices = []
+            labels = []
+            for label, mat in adj_mat.items():
+                indices.append(mat.indices())
+                labels.append(torch.full([mat.indices().shape[1]], train_labels[label]))
+            indices = torch.concat(indices, 1)
+            labels = torch.concat(labels)
+            new_adj_mats.append(torch.sparse_coo_tensor(
+                indices=torch.vstack([indices, labels]),
+                values=torch.ones_like(labels).float(),
+                size=(largest_mol, largest_mol, len(train_labels))
+            ))
+            y_inds.append(i)
 
-        if len(new_adj_mats_labels) == 1:
-            new_adj_mats.append(new_adj_mats_labels[0].coalesce().to_dense())
-        elif len(new_adj_mats_labels) > 1:
-            new_adj_mat = new_adj_mats_labels[0]
-            for adj_mat in new_adj_mats_labels[1:]:
-                new_adj_mat += adj_mat
-            new_adj_mats.append(new_adj_mat.coalesce().to_dense())
-        else:
-            pass
-
-    new_adj_mats = torch.stack([adj_mat.flatten() for adj_mat in new_adj_mats])
+    new_adj_mats = torch.stack([mat.to_dense().view(largest_mol*largest_mol*len(train_labels)) for mat in new_adj_mats])
+    train_y = train_y[y_inds]
 
     class ExactGPModel(gpytorch.models.ExactGP):
         def __init__(self, train_x, train_y, likelihood):
             super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
-            self.mean_module = gpytorch.means.ConstantMean()
-            self.covar_module = RandomWalk()
+            self.covar_module = RandomWalk(
+                label_dimension=len(train_labels),
+                weight_constraint=gpytorch.constraints.Interval(0, 1/16)
+            )
 
         def forward(self, x):
-            mean_x = self.mean_module(x)
-            settings.lazily_evaluate_kernels._set_state(False)
+            mean_x = torch.zeros(x.shape[0], dtype=x.dtype, device=x.device)
+            #settings.lazily_evaluate_kernels._set_state(False)
             covar_x = self.covar_module(x)
             return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
@@ -248,5 +217,18 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
 
-    output = model(new_adj_mats)
+    for i in range(100):
+        # Zero gradients from previous iteration
+        optimizer.zero_grad()
+        # Output from model
+        output = model(new_adj_mats)
+        # Calc loss and backprop gradients
+        loss = -mll(output, train_y)
+        loss.backward()
+        print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f' % (
+            i + 1, 10, loss.item(),
+            model.covar_module.weight.item(),
+            model.likelihood.noise.item()
+        ))
+        optimizer.step()
 

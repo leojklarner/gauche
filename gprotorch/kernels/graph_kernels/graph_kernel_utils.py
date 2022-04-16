@@ -1,22 +1,37 @@
 """
 Contains re-usable utility functions for calculating graph kernels.
 """
-import numpy
+
 import torch
-from typing import Any
-from torch.autograd import Function
-import pandas as pd
-import scipy.sparse as sp
 import numpy as np
-from collections import defaultdict
-from gpytorch.utils import linear_cg
-from numpy.linalg import inv
-from numpy.linalg import eig
-from numpy.linalg import multi_dot
-from scipy.linalg import expm
-from scipy.sparse.linalg import cg
-from scipy.sparse.linalg import LinearOperator
 import scipy.sparse as sp
+from collections import defaultdict
+
+
+def kronecker_inner_product(mat1, mat2):
+    r"""
+    This function calculates the Kronecker inner product.
+    Given two matrices X\in\mathbb{R}^{N \times M \times d}
+    and Y\in\mathbb{R}^{P \times Q \times d}, indexed by
+    a,b,c and d,e,f respectively, this function calculates
+    the Kronecker product between the indices a, d, b and e,
+    and fills the resulting Kronecker matrix with the inner
+    product of the corresponding vectors in dimensions c and f, i.e.
+    z_{Pa+d,Qb+e} = \langle \mathbf{x}_{a,b,:}, \mathbf{y}_{d,e,:}
+    \rangle = \sum_{c,f=0}^{d-1} x_{a,b,c}, y_{d,e,f}
+    assuming that the matrices are 0-indexed.
+
+    Args:
+        mat1: left-hand matrix
+        mat2: right-hand matrix
+
+    Returns: Kronecker inner product matrix
+
+    """
+
+    kron_size = (mat1.shape[0] * mat2.shape[0], mat1.shape[1] * mat2.shape[1])
+    return torch.einsum("abc,dec->adbe", mat1, mat2).reshape(kron_size)
+
 
 def normalise_covariance(covariance_matrix):
     """
@@ -30,47 +45,33 @@ def normalise_covariance(covariance_matrix):
 
     """
 
-    normalisation_factor = torch.unsqueeze(torch.sqrt(torch.diagonal(covariance_matrix)), -1)
-    normalisation_factor = normalisation_factor * torch.transpose(normalisation_factor, -2, -1)
+    normalisation_factor = torch.unsqueeze(
+        torch.sqrt(torch.diagonal(covariance_matrix)), -1
+    )
+    normalisation_factor = normalisation_factor * torch.transpose(
+        normalisation_factor, -2, -1
+    )
     return torch.div(covariance_matrix, normalisation_factor)
 
 
-def sp_adj_mats(mol):
-
-    adj_mats = defaultdict(lambda: [[], []])
-    num_atoms = mol.GetNumAtoms()
-
-    for bond in mol.GetBonds():
-
-        start_atom = bond.GetBeginAtom().GetSymbol()
-        start_idx = bond.GetBeginAtomIdx()
-        end_atom = bond.GetEndAtom().GetSymbol()
-        end_idx = bond.GetEndAtomIdx()
-
-        label = hash(frozenset([
-            start_atom, end_atom,
-            bond.GetBondTypeAsDouble()
-        ]))
-
-        adj_mats[label][0].extend([start_idx, end_idx])
-        adj_mats[label][1].extend([end_idx, start_idx])
-
-    adj_mats = {k: sp.coo_matrix(
-        (numpy.ones(len(v[0])), (v[0], v[1])), (num_atoms, num_atoms)).tocsr() for k, v in adj_mats.items()}
-
-    return adj_mats
-
-
-def get_label_adj_mats(mol):
+def get_label_adj_mats(mol, adj_mat_format):
     """
 
     Args:
         mol:
+        adj_mat_format:
 
     Returns:
 
     """
 
+    assert adj_mat_format in [
+        "torch_sparse",
+        "scipy_sparse",
+        "torch_dense",
+        "numpy_dense",
+    ], f"Invalid adjacency matrix format: {adj_mat_format}"
+
     adj_mats = defaultdict(lambda: [[], []])
     num_atoms = mol.GetNumAtoms()
 
@@ -81,86 +82,81 @@ def get_label_adj_mats(mol):
         end_atom = bond.GetEndAtom().GetSymbol()
         end_idx = bond.GetEndAtomIdx()
 
-        label = hash(frozenset([
-            start_atom, end_atom,
-            bond.GetBondTypeAsDouble()
-        ]))
+        label = hash(
+            frozenset([start_atom, end_atom, bond.GetBondTypeAsDouble()])
+        )
 
         adj_mats[label][0].extend([start_idx, end_idx])
         adj_mats[label][1].extend([end_idx, start_idx])
 
-    adj_mats = {k: torch.sparse_coo_tensor(
-        torch.LongTensor(v),
-        torch.ones(len(v[0])),
-        (num_atoms, num_atoms)).coalesce() for k, v in adj_mats.items()}
+    if adj_mat_format == "torch_sparse":
 
-    return adj_mats
+        def mat_transform(indices):
+            mat = torch.sparse_coo_tensor(
+                torch.LongTensor(indices),
+                torch.ones(len(indices[0])),
+                (num_atoms, num_atoms),
+            ).coalesce()
+            return mat
 
+    elif adj_mat_format == "scipy_sparse":
 
-def kronecker_matvec(adj_mat1, num_atoms1, adj_mat2, num_atoms2, labels, vec):
-    #vec = vec.reshape((num_atoms2, num_atoms1))
-    vec = torch.hstack(torch.tensor_split(vec, num_atoms1))
-    res = [torch.sparse.mm(adj_mat1[label], torch.mm(adj_mat2[label], vec).t()).t() for label in labels]
-    if len(res) == 1:
-        sum_res = res[0]
-    elif len(res) > 1:
-        sum_res = res[0]
-        for add_res in res[1:]:
-            sum_res += add_res
+        def mat_transform(indices):
+            mat = sp.coo_matrix(
+                (np.ones(len(indices[0])), np.array(indices)),
+                (num_atoms, num_atoms),
+            ).tocsr()
+            return mat
+
+    elif adj_mat_format == "torch_dense":
+
+        def mat_transform(indices):
+            mat = torch.zeros((num_atoms, num_atoms))
+            mat[indices] = 1
+            return mat
+
+    elif adj_mat_format == "numpy_dense":
+
+        def mat_transform(indices):
+            mat = np.zeros((num_atoms, num_atoms))
+            mat[tuple(indices)] = 1
+            return mat
+
     else:
-        raise NotImplementedError('')
-
-    #return sum_res.reshape((num_atoms1 * num_atoms2, 1))
-    return torch.vstack(torch.hsplit(sum_res, num_atoms1))
-
-
-class LinearCG(Function):
-    """
-    Differentiable linear conjugate gradient solver for sparse Kronecker products.
-    """
-
-    @staticmethod
-    def forward(ctx: Any, *args: Any, **kwargs: Any) -> Any:
-        adj_mat1, num_atoms1, adj_mat2, num_atoms2, common_labels, start_stop_probs, weight = args
-        inv_vec = linear_cg(
-            matmul_closure=lambda x: x - weight * kronecker_matvec(
-                adj_mat1, num_atoms1, adj_mat2, num_atoms2, common_labels, x),
-            rhs=start_stop_probs
+        raise NotImplementedError(
+            f"Invalid adjacency matrix format: {adj_mat_format}"
         )
 
-        #grad = kronecker_matvec(adj_mat1, num_atoms1, adj_mat2, num_atoms2, common_labels, inv_vec)
-        #weight_grad = linear_cg(
-        #    matmul_closure=lambda x: x - weight * kronecker_matvec(
-        #        adj_mat1, num_atoms1, adj_mat2, num_atoms2, common_labels, x),
-        #    rhs=grad
-        #)
-        #weight_grad=torch.Tensor([1])
-        #ctx.save_for_backward(weight_grad)
+    adj_mats = {k: mat_transform(v) for k, v in adj_mats.items()}
 
-        return inv_vec
-
-    @staticmethod
-    def backward(ctx: Any, grad_output: Any) -> Any:
-        weight_grad = ctx.saved_tensors
-        grads = (None, None, None, None, None, None, None, grad_output.mm(weight_grad))
-        return grads
+    return adj_mats, num_atoms
 
 
-class ScipyCG(Function):
+def adj_mat_preprocessing(adj_mats, dense=False):
 
-    def forward(ctx: Any, *args: Any, **kwargs: Any) -> Any:
+    assert all(adj_mats), 'Found empty adjacency matrices.'
 
-        adj_mat1, num_atoms1, adj_mat2, num_atoms2, common_labels, start_stop_probs, weight = args
+    largest_mol = max([num_atoms for _, num_atoms in adj_mats])
+    train_labels = {label for mol, _ in adj_mats for label in mol}
+    train_labels = {label: i for i, label in enumerate(train_labels)}
 
-        kron_shape = num_atoms1*num_atoms2, num_atoms1*num_atoms2
+    processed_adj_mats = []
 
-        def lsf(x):
-            y = 0
-            xm = x.reshape((num_atoms1, num_atoms2), order='F')
-            for label in common_labels:
-                y += np.reshape(multi_dot((adj_mat1[label], xm, adj_mat2[label])), (kron_shape,), order='F')
-            return x - weight * y
+    for adj_mat, _ in adj_mats:
+        indices = []
+        labels = []
+        for label, mat in adj_mat.items():
+            indices.append(mat.indices())
+            labels.append(torch.full([mat.indices().shape[1]], train_labels[label]))
+        indices = torch.concat(indices, 1)
+        labels = torch.concat(labels)
+        processed_adj_mats.append(torch.sparse_coo_tensor(
+            indices=torch.vstack([indices, labels]),
+            values=torch.ones_like(labels).float(),
+            size=(largest_mol, largest_mol, len(train_labels))
+        ))
 
-        A = LinearOperator((kron_shape, kron_shape), matvec=lambda x: lsf(x))
-        b = np.ones(num_atoms1*num_atoms2)
-        x_sol, _ = cg(A, b, tol=1.0e-6, maxiter=20, atol='legacy')
+    if dense:
+        processed_adj_mats = [adj_mat.to_dense() for adj_mat in processed_adj_mats]
+
+    return processed_adj_mats, largest_mol, len(train_labels)
