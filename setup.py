@@ -40,7 +40,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     license="MIT",
-    keywords="machine-learning gaussian-processes test_kernels pytorch chemistry biology protein ligand",
+    keywords="machine-learning gaussian-processes kernels pytorch chemistry biology protein ligand",
     url="https://github.com/leojklarner/GProTorch",
     packages=packages,
     install_requires=install_requires,
