@@ -8,13 +8,13 @@ We recommend using a conda virtual environment.
 ```
 conda create -n gprotorch python==3.8
 pip install gpytorch
-pip install scikit-learn pandas pytest
+pip install scikit-learn pandas pytest tqdm
 conda install -c conda-forge rdkit
 ```
 
 Optional for running tests.
 
 ```
-pip install gpflow
+pip install gpflow grakel
 ```
 

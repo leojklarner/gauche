@@ -1,5 +1,5 @@
 """
-Module for kernels that operate on bit vectors.
+Module for test_kernels that operate on bit vectors.
 Author: Ryan-Rhys Griffiths 2021
 """
 
@@ -11,7 +11,7 @@ import torch
 
 class BitDistance(torch.nn.Module):
     r"""
-    Distance module for bit vector kernels.
+    Distance module for bit vector test_kernels.
     """
     def __init__(self, postprocess_script=default_postprocess_script):
         super().__init__()
@@ -69,15 +69,15 @@ class BitDistance(torch.nn.Module):
 
 class BitKernel(Kernel):
     r"""
-    Base class for kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
+    Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
 
-    In the typical use case, kernels inheriting from this class will specify a similarity metric such as Tanimoto,
+    In the typical use case, test_kernels inheriting from this class will specify a similarity metric such as Tanimoto,
     MinMax etc.
 
    .. note::
 
     This kernel does not have an `outputscale` parameter. To add a scaling parameter,
-    decorate this kernel with a :class:`gpytorch.kernels.ScaleKernel`.
+    decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
 
     This base :class:`BitKernel` class does not include a lengthscale parameter
     :math:`\Theta`, in contrast to many common kernel functions.
@@ -160,17 +160,17 @@ class TanimotoKernel(BitKernel):
    .. note::
 
     This kernel does not have an `outputscale` parameter. To add a scaling parameter,
-    decorate this kernel with a :class:`gpytorch.kernels.ScaleKernel`.
+    decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
 
     Example:
         >>> x = torch.randint(0, 2, (10, 5))
         >>> # Non-batch: Simple option
-        >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
+        >>> covar_module = gpytorch.test_kernels.ScaleKernel(TanimotoKernel())
         >>> covar = covar_module(x)  # Output: LazyTensor of size (10 x 10)
         >>>
         >>> batch_x = torch.randint(0, 2, (2, 10, 5))
         >>> # Batch: Simple option
-        >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
+        >>> covar_module = gpytorch.test_kernels.ScaleKernel(TanimotoKernel())
         >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
     def __init__(self, **kwargs):

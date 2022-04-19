@@ -1,5 +1,5 @@
 """
-Test suite for bit vector kernels.
+Test suite for bit vector test_kernels.
 Author: Ryan-Rhys Griffiths 2021
 """
 
