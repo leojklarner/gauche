@@ -1,5 +1,5 @@
 """
-Test suite for bit vector test_kernels.
+Test suite for fingerprint kernels.
 Author: Ryan-Rhys Griffiths 2021
 """
 
@@ -10,7 +10,9 @@ from gpflow.utilities.ops import broadcasting_elementwise
 import tensorflow as tf
 import torch
 from gpytorch.kernels import ScaleKernel
-from gprotorch.kernels.bit_vector_kernel import BitDistance, TanimotoKernel
+
+from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import BitDistance
+from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 
 @pytest.mark.parametrize("x1, x2", [

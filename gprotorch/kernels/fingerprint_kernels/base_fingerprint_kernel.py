@@ -1,9 +1,8 @@
 """
-Module for test_kernels that operate on bit vectors.
+Module for test_kernels that operate on fingerprint representations (bit vectors or count vectors).
 Author: Ryan-Rhys Griffiths 2021
 """
 
-import gpytorch
 from gpytorch.kernels import Kernel
 from gpytorch.kernels.kernel import default_postprocess_script
 import torch
@@ -37,9 +36,12 @@ class BitDistance(torch.nn.Module):
             (:class:`Tensor`, :class:`Tensor) corresponding to the similarity matrix between `x1` and `x2`
         """
 
+        # Extend this list when including new metrics
+
         if metric not in ['tanimoto']:
             raise RuntimeError('Similarity metric not supported. Available options are \'tanimoto\'')
 
+        # Branch for Tanimoto metric
         if metric == 'tanimoto':
 
             # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
@@ -87,7 +89,7 @@ class BitKernel(Kernel):
         The similarity metric to use. One of ['tanimoto'].
     """
     def __init__(self, metric='', **kwargs):
-        super(BitKernel, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.metric = metric
 
     def forward(self, x1, x2, **params):
@@ -111,8 +113,6 @@ class BitKernel(Kernel):
                 First set of data.
             :attr:`x2` (Tensor `m x d` or `b1 x ... x bk x m x d`):
                 Second set of data.
-            :attr:`diag` (bool):
-                Should we return the whole distance matrix, or just the diagonal? If True, we must have `x1 == x2`.
             :attr:`last_dim_is_batch` (tuple, optional):
                 Is the last dimension of the data a batch dimension or not?
 
@@ -142,40 +142,3 @@ class BitKernel(Kernel):
         res = self.distance_module._sim(x1, x2, postprocess, x1_eq_x2, self.metric)
 
         return res
-
-
-class TanimotoKernel(BitKernel):
-    r"""
-    Computes a covariance matrix based on the Tanimoto kernel
-    between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`:
-
-    .. math::
-
-   \begin{equation*}
-    k_{\text{Tanimoto}}(\mathbf{x}, \mathbf{x'}) = \frac{\langle\mathbf{x},
-    \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert^2 + \left\lVert\mathbf{x'}\right\rVert^2 -
-    \langle\mathbf{x}, \mathbf{x'}\rangle}
-   \end{equation*}
-
-   .. note::
-
-    This kernel does not have an `outputscale` parameter. To add a scaling parameter,
-    decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
-
-    Example:
-        >>> x = torch.randint(0, 2, (10, 5))
-        >>> # Non-batch: Simple option
-        >>> covar_module = gpytorch.test_kernels.ScaleKernel(TanimotoKernel())
-        >>> covar = covar_module(x)  # Output: LazyTensor of size (10 x 10)
-        >>>
-        >>> batch_x = torch.randint(0, 2, (2, 10, 5))
-        >>> # Batch: Simple option
-        >>> covar_module = gpytorch.test_kernels.ScaleKernel(TanimotoKernel())
-        >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
-    """
-    def __init__(self, **kwargs):
-        super(TanimotoKernel, self).__init__(**kwargs)
-        self.metric = 'tanimoto'
-
-    def forward(self, x1, x2, **params):
-        return self.covar_dist(x1, x2, **params)
