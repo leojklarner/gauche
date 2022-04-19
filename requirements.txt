@@ -2,3 +2,7 @@ numpy
 pandas
 scikit-learn
 rdkit
+torch
+gpytorch
+pytest
+tqdm
