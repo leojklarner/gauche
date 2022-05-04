@@ -354,7 +354,3 @@ class GNN(torch.nn.Module):
                 x = F.relu(x)
 
         return x
-
-
-if __name__ == "__main__":
-    pass
