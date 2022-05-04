@@ -3,6 +3,9 @@ Reformatted and cleaned up GNN modules from Hu et al.
 Strategies for Pre-training Graph Neural Networks. ICLR 2020
 (https://github.com/snap-stanford/pretrain-gnns)
 
+Specifically, the model definition code is adapted from
+https://github.com/snap-stanford/pretrain-gnns/blob/master/chem/model.py
+
 Author: Leo Klarner (https://github.com/leojklarner), April 2022
 """
 
