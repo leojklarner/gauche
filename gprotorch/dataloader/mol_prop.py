@@ -82,7 +82,8 @@ class DataLoaderMP(DataLoader):
 
             # descList[115:] contains fragment-based features only
             # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-            fragments = {d[0]: d[1] for d in Descriptors.descList[115:]}
+            # Update: in the new RDKit version the indices are [124:]
+            fragments = {d[0]: d[1] for d in Descriptors.descList[124:]}
             frags = np.zeros((len(self.features), len(fragments)))
             for i in range(len(self.features)):
                 mol = MolFromSmiles(self.features[i])
@@ -143,8 +144,11 @@ class DataLoaderMP(DataLoader):
         else:
 
             df = pd.read_csv(path)
-            self.features = df[benchmarks[benchmark]["features"]].to_list()
-            self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
+            # drop nans from the datasets
+            nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
+            nan_indices = [nan for nan, x in enumerate(nans) if x]
+            self.features = df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
+            self.labels = df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
 
 
 if __name__ == '__main__':
