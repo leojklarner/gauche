@@ -143,8 +143,11 @@ class DataLoaderMP(DataLoader):
         else:
 
             df = pd.read_csv(path)
-            self.features = df[benchmarks[benchmark]["features"]].to_list()
-            self.labels = df[benchmarks[benchmark]["labels"]].to_numpy()
+            # drop nans from the datasets
+            nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
+            nan_indices = [nan for nan, x in enumerate(nans) if x]
+            self.features = df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
+            self.labels = df[benchmarks[benchmark]["labels"]].dropna().to_numpy()
 
 
 if __name__ == '__main__':
