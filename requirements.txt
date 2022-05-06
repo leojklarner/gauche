@@ -1,7 +1,7 @@
 numpy
 pandas
 scikit-learn
-rdkit
+rdkit-pypi
 torch
 gpytorch
 pytest
