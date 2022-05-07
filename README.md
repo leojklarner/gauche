@@ -6,7 +6,8 @@ Gaussian Process Library for Molecules, Proteins and General Chemistry in PyTorc
 We recommend using a conda virtual environment.
 
 ```
-conda create -n gprotorch python==3.8
+conda create -n gprotorch python=3.8
+conda activate gprotorch
 pip install gpytorch botorch
 pip install scikit-learn pandas pytest tqdm
 conda install -c conda-forge rdkit
