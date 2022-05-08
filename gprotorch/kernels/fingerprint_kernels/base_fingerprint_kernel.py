@@ -58,7 +58,7 @@ class BitDistance(torch.nn.Module):
         # Branch for Tanimoto metric
         if metric == "tanimoto":
             res = batch_tanimoto_sim(x1, x2)
-            res.clamp_min_(0)
+            res.clamp_min_(0)  # zero out negative values
             return self._postprocess(res) if postprocess else res
         else:
             raise RuntimeError(
