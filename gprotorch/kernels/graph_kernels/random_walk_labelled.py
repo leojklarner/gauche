@@ -156,7 +156,7 @@ class RandomWalk(Kernel):
                     covar_mat[idx1, idx2] = correct_solve.sum()
 
         # normalise the covariance matrix
-        covar_mat = normalise_covariance(covar_mat)
+        #covar_mat = normalise_covariance(covar_mat)
 
         return covar_mat
 

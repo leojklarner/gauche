@@ -6,10 +6,14 @@ against existing libraries.
 import numpy.testing as npt
 import grakel
 import scipy.sparse as sp
+import graphkernels.kernels as gk
 import os
+import igraph
 import numpy as np
 import torch
+import random
 from rdkit.Chem import MolFromSmiles
+from rdkit.Chem.rdchem import RWMol, Atom
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
 from gprotorch.dataloader.mol_prop import DataLoaderMP
 from gprotorch.kernels.graph_kernels.random_walk_labelled import RandomWalk
@@ -19,10 +23,26 @@ from gprotorch.kernels.graph_kernels.graph_kernel_utils import (
     adj_mat_preprocessing,
 )
 
+benchmark_path = os.path.abspath(
+    os.path.join(
+        os.getcwd(), '..', '..', '..', 'data', 'property_prediction', 'ESOL.csv'
+    )
+)
+
+def mol2graph(mol):
+    atoms_info = [(atom.GetIdx(), atom.GetAtomicNum()) for atom in mol.GetAtoms()]
+    bonds_info = [(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), int(bond.GetBondTypeAsDouble())) for bond in mol.GetBonds()]
+    graph = igraph.Graph()
+    for atom_info in atoms_info:
+        graph.add_vertex(atom_info[0], label=atom_info[1])
+    for bond_info in bonds_info:
+        graph.add_edge(bond_info[0], bond_info[1], label=bond_info[2])
+    return graph
+
 
 def labelled_random_walk_kernel():
 
-    weight = 1/16
+    weight = 1/17
 
     train_mols = [
         r"CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)[O])C",
@@ -32,7 +52,17 @@ def labelled_random_walk_kernel():
         r"CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5.CS(=O)(=O)O",
     ]
 
-    train_mols = [MolFromSmiles(smiles) for smiles in train_mols]
+    loader = DataLoaderMP()
+    loader.load_benchmark('ESOL', benchmark_path)
+
+    train_smiles = loader.features[:5]
+    print(len(train_smiles))
+
+    train_mols = [MolFromSmiles(smiles) for smiles in train_smiles]
+    igraphs = [mol2graph(mol) for mol in train_mols]
+    borgwardt_covar = gk.CalculateGeometricRandomWalkKernel(igraphs, par=weight)
+    #borgwardt_covar = normalise_covariance(torch.from_numpy(borgwardt_covar))
+
     torch_adj_mats = [
         get_label_adj_mats(x, adj_mat_format="torch_sparse")
         for x in train_mols
@@ -67,11 +97,24 @@ def labelled_random_walk_kernel():
                 sp_adj_mats[i], sp_adj_mats[j]
             )
 
-    grakel_covar = normalise_covariance(torch.from_numpy(grakel_covar))
-    print(grakel_covar)
-    print(our_covar)
-    npt.assert_almost_equal(
-        grakel_covar.numpy(), our_covar.numpy(),
+    #grakel_covar = normalise_covariance(torch.from_numpy(grakel_covar))
+    if len(train_mols) <= 5:
+        print(grakel_covar)
+        print()
+        print(borgwardt_covar)
+        print()
+        print(our_covar.numpy())
+        print()
+        print(normalise_covariance(torch.from_numpy(grakel_covar)).numpy())
+        print()
+        print(normalise_covariance(torch.from_numpy(borgwardt_covar)).numpy())
+        print()
+        print(normalise_covariance(our_covar).numpy())
+        print()
+    npt.assert_allclose(
+        normalise_covariance(torch.from_numpy(grakel_covar)).numpy(),
+        normalise_covariance(our_covar).numpy(),
+        atol=5e-2
     )
 
     print()
