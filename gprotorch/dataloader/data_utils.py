@@ -6,7 +6,9 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
-def transform_data(X_train, y_train, X_test, y_test, n_components=None, use_pca=False):
+def transform_data(
+    X_train, y_train, X_test, y_test, n_components=None, use_pca=False
+):
     """
     Apply feature scaling, dimensionality reduction to the data. Return the standardised and low-dimensional train and
     test sets together with the scaler object for the target values.
@@ -30,7 +32,16 @@ def transform_data(X_train, y_train, X_test, y_test, n_components=None, use_pca=
     if use_pca:
         pca = PCA(n_components)
         X_train_scaled = pca.fit_transform(X_train)
-        print('Fraction of variance retained is: ' + str(sum(pca.explained_variance_ratio_)))
+        print(
+            "Fraction of variance retained is: "
+            + str(sum(pca.explained_variance_ratio_))
+        )
         X_test_scaled = pca.transform(X_test)
 
-    return X_train_scaled, y_train_scaled, X_test_scaled, y_test_scaled, y_scaler
+    return (
+        X_train_scaled,
+        y_train_scaled,
+        X_test_scaled,
+        y_test_scaled,
+        y_scaler,
+    )

@@ -7,7 +7,7 @@ We recommend using a conda virtual environment.
 
 ```
 conda create -n gprotorch python==3.8
-pip install gpytorch botorch
+pip install gpytorch botorch selfies
 pip install scikit-learn pandas pytest tqdm
 conda install -c conda-forge rdkit
 ```

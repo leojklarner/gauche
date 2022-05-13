@@ -6,3 +6,4 @@ torch
 gpytorch
 pytest
 tqdm
+selfies

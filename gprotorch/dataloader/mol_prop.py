@@ -3,14 +3,18 @@ Instantiation of the abstract data loader class for
 molecular property prediction datasets.
 """
 
+import itertools
+import re
+
 import numpy as np
 import pandas as pd
+import selfies as sf
 from gprotorch.dataloader import DataLoader
 from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+from sklearn.feature_extraction.text import CountVectorizer
 
 
 class DataLoaderMP(DataLoader):
-
     def __init__(self):
         super(DataLoaderMP, self).__init__()
         self.task = "molecular_property_prediction"
@@ -59,7 +63,9 @@ class DataLoaderMP(DataLoader):
             self.features = np.delete(self.features, invalid_idx).tolist()
             self.labels = np.delete(self.labels, invalid_idx)
 
-    def featurize(self, representation, bond_radius=3, nBits=2048):
+    def featurize(
+        self, representation, bond_radius=3, nBits=2048, max_ngram=5
+    ):
         """Transforms SMILES into the specified molecular representation.
 
         Args:
@@ -73,7 +79,12 @@ class DataLoaderMP(DataLoader):
         def fingerprints():
 
             rdkit_mols = [MolFromSmiles(smiles) for smiles in self.features]
-            fps = [AllChem.GetMorganFingerprintAsBitVect(mol, bond_radius, nBits=nBits) for mol in rdkit_mols]
+            fps = [
+                AllChem.GetMorganFingerprintAsBitVect(
+                    mol, bond_radius, nBits=nBits
+                )
+                for mol in rdkit_mols
+            ]
 
             return np.asarray(fps)
 
@@ -90,12 +101,36 @@ class DataLoaderMP(DataLoader):
                 try:
                     features = [fragments[d](mol) for d in fragments]
                 except:
-                    raise Exception('molecule {}'.format(i) + ' is not canonicalised')
+                    raise Exception(
+                        "molecule {}".format(i) + " is not canonicalised"
+                    )
                 frags[i, :] = features
 
             return frags
 
-        valid_representations = ["fingerprints", "fragments", "fragprints"]
+        # auxiliary function to calculate bag of character representation of a molecular string
+        def bag_of_characters(selfies=False):
+            if selfies:  # convert SMILES to SELFIES
+                strings = []
+                for i in range(len(self.features)):
+                    strings.append(sf.encoder(self.features[i]))
+            else:  # otherwise stick with SMILES
+                strings = self.features
+
+            # extract bag of character (boc) representation from strings
+            cv = CountVectorizer(
+                ngram_range=(1, max_ngram), analyzer="char", lowercase=False
+            )
+            bocs = cv.fit_transform(strings).toarray()
+            return bocs
+
+        valid_representations = [
+            "fingerprints",
+            "fragments",
+            "fragprints",
+            "bag_of_smiles",
+            "bag_of_selfies",
+        ]
 
         if representation == "fingerprints":
 
@@ -107,12 +142,24 @@ class DataLoaderMP(DataLoader):
 
         elif representation == "fragprints":
 
-            self.features = np.concatenate((fingerprints(), fragments()), axis=1)
+            self.features = np.concatenate(
+                (fingerprints(), fragments()), axis=1
+            )
+
+        elif representation == "bag_of_selfies":
+
+            self.features = bag_of_characters(selfies=True)
+
+        elif representation == "bag_of_smiles":
+
+            self.features = bag_of_characters()
 
         else:
 
-            raise Exception(f"The specified representation choice {representation} is not a valid option."
-                            f"Choose between {valid_representations}.")
+            raise Exception(
+                f"The specified representation choice {representation} is not a valid option."
+                f"Choose between {valid_representations}."
+            )
 
     def load_benchmark(self, benchmark, path):
         """Loads features and labels from one of the included benchmark datasets
@@ -126,20 +173,24 @@ class DataLoaderMP(DataLoader):
         """
 
         benchmarks = {
-            "Photoswitch":      {"features": "SMILES",
-                                 "labels": "E isomer pi-pi* wavelength in nm"},
-            "ESOL":             {"features": "smiles",
-                                 "labels": "measured log solubility in mols per litre"},
-            "FreeSolv":         {"features": "smiles",
-                                 "labels": "expt"},
-            "Lipophilicity":    {"features": "smiles",
-                                 "labels": "exp"},
+            "Photoswitch": {
+                "features": "SMILES",
+                "labels": "E isomer pi-pi* wavelength in nm",
+            },
+            "ESOL": {
+                "features": "smiles",
+                "labels": "measured log solubility in mols per litre",
+            },
+            "FreeSolv": {"features": "smiles", "labels": "expt"},
+            "Lipophilicity": {"features": "smiles", "labels": "exp"},
         }
 
         if benchmark not in benchmarks.keys():
 
-            raise Exception(f"The specified benchmark choice ({benchmark}) is not a valid option. "
-                            f"Choose one of {list(benchmarks.keys())}.")
+            raise Exception(
+                f"The specified benchmark choice ({benchmark}) is not a valid option. "
+                f"Choose one of {list(benchmarks.keys())}."
+            )
 
         else:
 
@@ -147,11 +198,20 @@ class DataLoaderMP(DataLoader):
             # drop nans from the datasets
             nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
             nan_indices = [nan for nan, x in enumerate(nans) if x]
-            self.features = df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
-            self.labels = df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
+            self.features = (
+                df[benchmarks[benchmark]["features"]]
+                .drop(nan_indices)
+                .to_list()
+            )
+            self.labels = (
+                df[benchmarks[benchmark]["labels"]]
+                .dropna()
+                .to_numpy()
+                .reshape(-1, 1)
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     loader = DataLoaderMP()
     loader.load_benchmark("ESOL", "../../data/property_prediction/ESOL.csv")
     print(loader)
