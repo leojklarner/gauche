@@ -29,7 +29,7 @@ def test_tanimoto_similarity_with_equal_inputs(x1, x2):
     dist_object = BitDistance()
     tan_similarity = dist_object._sim(x1, x2, postprocess=False, x1_eq_x2=True, metric='tanimoto')
 
-    assert (tan_similarity == torch.ones((2, 2))).all() == True
+    assert torch.isclose(tan_similarity, torch.ones((2, 2))).all()
 
 
 def test_tanimoto_similarity_with_unequal_inputs():

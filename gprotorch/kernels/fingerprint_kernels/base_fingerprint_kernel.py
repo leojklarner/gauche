@@ -1,6 +1,6 @@
 """
 Module for test_kernels that operate on fingerprint representations (bit vectors or count vectors).
-Author: Ryan-Rhys Griffiths 2021
+Author: Ryan-Rhys Griffiths and Austin Tripp 2022
 """
 
 from gpytorch.kernels import Kernel
