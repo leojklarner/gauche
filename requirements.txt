@@ -6,3 +6,4 @@ torch
 gpytorch
 pytest
 tqdm
+graphein==1.4.0
