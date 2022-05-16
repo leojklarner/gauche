@@ -1,5 +1,4 @@
 
-import warnings
 from copy import deepcopy
 
 import torch
@@ -8,7 +7,6 @@ from gpytorch import settings
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import _GaussianLikelihoodBase
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
-from gpytorch.utils.warnings import GPInputWarning
 from gpytorch.models.exact_prediction_strategies import prediction_strategy
 from gpytorch.models import ExactGP
 
