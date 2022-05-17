@@ -78,6 +78,8 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
 
     for i in range(0, n_trials):
 
+        print(f'Trial {i} of {n_trials}')
+
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_set_size, random_state=i)
 
         #  We standardise the outputs but leave the inputs unchanged
@@ -193,18 +195,18 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-n', '--n_trials', type=int, default=20,
+    parser.add_argument('-n', '--n_trials', type=int, default=50,
                         help='int specifying number of random train/test splits to use')
     parser.add_argument('-ts', '--test_set_size', type=float, default=0.2,
                         help='float in range [0, 1] specifying fraction of dataset to use as test set')
-    parser.add_argument('-d', '--dataset', type=str, default='Photoswitch',
+    parser.add_argument('-d', '--dataset', type=str, default='Lipophilicity',
                         help='Dataset to use. One of [Photoswitch, ESOL, FreeSolv, Lipophilicity]')
-    parser.add_argument('-p', '--path', type=str, default="../data/property_prediction/photoswitches.csv",
+    parser.add_argument('-p', '--path', type=str, default="../data/property_prediction/Lipophilicity.csv",
                         help='Path to the dataset file. One of [../data/property_prediction/photoswitches.csv, '
                              '../data/property_prediction/ESOL.csv, '
                              '../data/property_prediction/FreeSolv.csv, '
                              '../data/property_prediction/Lipophilicity.csv]')
-    parser.add_argument('-r', '--featurisation', type=str, default='fragprints',
+    parser.add_argument('-r', '--featurisation', type=str, default='fingerprints',
                         help='str specifying the molecular featurisation. '
                              'One of [fingerprints, fragments, fragprints].')
     parser.add_argument('-m', '--model', type=str, default='Tanimoto',
