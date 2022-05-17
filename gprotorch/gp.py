@@ -3,12 +3,14 @@ from copy import deepcopy
 
 import torch
 
-from gpytorch import settings
+from gpytorch import Module, settings
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import _GaussianLikelihoodBase
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from gpytorch.models.exact_prediction_strategies import prediction_strategy
 from gpytorch.models import ExactGP
+
+Softplus = torch.nn.Softplus()
 
 class Inputs:
     def __init__(self, data):
@@ -16,6 +18,14 @@ class Inputs:
 
     def append(self, new_data):
         self.data.extend(new_data.data)
+
+class Kernel(Module):
+    def __init__(self, dtype=torch.float):
+        super().__init__()
+        self._scale_variance = torch.nn.Parameter(torch.tensor([0.1], dtype=dtype))
+
+    def scale(self, S):
+        return Softplus(self._scale_variance) * S
 
 class SIGP(ExactGP):
     def __init__(self, train_inputs, train_targets, likelihood):
