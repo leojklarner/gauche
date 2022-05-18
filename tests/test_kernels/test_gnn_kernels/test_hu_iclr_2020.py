@@ -10,7 +10,7 @@ import os
 import pytest
 import torch
 from gprotorch.dataloader import DataLoaderMP
-from gprotorch.kernels.gnn_kernels.test_hu_iclr_2020 import GNN, mol_to_pyg
+from gprotorch.kernels.gnn_kernels.hu_iclr_2020 import GNN, mol_to_pyg
 from rdkit.Chem import MolFromSmiles
 from torch_geometric.data import Batch
 

@@ -1,6 +1,6 @@
 """
 Module for test_kernels that operate on fingerprint representations (bit vectors or count vectors).
-Author: Ryan-Rhys Griffiths 2021
+Author: Ryan-Rhys Griffiths and Austin Tripp 2022
 """
 
 from gpytorch.kernels import Kernel
@@ -8,15 +8,34 @@ from gpytorch.kernels.kernel import default_postprocess_script
 import torch
 
 
+def batch_tanimoto_sim(
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+) -> torch.Tensor:
+    """
+    Tanimoto between two batched tensors, across last 2 dimensions.
+
+    eps argument ensures numerical stability if all zero tensors are added.
+    """
+    # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
+    assert x1.ndim >= 2 and x2.ndim >= 2
+    dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
+    x1_sum = torch.sum(x1**2, dim=-1, keepdims=True)
+    x2_sum = torch.sum(x2**2, dim=-1, keepdims=True)
+    return (dot_prod + eps) / (
+        eps + x1_sum + torch.transpose(x2_sum, -1, -2) - dot_prod
+    )
+
+
 class BitDistance(torch.nn.Module):
     r"""
     Distance module for bit vector test_kernels.
     """
+
     def __init__(self, postprocess_script=default_postprocess_script):
         super().__init__()
         self._postprocess = postprocess_script
 
-    def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric='tanimoto'):
+    def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric="tanimoto"):
         r"""
         Computes the similarity between x1 and x2
 
@@ -36,59 +55,38 @@ class BitDistance(torch.nn.Module):
             (:class:`Tensor`, :class:`Tensor) corresponding to the similarity matrix between `x1` and `x2`
         """
 
-        # Extend this list when including new metrics
-
-        if metric not in ['tanimoto']:
-            raise RuntimeError('Similarity metric not supported. Available options are \'tanimoto\'')
-
         # Branch for Tanimoto metric
-        if metric == 'tanimoto':
-
-            # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
-
-            x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)  # Compute the squared L2-norm of each datapoint
-            if x1_eq_x2 and not x1.requires_grad and not x2.requires_grad:
-                x2_norm = x1_norm
-            else:
-                x2_norm = x2.pow(2).sum(dim=-1, keepdim=False)
-
-            # The following code works for both the batch and non-batch cases
-            cross_product = x1.matmul(x2.transpose(-2, -1))
-
-            # Analogue of denominator in Tanimoto formula
-            denominator = x1_norm + x2_norm.squeeze(-1) - cross_product
-
-            res = (cross_product/denominator)
-
-            # if x1 and x2 are equal than the Tanimoto similarity is 1
-            if x1_eq_x2 and not x1.requires_grad and not x2.requires_grad:
-                res.diagonal(dim1=-2, dim2=-1).fill_(1)
-
-            # Zero out negative values
-            res.clamp_min_(0)
+        if metric == "tanimoto":
+            res = batch_tanimoto_sim(x1, x2)
+            res.clamp_min_(0)  # zero out negative values
             return self._postprocess(res) if postprocess else res
+        else:
+            raise RuntimeError(
+                "Similarity metric not supported. Available options are 'tanimoto'"
+            )
 
 
 class BitKernel(Kernel):
     r"""
-    Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
+     Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
 
-    In the typical use case, test_kernels inheriting from this class will specify a similarity metric such as Tanimoto,
-    MinMax etc.
+     In the typical use case, test_kernels inheriting from this class will specify a similarity metric such as Tanimoto,
+     MinMax etc.
 
-   .. note::
+    .. note::
 
-    This kernel does not have an `outputscale` parameter. To add a scaling parameter,
-    decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
+     This kernel does not have an `outputscale` parameter. To add a scaling parameter,
+     decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
 
-    This base :class:`BitKernel` class does not include a lengthscale parameter
-    :math:`\Theta`, in contrast to many common kernel functions.
+     This base :class:`BitKernel` class does not include a lengthscale parameter
+     :math:`\Theta`, in contrast to many common kernel functions.
 
-    Base Attributes:
-    :attr:`metric` (str):
-        The similarity metric to use. One of ['tanimoto'].
+     Base Attributes:
+     :attr:`metric` (str):
+         The similarity metric to use. One of ['tanimoto'].
     """
-    def __init__(self, metric='', **kwargs):
+
+    def __init__(self, metric="", **kwargs):
         super().__init__(**kwargs)
         self.metric = metric
 
@@ -136,9 +134,14 @@ class BitKernel(Kernel):
         res = None
 
         # Cache the Distance object or else JIT will recompile every time
-        if not self.distance_module or self.distance_module._postprocess != dist_postprocess_func:
+        if (
+            not self.distance_module
+            or self.distance_module._postprocess != dist_postprocess_func
+        ):
             self.distance_module = BitDistance(dist_postprocess_func)
 
-        res = self.distance_module._sim(x1, x2, postprocess, x1_eq_x2, self.metric)
+        res = self.distance_module._sim(
+            x1, x2, postprocess, x1_eq_x2, self.metric
+        )
 
         return res
