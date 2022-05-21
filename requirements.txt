@@ -1,8 +1,9 @@
 numpy
 pandas
 scikit-learn
-rdkit
+rdkit-pypi
 torch
 gpytorch
 pytest
 tqdm
+graphein==1.4.0
