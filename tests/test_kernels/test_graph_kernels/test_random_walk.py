@@ -53,7 +53,7 @@ if __name__ == "__main__":
     our_kernel = RandomWalk()
     our_kernel.weight = weight
     with torch.no_grad():
-        our_covar = our_kernel.forward(inputs)
+        our_covar = our_kernel.kern(inputs)
 
     sp_adj_mats = [
         get_label_adj_mats(x, adj_mat_format="numpy_dense")

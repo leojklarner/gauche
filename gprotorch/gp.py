@@ -27,6 +27,9 @@ class Kernel(Module):
     def scale(self, S):
         return Softplus(self._scale_variance) * S
 
+    def forward(self, X):
+        return self.scale(self.kern(X))
+
 class SIGP(ExactGP):
     def __init__(self, train_inputs, train_targets, likelihood):
         if train_inputs is not None and type(train_inputs) is Inputs:

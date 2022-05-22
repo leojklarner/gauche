@@ -11,7 +11,7 @@ from rdkit.Chem import MolFromSmiles
 from gpytorch import settings
 
 class RandomWalk(Kernel):
-    def forward(self, x1):
+    def kern(self, x1):
         x1_node_num = [x.shape[0] for x in x1]
 
         x2_node_num = x1_node_num
