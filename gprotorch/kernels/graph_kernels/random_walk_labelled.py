@@ -5,13 +5,17 @@ Notes: requires pytorch 1.8.0+ for torch.kron()
 
 import torch
 from tqdm import trange
-from gprotorch import Kernel
+from gprotorch import Kernel, Inputs
 from gprotorch.kernels.graph_kernels.graph_kernel_utils import normalise_covariance, kronecker_inner_product
 from rdkit.Chem import MolFromSmiles
 from gpytorch import settings
+from functools import lru_cache
 
 class RandomWalk(Kernel):
+    @lru_cache(maxsize=5)
     def kern(self, x1):
+        if type(x1) == Inputs:
+            x1 = x1.data
         x1_node_num = [x.shape[0] for x in x1]
 
         x2_node_num = x1_node_num

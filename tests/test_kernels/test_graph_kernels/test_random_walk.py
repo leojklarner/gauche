@@ -11,6 +11,7 @@ import random
 from rdkit.Chem import MolFromSmiles
 from rdkit.Chem.rdchem import RWMol, Atom
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
+from gprotorch import Inputs
 from gprotorch.dataloader.mol_prop import DataLoaderMP
 from gprotorch.kernels.graph_kernels.random_walk_labelled import RandomWalk
 from gprotorch.kernels.graph_kernels.graph_kernel_utils import (
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     torch_adj_mats, largest_mol, label_dim = adj_mat_preprocessing(
         torch_adj_mats)
 
-    inputs = [mat.to_dense()[:n, :n, :] for mat, n in zip(torch_adj_mats, node_nums)]
+    inputs = Inputs([mat.to_dense()[:n, :n, :] for mat, n in zip(torch_adj_mats, node_nums)])
 
     our_kernel = RandomWalk()
     our_kernel.weight = weight
