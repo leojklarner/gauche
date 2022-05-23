@@ -3,20 +3,19 @@ Test suite for fingerprint kernels.
 Author: Ryan-Rhys Griffiths 2021
 """
 
-import pytest
 import gpflow
-from gpflow.utilities import positive
-from gpflow.utilities.ops import broadcasting_elementwise
+import pytest
 import tensorflow as tf
 import torch
-from gpytorch.kernels import ScaleKernel
-
+from gpflow.utilities import positive
+from gpflow.utilities.ops import broadcasting_elementwise
 from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
     BitDistance,
 )
 from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import (
     TanimotoKernel,
 )
+from gpytorch.kernels import ScaleKernel
 
 
 @pytest.mark.parametrize(
@@ -38,7 +37,7 @@ def test_tanimoto_similarity_with_equal_inputs(x1, x2):
         x1, x2, postprocess=False, x1_eq_x2=True, metric="tanimoto"
     )
 
-    assert (tan_similarity == torch.ones((2, 2))).all() == True
+    assert torch.isclose(tan_similarity, torch.ones((2, 2))).all()
 
 
 def test_tanimoto_similarity_with_unequal_inputs():

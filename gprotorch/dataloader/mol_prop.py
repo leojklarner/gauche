@@ -6,6 +6,7 @@ molecular property prediction datasets.
 import itertools
 import re
 
+import graphein.molecule as gm
 import numpy as np
 import pandas as pd
 import selfies as sf
@@ -63,15 +64,15 @@ class DataLoaderMP(DataLoader):
             self.features = np.delete(self.features, invalid_idx).tolist()
             self.labels = np.delete(self.labels, invalid_idx)
 
-    def featurize(
-        self, representation, bond_radius=3, nBits=2048, max_ngram=5
-    ):
+
+    def featurize(self, representation, bond_radius=3, nBits=2048, graphein_config=None, max_ngram=5):
         """Transforms SMILES into the specified molecular representation.
 
         Args:
             representation: the desired molecular representation, one of [fingerprints, fragments, fragprints]
             bond_radius: int giving the bond radius for Morgan fingerprints. Default is 3
             nBits: int giving the bit vector length for Morgan fingerprints. Default is 2048
+            
 
         """
 
@@ -101,12 +102,14 @@ class DataLoaderMP(DataLoader):
                 try:
                     features = [fragments[d](mol) for d in fragments]
                 except:
-                    raise Exception(
-                        "molecule {}".format(i) + " is not canonicalised"
-                    )
+                    raise Exception(f'molecule {i}' + ' is not canonicalised')
+
                 frags[i, :] = features
 
             return frags
+        
+        def graphs():
+                return [gm.construct_graph(smiles=i, config=graphein_config) for i in self.features]
 
         # auxiliary function to calculate bag of character representation of a molecular string
         def bag_of_characters(selfies=False):
@@ -128,6 +131,7 @@ class DataLoaderMP(DataLoader):
             "fingerprints",
             "fragments",
             "fragprints",
+            "graphs",
             "bag_of_smiles",
             "bag_of_selfies",
         ]
@@ -142,9 +146,7 @@ class DataLoaderMP(DataLoader):
 
         elif representation == "fragprints":
 
-            self.features = np.concatenate(
-                (fingerprints(), fragments()), axis=1
-            )
+            self.features = np.concatenate((fingerprints(), fragments()), axis=1)
 
         elif representation == "bag_of_selfies":
 
@@ -153,6 +155,10 @@ class DataLoaderMP(DataLoader):
         elif representation == "bag_of_smiles":
 
             self.features = bag_of_characters()
+
+        elif representation == "graphs":
+
+            self.features = graphs()
 
         else:
 
@@ -193,25 +199,15 @@ class DataLoaderMP(DataLoader):
             )
 
         else:
-
             df = pd.read_csv(path)
             # drop nans from the datasets
             nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
             nan_indices = [nan for nan, x in enumerate(nans) if x]
-            self.features = (
-                df[benchmarks[benchmark]["features"]]
-                .drop(nan_indices)
-                .to_list()
-            )
-            self.labels = (
-                df[benchmarks[benchmark]["labels"]]
-                .dropna()
-                .to_numpy()
-                .reshape(-1, 1)
-            )
+            self.features = df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
+            self.labels = df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     loader = DataLoaderMP()
     loader.load_benchmark("ESOL", "../../data/property_prediction/ESOL.csv")
     print(loader)

@@ -4,7 +4,7 @@ RDKit fragment features.
 """
 
 import gpytorch
-
+import torch
 from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
     BitKernel,
 )
@@ -39,10 +39,19 @@ class TanimotoKernel(BitKernel):
          >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
          >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
+    
+    is_stationary = False
+    has_lengthscale = False
 
     def __init__(self, **kwargs):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
-    def forward(self, x1, x2, **params):
-        return self.covar_dist(x1, x2, **params)
+    def forward(self, x1, x2, diag=False, **params):
+        if diag:
+            assert x1.size() == x2.size() and torch.equal(x1, x2)
+            return torch.ones(
+                *x1.shape[:-2], x1.shape[-2], dtype=x1.dtype, device=x1.device
+            )
+        else:
+            return self.covar_dist(x1, x2, **params)

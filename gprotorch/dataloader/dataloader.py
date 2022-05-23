@@ -3,10 +3,11 @@ Abstract class implementing the data loading, data splitting,
 type validation and feature extraction functionalities.
 """
 
+from abc import ABCMeta, abstractmethod
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from abc import ABCMeta, abstractmethod
 
 
 class DataLoader(metaclass=ABCMeta):
