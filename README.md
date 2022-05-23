@@ -23,7 +23,7 @@ conda create -c conda-forge -n gauche rdkit
 conda activate gauche
 conda install pytorch torchvision torchaudio -c pytorch
 pip install scikit-learn pandas pytest tqdm jupyter
-pip install gpytorch botorch
+pip install gpytorch botorch selfies
 conda install pyg -c pyg
 ```
 

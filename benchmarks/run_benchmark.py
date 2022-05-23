@@ -7,19 +7,21 @@ Author: Ryan-Rhys Griffiths 2022
 import argparse
 import logging
 
-from botorch import fit_gpytorch_model
-from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.mlls import ExactMarginalLogLikelihood
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 import torch
-
-from benchmark_models import TanimotoGP, ScalarProductGP
+from benchmark_models import ScalarProductGP, TanimotoGP
+from botorch import fit_gpytorch_model
 from gprotorch.dataloader import DataLoaderMP
 from gprotorch.dataloader.data_utils import transform_data
-from gpytorch_metrics import negative_log_predictive_density, mean_standardized_log_loss, quantile_coverage_error
-
+from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.mlls import ExactMarginalLogLikelihood
+from gpytorch_metrics import (
+    mean_standardized_log_loss,
+    negative_log_predictive_density,
+    quantile_coverage_error,
+)
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 
 # Remove Graphein warnings
 logging.getLogger("graphein").setLevel("ERROR")
