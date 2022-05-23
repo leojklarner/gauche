@@ -195,18 +195,18 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-n', '--n_trials', type=int, default=50,
+    parser.add_argument('-n', '--n_trials', type=int, default=20,
                         help='int specifying number of random train/test splits to use')
     parser.add_argument('-ts', '--test_set_size', type=float, default=0.2,
                         help='float in range [0, 1] specifying fraction of dataset to use as test set')
-    parser.add_argument('-d', '--dataset', type=str, default='Lipophilicity',
+    parser.add_argument('-d', '--dataset', type=str, default='ESOL',
                         help='Dataset to use. One of [Photoswitch, ESOL, FreeSolv, Lipophilicity]')
-    parser.add_argument('-p', '--path', type=str, default="../data/property_prediction/Lipophilicity.csv",
+    parser.add_argument('-p', '--path', type=str, default="../data/property_prediction/ESOL.csv",
                         help='Path to the dataset file. One of [../data/property_prediction/photoswitches.csv, '
                              '../data/property_prediction/ESOL.csv, '
                              '../data/property_prediction/FreeSolv.csv, '
                              '../data/property_prediction/Lipophilicity.csv]')
-    parser.add_argument('-r', '--featurisation', type=str, default='fingerprints',
+    parser.add_argument('-r', '--featurisation', type=str, default='fragments',
                         help='str specifying the molecular featurisation. '
                              'One of [fingerprints, fragments, fragprints].')
     parser.add_argument('-m', '--model', type=str, default='Tanimoto',
