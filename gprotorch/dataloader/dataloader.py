@@ -3,14 +3,14 @@ Abstract class implementing the data loading, data splitting,
 type validation and feature extraction functionalities.
 """
 
+from abc import ABCMeta, abstractmethod
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from abc import ABCMeta, abstractmethod
 
 
 class DataLoader(metaclass=ABCMeta):
-
     def __init__(self):
         self.task = None
 
@@ -55,7 +55,9 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def split_and_scale(self, test_size=.2, scale_labels=True, scale_features=False):
+    def split_and_scale(
+        self, test_size=0.2, scale_labels=True, scale_features=False
+    ):
         """Splits the data into training and testing sets.
 
         Args:
@@ -79,7 +81,9 @@ class DataLoader(metaclass=ABCMeta):
             return train_scaled, test_scaled, scaler
 
         # split data into train and test sets
-        X_train, X_test, y_train, y_test = train_test_split(self.features, self.labels, test_size=test_size, random_state=1)
+        X_train, X_test, y_train, y_test = train_test_split(
+            self.features, self.labels, test_size=test_size, random_state=1
+        )
 
         # scale features, if requested
         if scale_features:

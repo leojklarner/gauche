@@ -10,7 +10,10 @@ TODO: Once new release of GPyTorch becomes available, remove this module.
 from math import pi
 
 import torch
-from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.distributions import (
+    MultitaskMultivariateNormal,
+    MultivariateNormal,
+)
 
 pi = torch.tensor(pi)
 

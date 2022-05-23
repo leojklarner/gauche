@@ -3,31 +3,39 @@ Test suite for fingerprint kernels.
 Author: Ryan-Rhys Griffiths 2021
 """
 
-import pytest
 import gpflow
-from gpflow.utilities import positive
-from gpflow.utilities.ops import broadcasting_elementwise
+import pytest
 import tensorflow as tf
 import torch
+from gpflow.utilities import positive
+from gpflow.utilities.ops import broadcasting_elementwise
+from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
+    BitDistance,
+)
+from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import (
+    TanimotoKernel,
+)
 from gpytorch.kernels import ScaleKernel
 
-from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import BitDistance
-from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
-
-@pytest.mark.parametrize("x1, x2", [
-    (torch.ones((2, 2)), torch.ones((2, 2))),
-    (2*torch.ones((2, 2)), 2*torch.ones((2, 2))),
-    (10*torch.ones((2, 2)), 10*torch.ones((2, 2))),
-    (10000*torch.ones((2, 2)), 10000*torch.ones((2, 2))),
-    (0.1*torch.ones((2, 2)), 0.1*torch.ones((2, 2)))
-])
+@pytest.mark.parametrize(
+    "x1, x2",
+    [
+        (torch.ones((2, 2)), torch.ones((2, 2))),
+        (2 * torch.ones((2, 2)), 2 * torch.ones((2, 2))),
+        (10 * torch.ones((2, 2)), 10 * torch.ones((2, 2))),
+        (10000 * torch.ones((2, 2)), 10000 * torch.ones((2, 2))),
+        (0.1 * torch.ones((2, 2)), 0.1 * torch.ones((2, 2))),
+    ],
+)
 def test_tanimoto_similarity_with_equal_inputs(x1, x2):
     """
     Test the Tanimoto similarity metric between two equal input tensors.
     """
     dist_object = BitDistance()
-    tan_similarity = dist_object._sim(x1, x2, postprocess=False, x1_eq_x2=True, metric='tanimoto')
+    tan_similarity = dist_object._sim(
+        x1, x2, postprocess=False, x1_eq_x2=True, metric="tanimoto"
+    )
 
     assert torch.isclose(tan_similarity, torch.ones((2, 2))).all()
 
@@ -39,9 +47,11 @@ def test_tanimoto_similarity_with_unequal_inputs():
     [1, 1]         [2, 2]                                            [2/3, 2/3]
     """
     x1 = torch.ones((2, 2))
-    x2 = 2*torch.ones((2, 2))
+    x2 = 2 * torch.ones((2, 2))
     dist_object = BitDistance()
-    tan_similarity = dist_object._sim(x1, x2, postprocess=False, metric='tanimoto')
+    tan_similarity = dist_object._sim(
+        x1, x2, postprocess=False, metric="tanimoto"
+    )
 
     assert torch.allclose(tan_similarity, torch.tensor(0.6666666666666))
 
@@ -54,9 +64,14 @@ def test_tanimoto_similarity_with_very_unequal_inputs():
     x1 = torch.tensor([[1, 3], [2, 4]], dtype=torch.float64)
     x2 = torch.tensor([[4, 2], [3, 1]], dtype=torch.float64)
     dist_object = BitDistance()
-    tan_similarity = dist_object._sim(x1, x2, postprocess=False, metric='tanimoto')
+    tan_similarity = dist_object._sim(
+        x1, x2, postprocess=False, metric="tanimoto"
+    )
 
-    assert torch.allclose(tan_similarity, torch.tensor([[0.5, 6/14], [2/3, 0.5]], dtype=torch.float64))
+    assert torch.allclose(
+        tan_similarity,
+        torch.tensor([[0.5, 6 / 14], [2 / 3, 0.5]], dtype=torch.float64),
+    )
 
 
 def test_tanimoto_similarity_with_batch_dimension():
@@ -72,9 +87,14 @@ def test_tanimoto_similarity_with_batch_dimension():
     x2 = x2[None, :]
 
     dist_object = BitDistance()
-    tan_similarity = dist_object._sim(x1, x2, postprocess=False, metric='tanimoto')
+    tan_similarity = dist_object._sim(
+        x1, x2, postprocess=False, metric="tanimoto"
+    )
 
-    assert torch.allclose(tan_similarity, torch.tensor([[0.5, 6/14], [2/3, 0.5]], dtype=torch.float64))
+    assert torch.allclose(
+        tan_similarity,
+        torch.tensor([[0.5, 6 / 14], [2 / 3, 0.5]], dtype=torch.float64),
+    )
 
 
 def test_tanimoto_kernel():
@@ -136,11 +156,15 @@ class Tanimoto(gpflow.kernels.Kernel):
 
         Xs = tf.reduce_sum(tf.square(X), axis=-1)  # Squared L2-norm of X
         X2s = tf.reduce_sum(tf.square(X2), axis=-1)  # Squared L2-norm of X2
-        cross_product = tf.tensordot(X, X2, [[-1], [-1]])  # outer product of the matrices X and X2
+        cross_product = tf.tensordot(
+            X, X2, [[-1], [-1]]
+        )  # outer product of the matrices X and X2
 
         # Analogue of denominator in Tanimoto formula
 
-        denominator = -cross_product + broadcasting_elementwise(tf.add, Xs, X2s)
+        denominator = -cross_product + broadcasting_elementwise(
+            tf.add, Xs, X2s
+        )
 
         return self.variance * cross_product / denominator
 

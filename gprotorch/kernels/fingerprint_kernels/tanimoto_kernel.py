@@ -3,9 +3,8 @@ Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/E
 RDKit fragment features.
 """
 
-import torch
 import gpytorch
-
+import torch
 from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
     BitKernel,
 )
@@ -40,7 +39,7 @@ class TanimotoKernel(BitKernel):
          >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
          >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
-
+    
     is_stationary = False
     has_lengthscale = False
 
