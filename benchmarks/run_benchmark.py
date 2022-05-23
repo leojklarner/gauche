@@ -32,6 +32,8 @@ dataset_paths = {'Photoswitch':'../data/property_prediction/photoswitches.csv',
                  'ESOL': '../data/property_prediction/ESOL.csv',
                  'FreeSolv': '../data/property_prediction/FreeSolv.csv',
                  'Lipophilicity': '../data/property_prediction/Lipophilicity.csv'}
+featurisations = {'fingerprints': 'fingerprints', 'fragments': 'fragments', 'fragprints': 'fragprints',
+                  'bag_of_smiles': 'bag_of_smiles', 'bag_of_selfies': 'bag_of_selfies'}
 
 
 def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_model):
@@ -45,7 +47,8 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
                                                        ../data/property_prediction/ESOL.csv',
                                                        '../data/property_prediction/FreeSolv.csv',
                                                        '../data/property_prediction/Lipophilicity.csv']
-        featurisation: Choice of features. One of ['fingerprints', 'fragments', 'fragprints']
+        featurisation: Choice of features. One of ['fingerprints', 'fragments', 'fragprints', 'bag_of_smiles',
+                                                   'bag_of_selfies']
         gp_model: Choice of model. One of ['Tanimoto', 'Scalar Product']
 
     Returns: Evaluation of model/representation on the benchmark
@@ -58,6 +61,9 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
     if dataset_path not in dataset_paths.values():
         raise ValueError(f"The specified dataset path ({dataset_path}) is not a valid option. "
                             f"Choose one of {list(dataset_paths.values())}.")
+    if featurisation not in featurisations.values():
+        raise ValueError(f"The specified featurisation ({featurisation}) is not a valid option. "
+                            f"Choose one of {list(featurisations.values())}.")
 
     # Load the benchmark dataset
     loader = DataLoaderMP()
@@ -127,8 +133,12 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
         # full GP predictive distribution
         trained_pred_dist = likelihood(model(X_test))
 
-        # Compute NLPD on the Test set
-        nlpd = negative_log_predictive_density(trained_pred_dist, y_test)
+        # Compute NLPD on the Test set. Raise exception if computation fails
+        try:
+            nlpd = negative_log_predictive_density(trained_pred_dist, y_test)
+        except:
+            Exception(f'NLPD calculation failed on trial {i}')
+            continue
 
         # Compute MSLL on Test set
         msll = mean_standardized_log_loss(trained_pred_dist, y_test)
@@ -197,7 +207,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-n', '--n_trials', type=int, default=20,
+    parser.add_argument('-n', '--n_trials', type=int, default=36,
                         help='int specifying number of random train/test splits to use')
     parser.add_argument('-ts', '--test_set_size', type=float, default=0.2,
                         help='float in range [0, 1] specifying fraction of dataset to use as test set')
@@ -208,9 +218,9 @@ if __name__ == '__main__':
                              '../data/property_prediction/ESOL.csv, '
                              '../data/property_prediction/FreeSolv.csv, '
                              '../data/property_prediction/Lipophilicity.csv]')
-    parser.add_argument('-r', '--featurisation', type=str, default='fragments',
+    parser.add_argument('-r', '--featurisation', type=str, default='bag_of_smiles',
                         help='str specifying the molecular featurisation. '
-                             'One of [fingerprints, fragments, fragprints].')
+                             'One of [fingerprints, fragments, fragprints, bag_of_smiles, bag_of_selfies].')
     parser.add_argument('-m', '--model', type=str, default='Tanimoto',
                         help='Model to use. One of [Tanimoto, Scalar Product,].')
 
