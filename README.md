@@ -4,7 +4,7 @@
 
 
 <p align="left">
-  <a href="https://github.com/leojklarner/gauche">
+  <a href="https://github.com/anonymousauthors/gauche">
     <img src="imgs/gauche_logo.png" width="45%" />
     <img src="imgs/gauche.gif" width="22%" hspace="30"/>
   </a>
