@@ -42,9 +42,8 @@ class DataLoaderMP(DataLoader):
         """Checks if the features are valid SMILES strings and (potentially)
         drops the entries that are not.
 
-        Args:
-            drop: whether to drop invalid entries
-
+        :param drop: whether to drop invalid entries
+        :type drop: bool
         """
 
         invalid_idx = []
@@ -68,12 +67,12 @@ class DataLoaderMP(DataLoader):
     def featurize(self, representation, bond_radius=3, nBits=2048, graphein_config=None, max_ngram=5):
         """Transforms SMILES into the specified molecular representation.
 
-        Args:
-            representation: the desired molecular representation, one of [fingerprints, fragments, fragprints]
-            bond_radius: int giving the bond radius for Morgan fingerprints. Default is 3
-            nBits: int giving the bit vector length for Morgan fingerprints. Default is 2048
-            
-
+        :param representation: the desired molecular representation, one of [fingerprints, fragments, fragprints]
+        :type representation: str
+        :param bond_radius: int giving the bond radius for Morgan fingerprints. Default is 3
+        :type bond_radius: int
+        :param nBits: int giving the bit vector length for Morgan fingerprints. Default is 2048
+        :type nBits: int
         """
 
         # auxiliary function to calculate the fingerprint representation of a molecule
@@ -102,7 +101,7 @@ class DataLoaderMP(DataLoader):
                 try:
                     features = [fragments[d](mol) for d in fragments]
                 except:
-                    raise Exception(f'molecule {i}' + ' is not canonicalised')
+                    raise Exception(f'molecule {i} is not canonicalised')
 
                 frags[i, :] = features
 
@@ -114,9 +113,7 @@ class DataLoaderMP(DataLoader):
         # auxiliary function to calculate bag of character representation of a molecular string
         def bag_of_characters(selfies=False):
             if selfies:  # convert SMILES to SELFIES
-                strings = []
-                for i in range(len(self.features)):
-                    strings.append(sf.encoder(self.features[i]))
+                strings = [sf.encoder(self.features[i]) for i in range(len(self.features))]
             else:  # otherwise stick with SMILES
                 strings = self.features
 
@@ -124,8 +121,7 @@ class DataLoaderMP(DataLoader):
             cv = CountVectorizer(
                 ngram_range=(1, max_ngram), analyzer="char", lowercase=False
             )
-            bocs = cv.fit_transform(strings).toarray()
-            return bocs
+            return cv.fit_transform(strings).toarray()
 
         valid_representations = [
             "fingerprints",
@@ -171,11 +167,11 @@ class DataLoaderMP(DataLoader):
         """Loads features and labels from one of the included benchmark datasets
         and feeds them into the DataLoader.
 
-        Args:
-            benchmark: the benchmark dataset to be loaded, one of
-            [Photoswitch, ESOL, FreeSolv, Lipophilicity]
-            path: the path to the dataset in csv format
-
+        :param benchmark: the benchmark dataset to be loaded, one of
+            ``[Photoswitch, ESOL, FreeSolv, Lipophilicity]``.
+        :type benchmark: str
+        :param path: the path to the dataset in csv format
+        :type path: str
         """
 
         benchmarks = {
@@ -191,20 +187,20 @@ class DataLoaderMP(DataLoader):
             "Lipophilicity": {"features": "smiles", "labels": "exp"},
         }
 
-        if benchmark not in benchmarks.keys():
-
-            raise Exception(
-                f"The specified benchmark choice ({benchmark}) is not a valid option. "
-                f"Choose one of {list(benchmarks.keys())}."
-            )
-
-        else:
+        if benchmark in benchmarks:
             df = pd.read_csv(path)
             # drop nans from the datasets
             nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
             nan_indices = [nan for nan, x in enumerate(nans) if x]
             self.features = df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
             self.labels = df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
+
+        else:
+
+            raise ValueError(
+                f"The specified benchmark choice ({benchmark}) is not a valid option. "
+                f"Choose one of {list(benchmarks.keys())}."
+            )
 
 
 if __name__ == '__main__':
