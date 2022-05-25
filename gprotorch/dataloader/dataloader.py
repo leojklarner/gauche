@@ -39,9 +39,8 @@ class DataLoader(metaclass=ABCMeta):
         """Checks whether the loaded data is a valid instance of the specified
         data type, potentially dropping invalid entries.
 
-        Args:
-            drop (bool):  whether to drop invalid entries
-
+        :param drop:  whether to drop invalid entries
+        :type drop: bool
         """
         raise NotImplementedError
 
@@ -49,8 +48,8 @@ class DataLoader(metaclass=ABCMeta):
     def featurize(self, representation):
         """Transforms the features to the specified representation (in-place).
 
-        Args:
-            representation: desired feature format
+        :param representation: desired feature format
+        :type representation: str
 
         """
         raise NotImplementedError
@@ -60,14 +59,13 @@ class DataLoader(metaclass=ABCMeta):
     ):
         """Splits the data into training and testing sets.
 
-        Args:
-            test_size: the relative size of the test set
-            scale_labels: whether to standardize the labels (after splitting)
-            scale_features: whether to standardize the features (after splitting)
-
-        Returns:
-            (potentially standardized) training and testing sets with associated scalers
-
+        :param test_size: the relative size of the test set
+        :type test_size: float
+        :param scale_labels: whether to standardize the labels (after splitting)
+        :type scale_labels: bool
+        :param scale_features: whether to standardize the features (after splitting)
+        :type scale_features: bool
+        :returns: (potentially standardized) training and testing sets with associated scalers
         """
 
         # reshape labels
