@@ -29,3 +29,10 @@ Optional for running tests.
 ```
 pip install gpflow grakel
 ```
+
+Optional for reaction optimization.
+```
+pip install --no-deps rxnfp
+pip install --no-deps drfp
+pip install transformers
+```
