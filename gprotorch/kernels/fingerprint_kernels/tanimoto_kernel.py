@@ -3,9 +3,8 @@ Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/E
 RDKit fragment features.
 """
 
-import torch
 import gpytorch
-
+import torch
 from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
     BitKernel,
 )

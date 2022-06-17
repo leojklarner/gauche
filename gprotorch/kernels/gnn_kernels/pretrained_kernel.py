@@ -6,7 +6,7 @@ Strategies for Pre-training Graph Neural Networks. ICLR 2020
 Specifically, the model definition code is adapted from
 https://github.com/snap-stanford/pretrain-gnns/blob/master/chem/model.py
 
-Author: Leo Klarner (https://github.com/leojklarner), April 2022
+Author: Anonymous authors, April 2022
 """
 
 import os
