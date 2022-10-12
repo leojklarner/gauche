@@ -13,19 +13,12 @@ A Gaussian Process Library for Molecules, Proteins and Reactions.
 
 ## Install
 
-We recommend using a conda virtual environment and install RDKit before the rest of the packages.
-
+We recommend using a conda virtual environment:.
 ```
-conda create -c conda-forge -n gauche rdkit
-conda activate gauche
-conda install pytorch torchvision torchaudio -c pytorch
-pip install scikit-learn pandas pytest tqdm jupyter
-pip install gpytorch botorch selfies
-conda install pyg -c pyg
+conda env create -f conda_env.yml
 ```
 
 Optional for running tests.
-
 ```
 pip install gpflow grakel
 ```
