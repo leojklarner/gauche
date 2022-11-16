@@ -22,3 +22,14 @@ Optional for running tests.
 ```
 pip install gpflow grakel
 ```
+## Citing
+
+If GAUCHE is useful for your work please consider citing the following paper:
+
+```
+@inproceedings{griffiths2022gauche,
+  title={GAUCHE: A Library for Gaussian Processes in Chemistry},
+  author={Griffiths, Ryan-Rhys and Klarner, Leo and Moss, Henry and Ravuri, Aditya and Truong, Sang T and Rankovic, Bojana and Du, Yuanqi and Jamasb, Arian Rokkum and Schwartz, Julius and Tripp, Austin and others},
+  booktitle={ICML 2022 2nd AI for Science Workshop}
+}
+```
