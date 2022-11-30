@@ -13,26 +13,32 @@ A Gaussian Process Library for Molecules, Proteins and Reactions.
 
 ## Install
 
-We recommend using a conda virtual environment and install RDKit before the rest of the packages.
-
+We recommend using a conda virtual environment:.
 ```
-conda create -c conda-forge -n gauche rdkit
-conda activate gauche
-conda install pytorch torchvision torchaudio -c pytorch
-pip install scikit-learn pandas pytest tqdm jupyter
-pip install gpytorch botorch selfies
-conda install pyg -c pyg
+conda env create -f conda_env.yml
 ```
 
 Optional for running tests.
-
 ```
 pip install gpflow grakel
 ```
+
 
 Optional for reaction optimization.
 ```
 pip install --no-deps rxnfp
 pip install --no-deps drfp
 pip install transformers
+
+## Citing
+
+If GAUCHE is useful for your work please consider citing the following paper:
+
+```
+@inproceedings{griffiths2022gauche,
+  title={GAUCHE: A Library for Gaussian Processes in Chemistry},
+  author={Griffiths, Ryan-Rhys and Klarner, Leo and Moss, Henry and Ravuri, Aditya and Truong, Sang T and Rankovic, Bojana and Du, Yuanqi and Jamasb, Arian Rokkum and Schwartz, Julius and Tripp, Austin and others},
+  booktitle={ICML 2022 2nd AI for Science Workshop}
+}
+
 ```
