@@ -41,7 +41,7 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-a
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -140,6 +140,10 @@ dmypy.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 .vscode/settings.json
+.DS_Store
+biovec/
+graphein/
+pytorch3d/
 
 # PyCharm .idea
 .idea
