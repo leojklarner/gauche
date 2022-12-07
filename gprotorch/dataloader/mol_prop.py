@@ -64,7 +64,6 @@ class DataLoaderMP(DataLoader):
             self.features = np.delete(self.features, invalid_idx).tolist()
             self.labels = np.delete(self.labels, invalid_idx)
 
-
     def featurize(self, representation, bond_radius=3, nBits=2048, graphein_config=None, max_ngram=5):
         """Transforms SMILES into the specified molecular representation.
 
@@ -173,7 +172,8 @@ class DataLoaderMP(DataLoader):
 
         Args:
             benchmark: the benchmark dataset to be loaded, one of
-            [Photoswitch, ESOL, FreeSolv, Lipophilicity]
+            [Photoswitch, Photoswitch_E_n_pi, Photoswitch_Z_pi_pi, Photoswitch_Z_n_pi,
+            ESOL, FreeSolv, Lipophilicity]
             path: the path to the dataset in csv format
 
         """
@@ -182,6 +182,18 @@ class DataLoaderMP(DataLoader):
             "Photoswitch": {
                 "features": "SMILES",
                 "labels": "E isomer pi-pi* wavelength in nm",
+            },
+            "Photoswitch_E_n_pi": {
+                "features": "SMILES",
+                "labels": "E isomer n-pi* wavelength in nm",
+            },
+            "Photoswitch_Z_pi_pi": {
+                "features": "SMILES",
+                "labels": "Z isomer pi-pi* wavelength in nm",
+            },
+            "Photoswitch_Z_n_pi": {
+                "features": "SMILES",
+                "labels": "Z isomer n-pi* wavelength in nm",
             },
             "ESOL": {
                 "features": "smiles",

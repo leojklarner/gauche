@@ -207,7 +207,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-n', '--n_trials', type=int, default=36,
+    parser.add_argument('-n', '--n_trials', type=int, default=20,
                         help='int specifying number of random train/test splits to use')
     parser.add_argument('-ts', '--test_set_size', type=float, default=0.2,
                         help='float in range [0, 1] specifying fraction of dataset to use as test set')
@@ -218,10 +218,10 @@ if __name__ == '__main__':
                              '../data/property_prediction/ESOL.csv, '
                              '../data/property_prediction/FreeSolv.csv, '
                              '../data/property_prediction/Lipophilicity.csv]')
-    parser.add_argument('-r', '--featurisation', type=str, default='bag_of_smiles',
+    parser.add_argument('-r', '--featurisation', type=str, default='fingerprints',
                         help='str specifying the molecular featurisation. '
                              'One of [fingerprints, fragments, fragprints, bag_of_smiles, bag_of_selfies].')
-    parser.add_argument('-m', '--model', type=str, default='Tanimoto',
+    parser.add_argument('-m', '--model', type=str, default='Scalar Product',
                         help='Model to use. One of [Tanimoto, Scalar Product,].')
 
     args = parser.parse_args()
