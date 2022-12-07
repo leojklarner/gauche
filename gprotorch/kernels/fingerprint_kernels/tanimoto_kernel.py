@@ -39,7 +39,7 @@ class TanimotoKernel(BitKernel):
          >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
          >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
-    
+
     is_stationary = False
     has_lengthscale = False
 

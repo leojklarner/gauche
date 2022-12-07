@@ -26,17 +26,29 @@ from sklearn.model_selection import train_test_split
 # Remove Graphein warnings
 logging.getLogger("graphein").setLevel("ERROR")
 
-gp_models = {'Tanimoto': 'Tanimoto', 'Scalar Product': 'Scalar Product'}
-dataset_names = {'Photoswitch': 'Photoswitch', 'ESOL': 'ESOL', 'FreeSolv': 'FreeSolv', 'Lipophilicity': 'Lipophilicity'}
-dataset_paths = {'Photoswitch':'../data/property_prediction/photoswitches.csv',
-                 'ESOL': '../data/property_prediction/ESOL.csv',
-                 'FreeSolv': '../data/property_prediction/FreeSolv.csv',
-                 'Lipophilicity': '../data/property_prediction/Lipophilicity.csv'}
-featurisations = {'fingerprints': 'fingerprints', 'fragments': 'fragments', 'fragprints': 'fragprints',
-                  'bag_of_smiles': 'bag_of_smiles', 'bag_of_selfies': 'bag_of_selfies'}
+gp_models = {"Tanimoto": "Tanimoto", "Scalar Product": "Scalar Product"}
+dataset_names = {
+    "Photoswitch": "Photoswitch",
+    "ESOL": "ESOL",
+    "FreeSolv": "FreeSolv",
+    "Lipophilicity": "Lipophilicity",
+}
+dataset_paths = {
+    "Photoswitch": "../data/property_prediction/photoswitches.csv",
+    "ESOL": "../data/property_prediction/ESOL.csv",
+    "FreeSolv": "../data/property_prediction/FreeSolv.csv",
+    "Lipophilicity": "../data/property_prediction/Lipophilicity.csv",
+}
 
 
-def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_model):
+def main(
+    n_trials,
+    test_set_size,
+    dataset_name,
+    dataset_path,
+    featurisation,
+    gp_model,
+):
     """
 
     Args:
@@ -56,8 +68,10 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
     """
 
     if dataset_name not in dataset_names.values():
-        raise ValueError(f"The specified dataset choice ({dataset_name}) is not a valid option. "
-                            f"Choose one of {list(dataset_names.keys())}.")
+        raise ValueError(
+            f"The specified dataset choice ({dataset_name}) is not a valid option. "
+            f"Choose one of {list(dataset_names.keys())}."
+        )
     if dataset_path not in dataset_paths.values():
         raise ValueError(f"The specified dataset path ({dataset_path}) is not a valid option. "
                             f"Choose one of {list(dataset_paths.values())}.")
@@ -86,12 +100,16 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
 
     for i in range(0, n_trials):
 
-        print(f'Trial {i} of {n_trials}')
+        print(f"Trial {i} of {n_trials}")
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_set_size, random_state=i)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_set_size, random_state=i
+        )
 
         #  We standardise the outputs but leave the inputs unchanged
-        _, y_train, _, y_test, y_scaler = transform_data(X_train, y_train, X_test, y_test)
+        _, y_train, _, y_test, y_scaler = transform_data(
+            X_train, y_train, X_test, y_test
+        )
 
         # Specify the precision. GPyTorch has issues with large datasets and float64.
         if y.size > 1000:
@@ -108,13 +126,15 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
         # initialise GP likelihood and model
         likelihood = GaussianLikelihood()
 
-        if gp_model == 'Tanimoto':
+        if gp_model == "Tanimoto":
             model = TanimotoGP(X_train, y_train, likelihood)
-        elif gp_model == 'Scalar Product':
+        elif gp_model == "Scalar Product":
             model = ScalarProductGP(X_train, y_train, likelihood)
         else:
-            raise ValueError(f"The specified model choice ({gp_model}) is not a valid option. "
-                            f"Choose one of {list(gp_models.keys())}.")
+            raise ValueError(
+                f"The specified model choice ({gp_model}) is not a valid option. "
+                f"Choose one of {list(gp_models.keys())}."
+            )
 
         # Find optimal model hyperparameters
         model.train()
@@ -146,9 +166,9 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
         # Compute quantile coverage error on test set
         qce = quantile_coverage_error(trained_pred_dist, y_test, quantile=95)
 
-        print(f'NLPD: {nlpd:.2f}')
-        print(f'MSLL: {msll:.2f}')
-        print(f'QCE: {qce:.2f}')
+        print(f"NLPD: {nlpd:.2f}")
+        print(f"MSLL: {msll:.2f}")
+        print(f"QCE: {qce:.2f}")
 
         # mean and variance GP prediction
         f_pred = model(X_test)
@@ -164,8 +184,11 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
         y_pred_train = model(X_train).mean.detach()
         train_rmse_stan = np.sqrt(mean_squared_error(y_train, y_pred_train))
         train_rmse = np.sqrt(
-            mean_squared_error(y_scaler.inverse_transform(y_train.unsqueeze(dim=1)),
-                               y_scaler.inverse_transform(y_pred_train.unsqueeze(dim=1))))
+            mean_squared_error(
+                y_scaler.inverse_transform(y_train.unsqueeze(dim=1)),
+                y_scaler.inverse_transform(y_pred_train.unsqueeze(dim=1)),
+            )
+        )
         print("\nStandardised Train RMSE: {:.3f}".format(train_rmse_stan))
         print("Train RMSE: {:.3f}".format(train_rmse))
 
@@ -194,35 +217,99 @@ def main(n_trials, test_set_size, dataset_name, dataset_path, featurisation, gp_
     rmse_list = np.array(rmse_list)
     mae_list = np.array(mae_list)
 
-    print("\nmean NLPD: {:.4f} +- {:.4f}".format(torch.mean(nlpd_list), torch.std(nlpd_list) / torch.sqrt(torch.tensor(n_trials))))
-    print("\nmean MSLL: {:.4f} +- {:.4f}".format(torch.mean(msll_list), torch.std(msll_list) / np.sqrt(torch.tensor(n_trials))))
-    print("\nmean QCE: {:.4f} +- {:.4f}".format(torch.mean(qce_list), torch.std(qce_list) / np.sqrt(torch.tensor(n_trials))))
+    print(
+        "\nmean NLPD: {:.4f} +- {:.4f}".format(
+            torch.mean(nlpd_list),
+            torch.std(nlpd_list) / torch.sqrt(torch.tensor(n_trials)),
+        )
+    )
+    print(
+        "\nmean MSLL: {:.4f} +- {:.4f}".format(
+            torch.mean(msll_list),
+            torch.std(msll_list) / np.sqrt(torch.tensor(n_trials)),
+        )
+    )
+    print(
+        "\nmean QCE: {:.4f} +- {:.4f}".format(
+            torch.mean(qce_list),
+            torch.std(qce_list) / np.sqrt(torch.tensor(n_trials)),
+        )
+    )
 
-    print("\nmean R^2: {:.4f} +- {:.4f}".format(np.mean(r2_list), np.std(r2_list) / np.sqrt(len(r2_list))))
-    print("mean RMSE: {:.4f} +- {:.4f}".format(np.mean(rmse_list), np.std(rmse_list) / np.sqrt(len(rmse_list))))
-    print("mean MAE: {:.4f} +- {:.4f}\n".format(np.mean(mae_list), np.std(mae_list) / np.sqrt(len(mae_list))))
+    print(
+        "\nmean R^2: {:.4f} +- {:.4f}".format(
+            np.mean(r2_list), np.std(r2_list) / np.sqrt(len(r2_list))
+        )
+    )
+    print(
+        "mean RMSE: {:.4f} +- {:.4f}".format(
+            np.mean(rmse_list), np.std(rmse_list) / np.sqrt(len(rmse_list))
+        )
+    )
+    print(
+        "mean MAE: {:.4f} +- {:.4f}\n".format(
+            np.mean(mae_list), np.std(mae_list) / np.sqrt(len(mae_list))
+        )
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-n', '--n_trials', type=int, default=20,
-                        help='int specifying number of random train/test splits to use')
-    parser.add_argument('-ts', '--test_set_size', type=float, default=0.2,
-                        help='float in range [0, 1] specifying fraction of dataset to use as test set')
-    parser.add_argument('-d', '--dataset', type=str, default='ESOL',
-                        help='Dataset to use. One of [Photoswitch, ESOL, FreeSolv, Lipophilicity]')
-    parser.add_argument('-p', '--path', type=str, default="../data/property_prediction/ESOL.csv",
-                        help='Path to the dataset file. One of [../data/property_prediction/photoswitches.csv, '
-                             '../data/property_prediction/ESOL.csv, '
-                             '../data/property_prediction/FreeSolv.csv, '
-                             '../data/property_prediction/Lipophilicity.csv]')
-    parser.add_argument('-r', '--featurisation', type=str, default='fingerprints',
-                        help='str specifying the molecular featurisation. '
-                             'One of [fingerprints, fragments, fragprints, bag_of_smiles, bag_of_selfies].')
-    parser.add_argument('-m', '--model', type=str, default='Scalar Product',
-                        help='Model to use. One of [Tanimoto, Scalar Product,].')
+    parser.add_argument(
+        "-n",
+        "--n_trials",
+        type=int,
+        default=50,
+        help="int specifying number of random train/test splits to use",
+    )
+    parser.add_argument(
+        "-ts",
+        "--test_set_size",
+        type=float,
+        default=0.2,
+        help="float in range [0, 1] specifying fraction of dataset to use as test set",
+    )
+    parser.add_argument(
+        "-d",
+        "--dataset",
+        type=str,
+        default="Lipophilicity",
+        help="Dataset to use. One of [Photoswitch, ESOL, FreeSolv, Lipophilicity]",
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        type=str,
+        default="../data/property_prediction/Lipophilicity.csv",
+        help="Path to the dataset file. One of [../data/property_prediction/photoswitches.csv, "
+        "../data/property_prediction/ESOL.csv, "
+        "../data/property_prediction/FreeSolv.csv, "
+        "../data/property_prediction/Lipophilicity.csv]",
+    )
+    parser.add_argument(
+        "-r",
+        "--featurisation",
+        type=str,
+        default="fingerprints",
+        help="str specifying the molecular featurisation. "
+        "One of [fingerprints, fragments, fragprints].",
+    )
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        default="Tanimoto",
+        help="Model to use. One of [Tanimoto, Scalar Product,].",
+    )
 
     args = parser.parse_args()
-    main(args.n_trials, args.test_set_size, args.dataset, args.path, args.featurisation, args.model)
+    main(
+        args.n_trials,
+        args.test_set_size,
+        args.dataset,
+        args.path,
+        args.featurisation,
+        args.model,
+    )
