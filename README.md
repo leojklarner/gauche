@@ -22,6 +22,14 @@ Optional for running tests.
 ```
 pip install gpflow grakel
 ```
+
+
+Optional for reaction optimization.
+```
+pip install --no-deps rxnfp
+pip install --no-deps drfp
+pip install transformers
+
 ## Citing
 
 If GAUCHE is useful for your work please consider citing the following paper:
@@ -32,4 +40,5 @@ If GAUCHE is useful for your work please consider citing the following paper:
   author={Griffiths, Ryan-Rhys and Klarner, Leo and Moss, Henry and Ravuri, Aditya and Truong, Sang T and Rankovic, Bojana and Du, Yuanqi and Jamasb, Arian Rokkum and Schwartz, Julius and Tripp, Austin and others},
   booktitle={ICML 2022 2nd AI for Science Workshop}
 }
+
 ```
