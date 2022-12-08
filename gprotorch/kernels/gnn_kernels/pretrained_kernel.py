@@ -55,7 +55,7 @@ self_loop_token = 4  # bond type for self-loop edge
 masked_bond_token = 5  # bond type for masked edges
 
 
-def mol_to_pyg(mol):
+def mol_to_pyg(mol: Chem.Mol) -> Data:
     """
     A featuriser that accepts an rdkit mol instance and
     converts it to a PyTorch Geometric data object that
@@ -117,7 +117,7 @@ class GINConv(MessagePassing):
     edge information by concatenating edge embeddings.
     """
 
-    def __init__(self, emb_dim, aggr="add"):
+    def __init__(self, emb_dim: int, aggr: str = "add"):
         """
         Initialise GIN convolutional layer.
         Args:
@@ -139,7 +139,7 @@ class GINConv(MessagePassing):
 
         self.aggr = aggr
 
-    def forward(self, x, edge_index, edge_attr):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, edge_attr: torch.Tensor) -> torch.Tensor:
         """
         Message passing and aggregation function
         of the adapted GIN convolutional layer.
@@ -169,10 +169,10 @@ class GINConv(MessagePassing):
         ) + self.edge_embedding2(edge_attr[:, 1])
         return self.propagate(edge_index, x=x, edge_attr=edge_embeddings)
 
-    def message(self, x_j, edge_attr):
+    def message(self, x_j: torch.Tensor, edge_attr: torch.Tensor) -> torch.Tensor:
         return x_j + edge_attr
 
-    def update(self, aggr_out):
+    def update(self, aggr_out: torch.Tensor) -> torch.Tensor:
         return self.mlp(aggr_out)
 
 
@@ -182,7 +182,7 @@ class GCNConv(MessagePassing):
     edge information by concatenating edge embeddings.
     """
 
-    def __init__(self, emb_dim, aggr="add"):
+    def __init__(self, emb_dim: int, aggr: str = "add"):
         super(GCNConv, self).__init__(aggr=aggr)
 
         self.linear = torch.nn.Linear(emb_dim, emb_dim)
@@ -193,7 +193,7 @@ class GCNConv(MessagePassing):
         torch.nn.init.xavier_uniform_(self.edge_embedding2.weight.data)
 
     @staticmethod
-    def norm(edge_index, num_nodes, dtype):
+    def norm(edge_index: torch.Tensor, num_nodes: int, dtype) -> torch.Tensor:
         """
         Symmetric normalisation step of the adjacency matrix A:
         .. math::
@@ -217,7 +217,7 @@ class GCNConv(MessagePassing):
         deg_inv_sqrt[deg_inv_sqrt == float("inf")] = 0
         return deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
 
-    def forward(self, x, edge_index, edge_attr):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, edge_attr: torch.Tensor) -> torch.Tensor:
         """
         Message passing and aggregation function
         of the adapted GCN convolutional layer.
@@ -261,7 +261,7 @@ class GNN(torch.nn.Module):
     Combine multiple GNN layers into a network.
     """
 
-    def __init__(self, num_layers=5, embed_dim=300, gnn_type="gin"):
+    def __init__(self, num_layers: int = 5, embed_dim: int = 300, gnn_type: str = "gin"):
         """
         Compose convolution layers into GNN. Pretrained parameters
         exist for a 5-layer network with 300 hidden units.
@@ -300,7 +300,7 @@ class GNN(torch.nn.Module):
         for layer in range(self.num_layers):
             self.batch_norms.append(torch.nn.BatchNorm1d(self.embed_dim))
 
-    def load_pretrained(self, pretrain_type, device):
+    def load_pretrained(self, pretrain_type: str, device):
         """
         Checks if a pretrained parameter set for the specified
         pretraining procedure exists and updates the
@@ -328,7 +328,7 @@ class GNN(torch.nn.Module):
             )
             self.load_state_dict(pretrained_state_dict)
 
-    def forward(self, x, edge_index, edge_attr):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, edge_attr: torch.Tensor) -> torch.Tensor:
         """
         Forward function of the GNN class that takes a PyTorch geometric
         representation of a molecule or a batch of molecules

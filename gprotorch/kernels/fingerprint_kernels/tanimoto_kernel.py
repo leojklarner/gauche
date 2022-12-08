@@ -47,7 +47,7 @@ class TanimotoKernel(BitKernel):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
-    def forward(self, x1, x2, diag=False, **params):
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor, diag: bool = False, **params) -> torch.Tensor:
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(

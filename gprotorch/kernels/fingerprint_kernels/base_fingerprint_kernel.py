@@ -34,7 +34,7 @@ class BitDistance(torch.nn.Module):
         super().__init__()
         self._postprocess = postprocess_script
 
-    def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric="tanimoto"):
+    def _sim(self, x1: torch.Tensor, x2: torch.Tensor, postprocess: bool, x1_eq_x2: bool = False, metric: str = "tanimoto") -> torch.Tensor:
         r"""
         Computes the similarity between x1 and x2
         Args:
@@ -82,18 +82,18 @@ class BitKernel(Kernel):
         super().__init__(**kwargs)
         self.metric = metric
 
-    def forward(self, x1, x2, **params):
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor, **params) -> torch.Tensor:
         return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
         self,
-        x1,
-        x2,
-        last_dim_is_batch=False,
+        x1: torch.Tensor,
+        x2: torch.Tensor,
+        last_dim_is_batch: bool = False,
         dist_postprocess_func=default_postprocess_script,
-        postprocess=True,
+        postprocess: bool = True,
         **params,
-    ):
+    ) -> torch.Tensor:
         r"""
         This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.

@@ -1,25 +1,40 @@
 """
-Utility functions for molecular data
+Utility functions for molecular data.
 """
-
+import numpy as np
+from typing import Optional Tuple
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
 def transform_data(
-    X_train, y_train, X_test, y_test, n_components=None, use_pca=False
-):
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    n_components: Optional[int] = None,
+    use_pca: bool = False
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler]:
     """
-    Apply feature scaling, dimensionality reduction to the data. Return the standardised and low-dimensional train and
+    Apply feature scaling, dimensionality reduction to the data.
+    
+    Returns the standardised and low-dimensional train and
     test sets together with the scaler object for the target values.
 
     :param X_train: input train data
+    :type X_train: np.ndarray
     :param y_train: train labels
+    :type y_train: np.ndarray
     :param X_test: input test data
+    :type X_test: np.ndarray
     :param y_test: test labels
-    :param n_components: number of principal components to keep when use_pca = True
-    :param use_pca: Whether or not to use PCA
+    :type y_test: np.ndarray
+    :param n_components: number of principal components to keep when ``use_pca=True``
+    :type n_components: int, optional. Default is ``None``.
+    :param use_pca: Whether or not to use PCA.
+    :type use_pca: bool
     :return: X_train_scaled, y_train_scaled, X_test_scaled, y_test_scaled, y_scaler
+    :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, sklearn.preprocessing.StandardScaler]
     """
 
     x_scaler = StandardScaler()
