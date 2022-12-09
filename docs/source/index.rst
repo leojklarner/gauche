@@ -16,6 +16,7 @@ Welcome to GAUCHE's documentation!
 
    notebooks/gp_regression_on_molecules.nblink
    notebooks/bayesian_optimisation_over_molecules.nblink
+   notebooks/multitask_gp_regression_on_molecules.nblink
 
 
 .. toctree::
