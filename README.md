@@ -32,10 +32,13 @@ pip install gpflow grakel
 If GAUCHE is useful for your work please consider citing the following paper:
 
 ```
-@inproceedings{griffiths2022gauche,
-  title={GAUCHE: A Library for Gaussian Processes in Chemistry},
-  author={Griffiths, Ryan-Rhys and Klarner, Leo and Moss, Henry and Ravuri, Aditya and Truong, Sang T and Rankovic, Bojana and Du, Yuanqi and Jamasb, Arian Rokkum and Schwartz, Julius and Tripp, Austin and others},
-  booktitle={ICML 2022 2nd AI for Science Workshop}
+@misc{griffiths2022gauche,
+      title={GAUCHE: A Library for Gaussian Processes in Chemistry}, 
+      author={Ryan-Rhys Griffiths and Leo Klarner and Henry B. Moss and Aditya Ravuri and Sang Truong and Bojana Rankovic and Yuanqi Du and Arian Jamasb and Julius Schwartz and Austin Tripp and Gregory Kell and Anthony Bourached and Alex Chan and Jacob Moss and Chengzhi Guo and Alpha A. Lee and Philippe Schwaller and Jian Tang},
+      year={2022},
+      eprint={2212.04450},
+      archivePrefix={arXiv},
+      primaryClass={physics.chem-ph}
 }
 
 ```
