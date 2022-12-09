@@ -16,19 +16,16 @@ A Gaussian Process Library for Molecules, Proteins and Reactions.
 We recommend using a conda virtual environment:.
 ```
 conda env create -f conda_env.yml
+
+pip install --no-deps rxnfp
+pip install --no-deps drfp
+pip install transformers
 ```
 
 Optional for running tests.
 ```
 pip install gpflow grakel
 ```
-
-
-Optional for reaction optimization.
-```
-pip install --no-deps rxnfp
-pip install --no-deps drfp
-pip install transformers
 
 ## Citing
 

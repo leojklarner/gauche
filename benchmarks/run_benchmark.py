@@ -11,8 +11,8 @@ import numpy as np
 import torch
 from benchmark_models import ScalarProductGP, TanimotoGP
 from botorch import fit_gpytorch_model
-from gprotorch.dataloader import DataLoaderMP
-from gprotorch.dataloader.data_utils import transform_data
+from gauche.dataloader import DataLoaderMP
+from gauche.dataloader.data_utils import transform_data
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch_metrics import (
@@ -59,7 +59,8 @@ def main(
                                                        ../data/property_prediction/ESOL.csv',
                                                        '../data/property_prediction/FreeSolv.csv',
                                                        '../data/property_prediction/Lipophilicity.csv']
-        featurisation: Choice of features. One of ['fingerprints', 'fragments', 'fragprints']
+        featurisation: Choice of features. One of ['fingerprints', 'fragments', 'fragprints', 'bag_of_smiles',
+                                                   'bag_of_selfies']
         gp_model: Choice of model. One of ['Tanimoto', 'Scalar Product']
 
     Returns: Evaluation of model/representation on the benchmark
@@ -72,10 +73,11 @@ def main(
             f"Choose one of {list(dataset_names.keys())}."
         )
     if dataset_path not in dataset_paths.values():
-        raise ValueError(
-            f"The specified dataset path ({dataset_path}) is not a valid option. "
-            f"Choose one of {list(dataset_paths.values())}."
-        )
+        raise ValueError(f"The specified dataset path ({dataset_path}) is not a valid option. "
+                            f"Choose one of {list(dataset_paths.values())}.")
+    if featurisation not in featurisations.values():
+        raise ValueError(f"The specified featurisation ({featurisation}) is not a valid option. "
+                            f"Choose one of {list(featurisations.values())}.")
 
     # Load the benchmark dataset
     loader = DataLoaderMP()
@@ -151,8 +153,12 @@ def main(
         # full GP predictive distribution
         trained_pred_dist = likelihood(model(X_test))
 
-        # Compute NLPD on the Test set
-        nlpd = negative_log_predictive_density(trained_pred_dist, y_test)
+        # Compute NLPD on the Test set. Raise exception if computation fails
+        try:
+            nlpd = negative_log_predictive_density(trained_pred_dist, y_test)
+        except:
+            Exception(f'NLPD calculation failed on trial {i}')
+            continue
 
         # Compute MSLL on Test set
         msll = mean_standardized_log_loss(trained_pred_dist, y_test)

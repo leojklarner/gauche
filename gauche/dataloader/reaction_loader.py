@@ -1,6 +1,7 @@
 import pandas as pd
-from gprotorch.data_featuriser import one_hot, rxnfp, drfp, bag_of_characters
-from gprotorch.dataloader import DataLoader
+
+from gauche.data_featuriser import one_hot, rxnfp, drfp, bag_of_characters
+from gauche.dataloader import DataLoader
 
 
 class ReactionLoader(DataLoader):
