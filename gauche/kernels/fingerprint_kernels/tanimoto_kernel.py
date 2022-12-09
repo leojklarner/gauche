@@ -5,7 +5,7 @@ RDKit fragment features.
 
 import gpytorch
 import torch
-from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
+from gauche.kernels.fingerprint_kernels.base_fingerprint_kernel import (
     BitKernel,
 )
 

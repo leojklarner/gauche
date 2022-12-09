@@ -2,7 +2,7 @@
 GP Model definitions to be used in the benchmarks
 """
 
-from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import (
+from gauche.kernels.fingerprint_kernels.tanimoto_kernel import (
     TanimotoKernel,
 )
 from gpytorch.distributions import MultivariateNormal

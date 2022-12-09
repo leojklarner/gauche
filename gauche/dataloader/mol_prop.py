@@ -6,7 +6,7 @@ molecular property prediction datasets.
 
 import numpy as np
 import pandas as pd
-from gprotorch.data_featuriser.featurisation import (
+from gauche.data_featuriser.featurisation import (
     fingerprints,
     fragments,
     mqn_features,
@@ -14,7 +14,7 @@ from gprotorch.data_featuriser.featurisation import (
     graphs,
 )
 
-from gprotorch.dataloader import DataLoader
+from gauche.dataloader import DataLoader
 from rdkit.Chem import MolFromSmiles
 
 

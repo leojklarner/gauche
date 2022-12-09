@@ -15,8 +15,8 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from gprotorch.dataloader import DataLoaderMP
-from gprotorch.kernels.gnn_kernels.pretrained_kernel import GNN, mol_to_pyg
+from gauche.dataloader import DataLoaderMP
+from gauche.kernels.gnn_kernels.pretrained_kernel import GNN, mol_to_pyg
 
 def set_seed(seed):
     np.random.seed(seed)

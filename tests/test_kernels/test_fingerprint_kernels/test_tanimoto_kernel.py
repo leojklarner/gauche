@@ -9,10 +9,10 @@ import tensorflow as tf
 import torch
 from gpflow.utilities import positive
 from gpflow.utilities.ops import broadcasting_elementwise
-from gprotorch.kernels.fingerprint_kernels.base_fingerprint_kernel import (
+from gauche.kernels.fingerprint_kernels.base_fingerprint_kernel import (
     BitDistance,
 )
-from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import (
+from gauche.kernels.fingerprint_kernels.tanimoto_kernel import (
     TanimotoKernel,
 )
 from gpytorch.kernels import ScaleKernel

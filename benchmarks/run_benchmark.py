@@ -11,8 +11,8 @@ import numpy as np
 import torch
 from benchmark_models import ScalarProductGP, TanimotoGP
 from botorch import fit_gpytorch_model
-from gprotorch.dataloader import DataLoaderMP
-from gprotorch.dataloader.data_utils import transform_data
+from gauche.dataloader import DataLoaderMP
+from gauche.dataloader.data_utils import transform_data
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch_metrics import (
