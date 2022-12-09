@@ -27,14 +27,14 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-version = find_version("gprotorch", "__init__.py")
+version = find_version("gauche", "__init__.py")
 readme = open("README.md").read()
 packages = find_packages(".", exclude=["tests"])
 install_requires = open("requirements.txt").read().splitlines()
 
 
 setup(
-    name="gprotorch",
+    name="gauche",
     version=version,
     description="Gaussian Process Library for Molecules, Proteins and General Chemistry in PyTorch.",
     long_description=readme,

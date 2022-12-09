@@ -1,0 +1,45 @@
+name: build
+
+on:
+  push:
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+
+  pull_request:
+    paths-ignore:
+      - "README.md"
+      - "docs/*"
+      - "CHANGELOG.md"
+      - "CONTRIBUTORS.md"
+      - "CONTRIBUTING.md"
+      - "imgs/"
+
+jobs:
+  build_cpu:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9, 3.11]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        # See: https://github.com/marketplace/actions/setup-conda
+      - name: Setup anaconda
+        uses: s-weigand/setup-conda@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          conda-channels: "conda-forge"
+
+      - name: Install GAUCHE
+        run: pip install -e .
+      - name: Install rnxfp
+        run: pip install --no-deps rxnfp
+      - name: Install drfp
+        run: pip install --no-deps drfp
+      - name: Install transformers
+        run: pip install transformers
+      - name: Run unit tests and generate coverage report
+        run: pytest .
+      - name: Test notebook execution
+        run: pytest --nbval-lax notebooks/ --current-env

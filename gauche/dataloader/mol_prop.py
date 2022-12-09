@@ -3,16 +3,19 @@ Instantiation of the abstract data loader class for
 molecular property prediction datasets.
 """
 
-import itertools
-import re
 
-import graphein.molecule as gm
 import numpy as np
 import pandas as pd
-import selfies as sf
-from gprotorch.dataloader import DataLoader
-from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
-from sklearn.feature_extraction.text import CountVectorizer
+from gauche.data_featuriser.featurisation import (
+    fingerprints,
+    fragments,
+    mqn_features,
+    bag_of_characters,
+    graphs,
+)
+
+from gauche.dataloader import DataLoader
+from rdkit.Chem import MolFromSmiles
 
 
 class DataLoaderMP(DataLoader):
@@ -81,60 +84,6 @@ class DataLoaderMP(DataLoader):
         :type nBits: int
         """
 
-        # auxiliary function to calculate the fingerprint representation of a molecule
-        def fingerprints():
-
-            rdkit_mols = [MolFromSmiles(smiles) for smiles in self.features]
-            fps = [
-                AllChem.GetMorganFingerprintAsBitVect(
-                    mol, bond_radius, nBits=nBits
-                )
-                for mol in rdkit_mols
-            ]
-
-            return np.asarray(fps)
-
-        # auxiliary function to calculate the fragment representation of a molecule
-        def fragments():
-
-            # descList[115:] contains fragment-based features only
-            # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-            # Update: in the new RDKit version the indices are [124:]
-            fragments = {d[0]: d[1] for d in Descriptors.descList[124:]}
-            frags = np.zeros((len(self.features), len(fragments)))
-            for i in range(len(self.features)):
-                mol = MolFromSmiles(self.features[i])
-                try:
-                    features = [fragments[d](mol) for d in fragments]
-                except:
-                    raise Exception(f"molecule {i} is not canonicalised")
-
-                frags[i, :] = features
-
-            return frags
-
-        def graphs():
-            return [
-                gm.construct_graph(smiles=i, config=graphein_config)
-                for i in self.features
-            ]
-
-        # auxiliary function to calculate bag of character representation of a molecular string
-        def bag_of_characters(selfies=False):
-            if selfies:  # convert SMILES to SELFIES
-                strings = [
-                    sf.encoder(self.features[i])
-                    for i in range(len(self.features))
-                ]
-            else:  # otherwise stick with SMILES
-                strings = self.features
-
-            # extract bag of character (boc) representation from strings
-            cv = CountVectorizer(
-                ngram_range=(1, max_ngram), analyzer="char", lowercase=False
-            )
-            return cv.fit_transform(strings).toarray()
-
         valid_representations = [
             "fingerprints",
             "fragments",
@@ -142,33 +91,44 @@ class DataLoaderMP(DataLoader):
             "graphs",
             "bag_of_smiles",
             "bag_of_selfies",
+            "mqn",
         ]
 
         if representation == "fingerprints":
 
-            self.features = fingerprints()
+            self.features = fingerprints(
+                self.features, bond_radius=bond_radius, nBits=nBits
+            )
 
         elif representation == "fragments":
 
-            self.features = fragments()
+            self.features = fragments(self.features)
 
         elif representation == "fragprints":
 
             self.features = np.concatenate(
-                (fingerprints(), fragments()), axis=1
+                (
+                    fingerprints(
+                        self.features, bond_radius=bond_radius, nBits=nBits
+                    ),
+                    fragments(self.features),
+                ),
+                axis=1,
             )
+
+        elif representation == "mqn":
+            self.features = mqn_features(self.features)
 
         elif representation == "bag_of_selfies":
 
-            self.features = bag_of_characters(selfies=True)
+            self.features = bag_of_characters(self.features, selfies=True)
 
         elif representation == "bag_of_smiles":
 
-            self.features = bag_of_characters()
+            self.features = bag_of_characters(self.features)
 
         elif representation == "graphs":
-
-            self.features = graphs()
+            self.features = graphs(self.features, graphein_config)
 
         else:
 
@@ -192,6 +152,18 @@ class DataLoaderMP(DataLoader):
             "Photoswitch": {
                 "features": "SMILES",
                 "labels": "E isomer pi-pi* wavelength in nm",
+            },
+            "Photoswitch_E_n_pi": {
+                "features": "SMILES",
+                "labels": "E isomer n-pi* wavelength in nm",
+            },
+            "Photoswitch_Z_pi_pi": {
+                "features": "SMILES",
+                "labels": "Z isomer pi-pi* wavelength in nm",
+            },
+            "Photoswitch_Z_n_pi": {
+                "features": "SMILES",
+                "labels": "Z isomer n-pi* wavelength in nm",
             },
             "ESOL": {
                 "features": "smiles",

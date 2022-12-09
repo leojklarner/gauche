@@ -9,13 +9,12 @@ import os
 
 import pytest
 import torch
-from gprotorch.dataloader import DataLoaderMP
-from gprotorch.kernels.gnn_kernels.hu_iclr_2020 import GNN, mol_to_pyg
+from gauche.dataloader import DataLoaderMP
+from gauche.kernels.gnn_kernels.hu_iclr_2020 import GNN, mol_to_pyg
 from rdkit.Chem import MolFromSmiles
 from torch_geometric.data import Batch
 
 # load and featurise ESOL benchmark for tests
-
 benchmark_path = os.path.abspath(
     os.path.join(
         os.getcwd(),
@@ -92,7 +91,3 @@ def test_embedding_generation(gnn_type, pretrain_method):
     for embed, mol in zip(node_embeds, benchmark_mols):
         assert embed.shape[0] == mol.num_nodes
         assert embed.shape[1] == model.embed_dim
-
-
-if __name__ == "__main__":
-    pass
