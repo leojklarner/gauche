@@ -8,3 +8,4 @@ pytest
 tqdm
 selfies
 graphein==1.4.0
+gpflow
