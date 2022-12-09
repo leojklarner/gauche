@@ -16,3 +16,4 @@ GNN Kernels
 Graph Kernels
 --------------
 .. automodule:: gprotorch.kernels.graph_kernels
+    :members:

@@ -19,3 +19,4 @@ Utils
 Reaction Loader
 ------------------
 .. automodule:: gprotorch.dataloader.reaction_loader
+    :members:
