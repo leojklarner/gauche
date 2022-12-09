@@ -10,6 +10,8 @@
   </a>
 </p>
 
+[Documentation](https://leojklarner.github.io/gauche/) | [Paper](https://arxiv.org/abs/2212.04450)
+
 A Gaussian Process Library for Molecules, Proteins and Reactions.
 
 ## Install
