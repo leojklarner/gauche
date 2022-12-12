@@ -10,22 +10,6 @@ import codecs
 from setuptools import find_packages, setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-INSTALL_REQUIRES = read_requirements(".requirements/base.in")
-EXTRA_REQUIRES = {
-    "dev": read_requirements(".requirements/dev.in"),
-    "docs": read_requirements(".requirements/docs.in"),
-    "cpu": read_requirements(".requirements/cpu.in"),
-    "cu116": read_requirements(".requirements/cu116.in"),
-    "cu117": read_requirements(".requirements/cu117.in"),
-}
-# Add all requires
-all_requires = []
-for k, v in EXTRA_REQUIRES.items():
-    if k not in ["cu116", "cu117"]:
-        all_requires.extend(v)
-EXTRA_REQUIRES["all"] = set(all_requires)
-
-
 
 def read(*parts):
     # intentionally *not* adding an encoding option to open
@@ -66,6 +50,22 @@ def read_requirements(*parts):
         if new_line:  # i.e. we have a non-zero-length string
             requirements.append(new_line)
     return requirements
+
+
+INSTALL_REQUIRES = read_requirements(".requirements/base.in")
+EXTRA_REQUIRES = {
+    "dev": read_requirements(".requirements/dev.in"),
+    "docs": read_requirements(".requirements/docs.in"),
+    "cpu": read_requirements(".requirements/cpu.in"),
+    "cu116": read_requirements(".requirements/cu116.in"),
+    "cu117": read_requirements(".requirements/cu117.in"),
+}
+# Add all requires
+all_requires = []
+for k, v in EXTRA_REQUIRES.items():
+    if k not in ["cu116", "cu117"]:
+        all_requires.extend(v)
+EXTRA_REQUIRES["all"] = set(all_requires)
 
 
 def find_version(*file_paths):
