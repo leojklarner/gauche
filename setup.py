@@ -6,7 +6,7 @@ import io
 import os
 import re
 import codecs
-
+from typing import Dict, List
 from setuptools import find_packages, setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -16,7 +16,7 @@ def read(*parts):
     return codecs.open(os.path.join(HERE, *parts), "r").read()
 
 
-def read_requirements(*parts):
+def read_requirements(*parts) -> List[str]:
     """
     Return requirements from parts.
     Given a requirements.txt (or similar style file),
@@ -52,8 +52,8 @@ def read_requirements(*parts):
     return requirements
 
 
-INSTALL_REQUIRES = read_requirements(".requirements/base.in")
-EXTRA_REQUIRES = {
+INSTALL_REQUIRES: List[str] = read_requirements(".requirements/base.in")
+EXTRA_REQUIRES: Dict[str, List[str]] = {
     "dev": read_requirements(".requirements/dev.in"),
     "docs": read_requirements(".requirements/docs.in"),
     "cpu": read_requirements(".requirements/cpu.in"),
@@ -61,11 +61,11 @@ EXTRA_REQUIRES = {
     "cu117": read_requirements(".requirements/cu117.in"),
 }
 # Add all requires
-all_requires = []
+all_requires: List[str] = []
 for k, v in EXTRA_REQUIRES.items():
     if k not in ["cu116", "cu117"]:
         all_requires.extend(v)
-EXTRA_REQUIRES["all"] = set(all_requires)
+EXTRA_REQUIRES["all"] = list(set(all_requires))
 
 
 def find_version(*file_paths):
