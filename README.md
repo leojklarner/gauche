@@ -3,6 +3,7 @@
 [![Docs](https://assets.readthedocs.org/static/projects/badges/passing-flat.svg)](https://leojklarner.github.io/gauche/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leojklarner/gauche/HEAD)
 [![DOI:10.48550/arXiv.2212.04450](https://zenodo.org/badge/DOI/10.48550/arXiv.2212.04450.svg)](https://doi.org/10.48550/arXiv.2212.04450)
+[![CodeFactor](https://www.codefactor.io/repository/github/leojklarner/gauche/badge)](https://www.codefactor.io/repository/github/leojklarner/gauche)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 <p align="left">
