@@ -1,7 +1,15 @@
-# GPU-compatible gpytorch version of the substring kernel implemented in https://github.com/henrymoss/BOSS/tree/master/boss/code/kernels/string
-# algorithmic description in 
-# [1] Beck, D., & Cohn, T. Learning kernels over strings using Gaussian processes. In Proceedings of the Eighth International Joint Conference on Natural Language Processing (Volume 2: Short Papers) (pp. 67-73).
-# or appendix of [2] Moss, H., Leslie, D., Beck, D., Gonzalez, J., & Rayson, P. (2020). Boss: Bayesian optimization over string spaces. Advances in neural information processing systems, 33, 15476-15486.
+"""
+GPU-compatible gpytorch version of the substring kernel implemented 
+in https://github.com/henrymoss/BOSS/tree/master/boss/code/kernels/string
+algorithmic description in :
+[1] Beck, D., & Cohn, T. Learning kernels over strings using Gaussian processes. 
+In Proceedings of the Eighth International Joint Conference on 
+Natural Language Processing (Volume 2: Short Papers) (pp. 67-73).
+or appendix of 
+[2] Moss, H., Leslie, D., Beck, D., Gonzalez, J., & Rayson, P. (2020). 
+Boss: Bayesian optimization over string spaces. 
+Advances in neural information processing systems, 33, 15476-15486.
+"""
 
 import math
 import itertools
@@ -13,6 +21,11 @@ def pad(s, length):
     """
     Pad out input strings to a maximum length 
     (required to pass same length tensors to gpytorch modules)
+    Args: 
+        s: input string
+        length: max length including zero-padding
+
+    Returns: padded string with zeros
     """
     new_s = torch.zeros(length, dtype=torch.double)
     new_s[:len(s)] = torch.tensor(s)
@@ -21,6 +34,12 @@ def pad(s, length):
 def build_one_hot(alphabet):
     """
     Build one-hot encodings for a given alphabet.
+    Args: 
+        alphabet: unique alphabet/characters possible in the string
+
+    Returns: 
+        embs: one-hot embeddings of the alphabet
+        index: integer index for the alphabet
     """
     dim = len(alphabet)
     embs = torch.zeros((dim+1, dim), dtype=torch.double)
@@ -35,6 +54,11 @@ def encode_string(s, index):
     Transform a string in a list of integers.
     The ints correspond to indices in an
     embeddings matrix.
+    Args: 
+        s: input string
+        index: integer index for the alphabet
+
+    Returns: integer encoding for the string s
     """
     return [index[symbol] for symbol in s]
 
@@ -168,6 +192,11 @@ class SubsequenceStringKernel(Kernel):
             """
             Computes subsequence string kernel between two tensors of strings
             represented in numerical embeddings (one-hot encoding) from the alphabet.
+            Args:
+                s1: tensor of encoded input-strings
+                s2: tensor of encoded input-strings
+
+            Returns: kernel matrix containing pairwise string kernel values
             """
             S = torch.bmm(self.embds[s1.long()], self.embds[s2.long()].transpose(-2, -1))
             assert S.shape == (s1.shape[0], s1.shape[1], s1.shape[1])
