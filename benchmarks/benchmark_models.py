@@ -2,12 +2,13 @@
 GP Model definitions to be used in the benchmarks
 """
 
+from gauche.kernels.fingerprint_kernels.tanimoto_kernel import (
+    TanimotoKernel,
+)
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import ScaleKernel, LinearKernel
+from gpytorch.kernels import LinearKernel, ScaleKernel
 from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP
-
-from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 
 class TanimotoGP(ExactGP):

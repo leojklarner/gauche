@@ -3,9 +3,9 @@ Module for test_kernels that operate on fingerprint representations (bit vectors
 Author: Ryan-Rhys Griffiths and Austin Tripp 2022
 """
 
+import torch
 from gpytorch.kernels import Kernel
 from gpytorch.kernels.kernel import default_postprocess_script
-import torch
 
 
 def batch_tanimoto_sim(
@@ -13,7 +13,6 @@ def batch_tanimoto_sim(
 ) -> torch.Tensor:
     """
     Tanimoto between two batched tensors, across last 2 dimensions.
-
     eps argument ensures numerical stability if all zero tensors are added.
     """
     # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
@@ -38,7 +37,6 @@ class BitDistance(torch.nn.Module):
     def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric="tanimoto"):
         r"""
         Computes the similarity between x1 and x2
-
         Args:
             :attr: `x1`: (Tensor `n x d` or `b x n x d`):
                 First set of data where b is a batch dimension
@@ -50,7 +48,6 @@ class BitDistance(torch.nn.Module):
                 Is x1 equal to x2
             :attr: `metric` (str):
                 String specifying the similarity metric. One of ['tanimoto']
-
         Returns:
             (:class:`Tensor`, :class:`Tensor) corresponding to the similarity matrix between `x1` and `x2`
         """
@@ -69,18 +66,13 @@ class BitDistance(torch.nn.Module):
 class BitKernel(Kernel):
     r"""
      Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
-
      In the typical use case, test_kernels inheriting from this class will specify a similarity metric such as Tanimoto,
      MinMax etc.
-
     .. note::
-
      This kernel does not have an `outputscale` parameter. To add a scaling parameter,
      decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
-
      This base :class:`BitKernel` class does not include a lengthscale parameter
      :math:`\Theta`, in contrast to many common kernel functions.
-
      Base Attributes:
      :attr:`metric` (str):
          The similarity metric to use. One of ['tanimoto'].
@@ -105,7 +97,6 @@ class BitKernel(Kernel):
         r"""
         This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.
-
         Args:
             :attr:`x1` (Tensor `n x d` or `b1 x ... x bk x n x d`):
                 First set of data.
@@ -113,7 +104,6 @@ class BitKernel(Kernel):
                 Second set of data.
             :attr:`last_dim_is_batch` (tuple, optional):
                 Is the last dimension of the data a batch dimension or not?
-
         Returns:
             (:class:`Tensor`, :class:`Tensor) corresponding to the distance matrix between `x1` and `x2`.
             The shape depends on the kernel's mode

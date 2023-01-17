@@ -143,3 +143,10 @@ dmypy.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 .vscode/settings.json
+.DS_Store
+biovec/
+graphein/
+pytorch3d/
+
+# PyCharm .idea
+.idea
