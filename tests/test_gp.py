@@ -11,16 +11,16 @@ from grakel.kernels import WeisfeilerLehman
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from gprotorch.dataloader import DataLoaderMP
-from gprotorch.dataloader.data_utils import transform_data
+from gauche.dataloader import DataLoaderMP
+from gauche.dataloader.data_utils import transform_data
 
 import torch
 import gpytorch
 from gpytorch.models import ExactGP
 from botorch import fit_gpytorch_model
 
-from gprotorch import SIGP, Kernel, Inputs
-from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
+from gauche import SIGP, Kernel, Inputs
+from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 class SIGPTestClass(SIGP):
     def __init__(self, train_x, train_y, likelihood):
