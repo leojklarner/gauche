@@ -1,7 +1,10 @@
 
 from copy import deepcopy
 
-import torch
+import torch, gpytorch
+
+if gpytorch.__version__ != '1.7.0':
+    raise RuntimeError('Please install gpytorch==1.7.0 to run use the current SIGP implementation.')
 
 from gpytorch import Module, settings
 from gpytorch.distributions import MultivariateNormal
@@ -20,6 +23,9 @@ class Inputs:
         self.data.extend(new_data.data)
 
 class Kernel(Module):
+    """
+    Abstract class for kernels with only a scale parameter.
+    """
     def __init__(self, dtype=torch.float):
         super().__init__()
         self._scale_variance = torch.nn.Parameter(torch.tensor([0.1], dtype=dtype))
@@ -30,7 +36,19 @@ class Kernel(Module):
     def forward(self, X):
         return self.scale(self.kern(X))
 
+    def kern(self, X):
+        raise NotImplementedError()
+
 class SIGP(ExactGP):
+    """
+    A reimplementation of gpytorch(==1.7.0)'s ExactGP that allows for non-tensorial inputs.
+    The inputs to this class may be a gauche.gp.Inputs instance, with graphs stored within
+    the object's .data attribute.
+
+    In the longer term, if ExactGP can be refactored such that the validation checks ensuring
+    that the inputs are torch.Tensors are optional, this class should subclass ExactGP without
+    performing those checks.
+    """
     def __init__(self, train_inputs, train_targets, likelihood):
         if train_inputs is not None and type(train_inputs) is Inputs:
             train_inputs = (train_inputs,)
