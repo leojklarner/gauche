@@ -1,4 +1,3 @@
-<<<<<<< HEAD:requirements.txt
 numpy
 pandas
 scikit-learn
@@ -10,13 +9,3 @@ tqdm
 selfies
 graphein==1.4.0
 gpflow
-=======
-numpy
-pandas
-scikit-learn
-rdkit
-tqdm
-selfies
-graphein==1.4.0
-gpytorch
->>>>>>> main:.requirements/base.in
