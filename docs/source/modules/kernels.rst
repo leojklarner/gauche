@@ -10,6 +10,10 @@ Fingerprint Kernels
 
 GNN Kernels
 -------------
-.. automodule:: gprotorch.kernels.gnn_kernels.hu_iclr_2020
+.. automodule:: gprotorch.kernels.gnn_kernels.pretrained_kernel
     :members:
 
+Graph Kernels
+--------------
+.. automodule:: gprotorch.kernels.graph_kernels
+    :members:

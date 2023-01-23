@@ -144,3 +144,6 @@ dmypy.json
 biovec/
 graphein/
 pytorch3d/
+
+# PyCharm .idea
+.idea

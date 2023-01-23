@@ -15,3 +15,8 @@ Utils
 --------------------
 .. automodule:: gprotorch.dataloader.data_utils
     :members:
+
+Reaction Loader
+------------------
+.. automodule:: gprotorch.dataloader.reaction_loader
+    :members:
