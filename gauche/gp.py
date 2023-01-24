@@ -1,10 +1,16 @@
 
 from copy import deepcopy
+from functools import lru_cache
 
 import torch, gpytorch
 
 if gpytorch.__version__ != '1.7.0':
-    raise RuntimeError('Please install gpytorch==1.7.0 to run use the current SIGP implementation.')
+    raise RuntimeError('''
+        Please install gpytorch==1.7.0 to run use the current SIGP
+        implementation, or use the wl_graph_kernel.ipynb notebook,
+        which uses pytorch_geometric.nn.WLConv instead of GraKel to
+        form a WL Kernel.
+    ''')
 
 from gpytorch import Module, settings
 from gpytorch.distributions import MultivariateNormal
@@ -22,13 +28,20 @@ class Inputs:
     def append(self, new_data):
         self.data.extend(new_data.data)
 
-class Kernel(Module):
+class GraphKernel(Module):
     """
-    Abstract class for kernels with only a scale parameter.
+    A class suporting externel kernels.
+    The external kernel must have a method `fit_transform`, which, when
+    evaluated on an `Inputs` instance `X`, returns a scaled kernel matrix
+    v * k(X, X).
+
+    As gradients are not propagated through to the external kernel, outputs are
+    cached to avoid repeated computation.
     """
-    def __init__(self, dtype=torch.float):
+    def __init__(self, graph_kernel, dtype=torch.float):
         super().__init__()
         self._scale_variance = torch.nn.Parameter(torch.tensor([0.1], dtype=dtype))
+        self.kernel = graph_kernel
 
     def scale(self, S):
         return Softplus(self._scale_variance) * S
@@ -36,8 +49,9 @@ class Kernel(Module):
     def forward(self, X):
         return self.scale(self.kern(X))
 
+    @lru_cache(maxsize=5)
     def kern(self, X):
-        raise NotImplementedError()
+        return torch.tensor(self.kernel.fit_transform(X.data)).float()
 
 class SIGP(ExactGP):
     """
