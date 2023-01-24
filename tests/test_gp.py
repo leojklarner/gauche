@@ -19,7 +19,7 @@ import gpytorch
 from gpytorch.models import ExactGP
 from botorch import fit_gpytorch_model
 
-from gauche import SIGP, Kernel, Inputs
+from gauche.gp import SIGP, GraphKernel, Inputs
 from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 class SIGPTestClass(SIGP):
@@ -102,17 +102,9 @@ class TestReproducibility(unittest.TestCase):
 
 # ---------------------------------------------------------------------------
 
-class WLKernel(Kernel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.kernel = WeisfeilerLehman()
-
-    @lru_cache(maxsize=3)
-    def kern(self, X):
-        return torch.tensor(self.kernel.fit_transform(X.data)).float()
-
-    def forward(self, X):
-        return self.scale(self.kern(X))
+class WLKernel(GraphKernel):
+    def __init__(self):
+        super().__init__(graph_kernel=WeisfeilerLehman())
 
 class GraphGP(SIGP):
     def __init__(self, train_x, train_y, likelihood):
