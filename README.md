@@ -4,7 +4,6 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leojklarner/gauche/HEAD)
 [![DOI:10.48550/arXiv.2212.04450](https://zenodo.org/badge/DOI/10.48550/arXiv.2212.04450.svg)](https://doi.org/10.48550/arXiv.2212.04450)
 [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B-orange)](https://fair-software.eu)
-[![CodeFactor](https://www.codefactor.io/repository/github/leojklarner/gauche/badge)](https://www.codefactor.io/repository/github/leojklarner/gauche)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 <p align="left">
@@ -13,8 +12,6 @@
     <img src="https://github.com/leojklarner/gauche/blob/main/imgs/gauche.gif?raw=true" width="22%" hspace="30"/>
   </a>
 </p>
-
-[Documentation](https://leojklarner.github.io/gauche/) | [Paper](https://arxiv.org/abs/2212.04450)
 
 A Gaussian Process Library for Molecules, Proteins and Reactions.
 
@@ -37,15 +34,3 @@ pip install gpflow grakel
 ## Citing
 
 If GAUCHE is useful for your work please consider citing the following paper:
-
-```bibtex
-@misc{griffiths2022gauche,
-      title={GAUCHE: A Library for Gaussian Processes in Chemistry}, 
-      author={Ryan-Rhys Griffiths and Leo Klarner and Henry B. Moss and Aditya Ravuri and Sang Truong and Bojana Rankovic and Yuanqi Du and Arian Jamasb and Julius Schwartz and Austin Tripp and Gregory Kell and Anthony Bourached and Alex Chan and Jacob Moss and Chengzhi Guo and Alpha A. Lee and Philippe Schwaller and Jian Tang},
-      year={2022},
-      eprint={2212.04450},
-      archivePrefix={arXiv},
-      primaryClass={physics.chem-ph}
-}
-
-```
