@@ -1,6 +1,7 @@
 name: gauche
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.7
   - pip=21.1.3
