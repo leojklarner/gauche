@@ -16,6 +16,6 @@ dependencies:
   - pytorch::torchvision
   - pytorch::torchaudio
   - pip:
-    - graphein==1.4.0
+    - graphein==1.5.1
     - rdkit
     - torch-geometric == 1.7.2
