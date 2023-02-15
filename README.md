@@ -41,7 +41,33 @@ Optional for running tests.
 pip install gpflow grakel
 ```
 
-## Tutorials
+## Example usage
+
+### Bayesian Optimisation Over Molecules
+
+|   |   |  
+|---|---|
+[Tutorial (Bayesian Optimisation Over Molecules)](https://leojklarner.github.io/gauche/notebooks/bayesian_optimisation_over_molecules.html)  | [Docs](https://leojklarner.github.io/gauche/modules/kernels.html)
+| [![Open In Colab(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb) | |
+
+```python
+from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
+
+# We define our custom GP surrogate model using the Tanimoto kernel
+
+class TanimotoGP(SingleTaskGP):
+
+    def __init__(self, train_X, train_Y):
+        super().__init__(train_X, train_Y, GaussianLikelihood())
+        self.mean_module = ConstantMean()
+        self.covar_module = ScaleKernel(base_kernel=TanimotoKernel())
+        self.to(train_X)  # make sure we're on the right device/dtype
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)
+```
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/BNN%20Regression%20on%20Molecules.ipynb)
 
