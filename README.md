@@ -34,6 +34,10 @@ Optional for running tests.
 pip install gpflow grakel
 ```
 
+## Tutorials
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/BNN%20Regression%20on%20Molecules.ipynb)
+
 ## Citing
 
 If GAUCHE is useful for your work please consider citing the following paper:
