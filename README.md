@@ -43,6 +43,29 @@ pip install gpflow grakel
 
 ## Example usage
 
+### BNN Regression on Molecules
+
+|   |   |  
+|---|---|
+[Tutorial (BNN Regression on Molecules)](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  | [Docs](https://leojklarner.github.io/gauche/modules/dataloader.html)
+| [![Open In Colab(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/assets/colab-badge.svg)]([https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/BNN%20Regression%20on%20Molecules.ipynb)) | |
+
+```python
+from gauche.dataloader import DataLoaderMP
+from gauche.dataloader.data_utils import transform_data
+from sklearn.model_selection import train_test_split
+
+loader = DataLoaderMP()
+loader.load_benchmark(dataset, dataset_paths[dataset])
+loader.featurize(feature)
+X = loader.features
+y = loader.labels
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_set_size, random_state=i)
+#  We standardise the outputs but leave the inputs unchanged
+_, y_train, _, y_test, y_scaler = transform_data(X_train, y_train, X_test, y_test)
+```
+
 ### Bayesian Optimisation Over Molecules
 
 |   |   |  
@@ -51,6 +74,7 @@ pip install gpflow grakel
 | [![Open In Colab(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb) | |
 
 ```python
+from botorch.models.gp_regression import SingleTaskGP
 from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 # We define our custom GP surrogate model using the Tanimoto kernel
@@ -68,8 +92,6 @@ class TanimotoGP(SingleTaskGP):
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
 ```
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/BNN%20Regression%20on%20Molecules.ipynb)
 
 ## Citing
 
