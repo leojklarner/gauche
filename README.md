@@ -62,6 +62,7 @@ X = loader.features
 y = loader.labels
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_set_size, random_state=i)
+
 #  We standardise the outputs but leave the inputs unchanged
 _, y_train, _, y_test, y_scaler = transform_data(X_train, y_train, X_test, y_test)
 ```
@@ -78,7 +79,6 @@ from botorch.models.gp_regression import SingleTaskGP
 from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 # We define our custom GP surrogate model using the Tanimoto kernel
-
 class TanimotoGP(SingleTaskGP):
 
     def __init__(self, train_X, train_Y):
