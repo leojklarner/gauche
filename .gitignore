@@ -150,3 +150,6 @@ pytorch3d/
 
 # PyCharm .idea
 .idea
+
+# pdf 
+*.pdf
