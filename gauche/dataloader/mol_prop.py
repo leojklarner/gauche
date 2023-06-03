@@ -16,7 +16,8 @@ from gauche.data_featuriser.featurisation import (
 
 from gauche.dataloader import DataLoader
 from rdkit.Chem import MolFromSmiles
-
+from graphein.molecule.config import MoleculeGraphConfig
+from typing import Optional
 
 class DataLoaderMP(DataLoader):
     def __init__(self):
@@ -41,7 +42,7 @@ class DataLoaderMP(DataLoader):
     def labels(self, value):
         self._labels = value
 
-    def validate(self, drop=True):
+    def validate(self, drop: bool = True):
         """Checks if the features are valid SMILES strings and (potentially)
         drops the entries that are not.
 
@@ -68,11 +69,11 @@ class DataLoaderMP(DataLoader):
 
     def featurize(
         self,
-        representation,
-        bond_radius=3,
-        nBits=2048,
-        graphein_config=None,
-        max_ngram=5,
+        representation: str,
+        bond_radius: int = 3,
+        nBits: int = 2048,
+        graphein_config: Optional[MoleculeGraphConfig] = None,
+        max_ngram: int = 5,
     ):
         """Transforms SMILES into the specified molecular representation.
 
@@ -137,7 +138,7 @@ class DataLoaderMP(DataLoader):
                 f"Choose between {valid_representations}."
             )
 
-    def load_benchmark(self, benchmark, path):
+    def load_benchmark(self, benchmark: str, path: str):
         """Loads features and labels from one of the included benchmark datasets
         and feeds them into the DataLoader.
 
@@ -146,6 +147,7 @@ class DataLoaderMP(DataLoader):
         :type benchmark: str
         :param path: the path to the dataset in csv format
         :type path: str
+        :raises ValueError: If an unsupported benchmark is provided.
         """
 
         benchmarks = {

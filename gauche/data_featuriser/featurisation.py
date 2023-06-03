@@ -1,6 +1,7 @@
 import numpy as np
 from rdkit.Chem import MolFromSmiles, AllChem, Descriptors
 import pandas as pd
+from typing import List, Optional
 from rxnfp.transformer_fingerprints import (
     get_default_model_and_tokenizer,
     RXNBERTFingerprintGenerator,
@@ -10,10 +11,12 @@ from sklearn.feature_extraction.text import CountVectorizer
 import selfies as sf
 import graphein.molecule as gm
 from rdkit.Chem import rdMolDescriptors
+from graphein.molecule.config import MoleculeGraphConfig
+import networkx as nx
 
 
 # Reactions
-def one_hot(df):
+def one_hot(df: pd.DataFrame) -> np.ndarray:
     """
     Builds reaction representation as a bit vector which indicates whether
     a certain condition, reagent, reactant etc. is present in the reaction.
@@ -28,7 +31,7 @@ def one_hot(df):
     return df_ohe.to_numpy(dtype=np.float64)
 
 
-def rxnfp(reaction_smiles):
+def rxnfp(reaction_smiles: List[str]) -> np.ndarray:
     """
     https://rxn4chemistry.github.io/rxnfp/
 
@@ -44,7 +47,7 @@ def rxnfp(reaction_smiles):
     return np.array(rxnfps, dtype=np.float64)
 
 
-def drfp(reaction_smiles, nBits=2048):
+def drfp(reaction_smiles: List[str], nBits: int = 2048) -> np.ndarray:
     """
     https://github.com/reymond-group/drfp
 
@@ -59,7 +62,7 @@ def drfp(reaction_smiles, nBits=2048):
 
 
 # Molecules
-def fingerprints(smiles, bond_radius=3, nBits=2048):
+def fingerprints(smiles: List[str], bond_radius: int = 3, nBits: int = 2048) -> np.ndarray:
     rdkit_mols = [MolFromSmiles(smiles) for smiles in smiles]
     fps = [
         AllChem.GetMorganFingerprintAsBitVect(mol, bond_radius, nBits=nBits)
@@ -69,7 +72,7 @@ def fingerprints(smiles, bond_radius=3, nBits=2048):
 
 
 # auxiliary function to calculate the fragment representation of a molecule
-def fragments(smiles):
+def fragments(smiles: List[str]) -> np.ndarray:
     # descList[115:] contains fragment-based features only
     # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
     # Update: in the new RDKit version the indices are [124:]
@@ -87,7 +90,7 @@ def fragments(smiles):
 
 
 # auxiliary function to calculate bag of character representation of a molecular string
-def bag_of_characters(smiles, max_ngram=5, selfies=False):
+def bag_of_characters(smiles: List[str], max_ngram: int = 5, selfies: bool = False) -> np.ndarray:
     if selfies:  # convert SMILES to SELFIES
         strings = [sf.encoder(smiles[i]) for i in range(len(smiles))]
     else:  # otherwise stick with SMILES
@@ -100,13 +103,13 @@ def bag_of_characters(smiles, max_ngram=5, selfies=False):
     return cv.fit_transform(strings).toarray()
 
 
-def graphs(smiles, graphein_config=None):
+def graphs(smiles: List[str], graphein_config: Optional[MoleculeGraphConfig] = None) -> List[nx.Graph]:
     return [
         gm.construct_graph(smiles=i, config=graphein_config) for i in smiles
     ]
 
 
-def mqn_features(smiles):
+def mqn_features(smiles: List[str]) -> np.ndarray:
     """
     Builds molecular representation as a vector of Molecular Quantum Numbers.
 

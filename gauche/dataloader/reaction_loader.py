@@ -30,13 +30,14 @@ class ReactionLoader(DataLoader):
     def validate(self, drop=True):
         invalid_idx = []
 
-    def featurize(self, representation, nBits=2048):
+    def featurize(self, representation: str, nBits: int = 2048):
         """Transforms reactions into the specified representation.
 
         :param representation: the desired reaction representation, one of [ohe, rxnfp, drfp, bag_of_smiles]
         :type representation: str
         :param nBits: int giving the bit vector length for drfp representation. Default is 2048
         :type nBits: int
+        :raises ValueError: If unsupported ``representation`` is provided.
         """
 
         valid_representations = [
@@ -64,7 +65,7 @@ class ReactionLoader(DataLoader):
                 f"Choose between {valid_representations}."
             )
 
-    def load_benchmark(self, benchmark, path):
+    def load_benchmark(self, benchmark: str, path: str):
 
         """Loads features and labels from one of the included benchmark datasets
                 and feeds them into the DataLoader.
@@ -75,6 +76,7 @@ class ReactionLoader(DataLoader):
         :type benchmark: str
         :param path: the path to the dataset in csv format
         :type path: str
+        :raises ValueError: If unsupported ``benchmark`` is provided.
         """
 
         benchmarks = {

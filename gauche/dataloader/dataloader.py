@@ -54,7 +54,7 @@ class DataLoader(metaclass=ABCMeta):
         raise NotImplementedError
 
     def split_and_scale(
-        self, test_size=0.2, scale_labels=True, scale_features=False
+        self, test_size: float = 0.2, scale_labels: bool = True, scale_features: bool = False
     ):
         """Splits the data into training and testing sets.
 
