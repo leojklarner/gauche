@@ -3,6 +3,7 @@ Test suite for fingerprint kernels.
 Author: Ryan-Rhys Griffiths 2021
 """
 
+import numpy as np
 import gpflow
 import pytest
 import tensorflow as tf
@@ -14,10 +15,18 @@ from gauche.kernels.fingerprint_kernels.base_fingerprint_kernel import (
 )
 from gauche.kernels.fingerprint_kernels.tanimoto_kernel import (
     TanimotoKernel,
+    MinMaxKernel,
 )
 from gpytorch.kernels import ScaleKernel
 
 
+@pytest.mark.parametrize(
+    "metric",
+    [
+        "tanimoto",
+        "minmax",
+    ],
+)
 @pytest.mark.parametrize(
     "x1, x2",
     [
@@ -28,13 +37,13 @@ from gpytorch.kernels import ScaleKernel
         (0.1 * torch.ones((2, 2)), 0.1 * torch.ones((2, 2))),
     ],
 )
-def test_tanimoto_similarity_with_equal_inputs(x1, x2):
+def test_tanimoto_and_minmax_similarity_with_equal_inputs(x1, x2, metric):
     """
-    Test the Tanimoto similarity metric between two equal input tensors.
+    Test the Tanimoto/minmax similarity metric between two equal input tensors.
     """
     dist_object = BitDistance()
     tan_similarity = dist_object._sim(
-        x1, x2, postprocess=False, x1_eq_x2=True, metric="tanimoto"
+        x1, x2, postprocess=False, x1_eq_x2=True, metric=metric
     )
 
     assert torch.isclose(tan_similarity, torch.ones((2, 2))).all()
@@ -112,6 +121,23 @@ def test_tanimoto_kernel():
     covar_module = ScaleKernel(TanimotoKernel())
     covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     assert covar.size() == torch.Size([2, 10, 10])
+
+
+def test_minmax_kernel():
+    """
+    Test the MinMax kernel when integrated with GP.
+    """
+
+    x1 = torch.as_tensor([[1.0, 2.0, 3.0, 4.0], [0.0, 1.0, 0.0, 2.0]])
+    x2 = torch.as_tensor(
+            [[1.0, 1.0, 1.0, 1.0], [0.5, 0.5, 0.5, 0.5], [4.0, 3.0, 2.0, 1.0]]
+        )
+    kernel = MinMaxKernel()
+
+    # Test that minmax sim is as expected
+    covar = kernel(x1, x2).to_dense().numpy()
+    expected_ans = np.array([[4 / 10, 2 / 10, 6 / 14], [2 / 5, 1 / 4, 2 / 11]])
+    assert np.allclose(covar, expected_ans)
 
 
 def test_against_tf_implementation():

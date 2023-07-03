@@ -25,6 +25,31 @@ def batch_tanimoto_sim(
     )
 
 
+def minmax_sim(
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+) -> torch.Tensor:
+    """
+    Non-batch version of minmax similarity.
+    eps argument ensures numerical stability if all zero tensors are added.
+
+    Uses formula from Ioffe 2010 to avoid forming large intermediate tensors:
+    (|x1| + |x2| - |x1 - x2|) / (|x1| + |x2| + |x1 - x2|)
+    (where || is the L1 norm)
+    """
+
+    # Check dimension is correct
+    assert x1.ndim == 2
+    assert x2.ndim == 2
+    assert x1.shape[1] == x2.shape[1]
+
+    # Compute l1 norms
+    x1_norm = torch.sum(x1, dim=-1, keepdim=True)
+    x2_norm = torch.sum(x2, dim=-1, keepdim=True)
+    norm_sum = x1_norm + x2_norm.T
+    pairwise_dist = torch.cdist(x1, x2, p=1)
+
+    return (norm_sum - pairwise_dist + eps) / (norm_sum + + pairwise_dist + eps)
+
 class BitDistance(torch.nn.Module):
     r"""
     Distance module for bit vector test_kernels.
@@ -57,9 +82,13 @@ class BitDistance(torch.nn.Module):
             res = batch_tanimoto_sim(x1, x2)
             res.clamp_min_(0)  # zero out negative values
             return self._postprocess(res) if postprocess else res
+        if metric == "minmax":
+            res = minmax_sim(x1, x2)
+            res.clamp_min_(0)  # zero out negative values
+            return self._postprocess(res) if postprocess else res
         else:
             raise RuntimeError(
-                "Similarity metric not supported. Available options are 'tanimoto'"
+                "Similarity metric not supported. Available options are 'tanimoto', 'minmax'"
             )
 
 

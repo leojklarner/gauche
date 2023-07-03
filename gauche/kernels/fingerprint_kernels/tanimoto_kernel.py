@@ -1,6 +1,6 @@
 """
-Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
-RDKit fragment features.
+Tanimoto Kernel. Operates on discrete or real-valued representations including bit vectors
+(e.g. Morgan/ECFP6 fingerprints) and count vectors (e.g. RDKit fragment features).
 """
 
 import gpytorch
@@ -22,6 +22,9 @@ class TanimotoKernel(BitKernel):
      \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert^2 + \left\lVert\mathbf{x'}\right\rVert^2 -
      \langle\mathbf{x}, \mathbf{x'}\rangle}
     \end{equation*}
+
+    This kernel is positive-definite for all real-valued inputs
+    (see https://arxiv.org/abs/2306.14809).
 
     .. note::
 
@@ -55,3 +58,21 @@ class TanimotoKernel(BitKernel):
             )
         else:
             return self.covar_dist(x1, x2, **params)
+
+
+class MinMaxKernel(TanimotoKernel):
+    r"""
+    A continuous extension to the Tanimoto kernel on binary fingerprints.
+
+     .. math::
+
+    \begin{equation*}
+     k_{\text{MinMax}}(\mathbf{x}, \mathbf{x'}) = \frac{\sum_i \min(x_i, x'_i)}{\sum_i \max(x_i, x'_i)}
+    \end{equation*}
+
+    ..
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.metric = "minmax"
