@@ -37,11 +37,6 @@ def minmax_sim(
     (where || is the L1 norm)
     """
 
-    # Check dimension is correct
-    assert x1.ndim == 2
-    assert x2.ndim == 2
-    assert x1.shape[1] == x2.shape[1]
-
     # Compute l1 norms
     x1_norm = torch.sum(x1, dim=-1, keepdim=True)
     x2_norm = torch.sum(x2, dim=-1, keepdim=True)
