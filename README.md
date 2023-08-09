@@ -34,6 +34,7 @@ conda env create -f conda_env.yml
 pip install --no-deps rxnfp
 pip install --no-deps drfp
 pip install transformers
+pip install mordred
 ```
 
 Optional for running tests.
