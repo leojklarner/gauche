@@ -1,6 +1,5 @@
 """
-Test suite for fingerprint kernels.
-Author: Ryan-Rhys Griffiths 2021
+Test suite for Tanimoto kernel.
 """
 
 import gpflow
@@ -9,11 +8,8 @@ import tensorflow as tf
 import torch
 from gpflow.utilities import positive
 from gpflow.utilities.ops import broadcasting_elementwise
-from gauche.kernels.fingerprint_kernels.base_fingerprint_kernel import (
-    BitDistance,
-)
 from gauche.kernels.fingerprint_kernels.tanimoto_kernel import (
-    TanimotoKernel,
+    TanimotoKernel, batch_tanimoto_sim
 )
 from gpytorch.kernels import ScaleKernel
 
@@ -29,14 +25,9 @@ from gpytorch.kernels import ScaleKernel
     ],
 )
 def test_tanimoto_similarity_with_equal_inputs(x1, x2):
+    """Test the Tanimoto similarity metric between two equal input tensors.
     """
-    Test the Tanimoto similarity metric between two equal input tensors.
-    """
-    dist_object = BitDistance()
-    tan_similarity = dist_object._sim(
-        x1, x2, postprocess=False, x1_eq_x2=True, metric="tanimoto"
-    )
-
+    tan_similarity = batch_tanimoto_sim(x1, x2)
     assert torch.isclose(tan_similarity, torch.ones((2, 2))).all()
 
 
@@ -48,10 +39,7 @@ def test_tanimoto_similarity_with_unequal_inputs():
     """
     x1 = torch.ones((2, 2))
     x2 = 2 * torch.ones((2, 2))
-    dist_object = BitDistance()
-    tan_similarity = dist_object._sim(
-        x1, x2, postprocess=False, metric="tanimoto"
-    )
+    tan_similarity = batch_tanimoto_sim(x1, x2)
 
     assert torch.allclose(tan_similarity, torch.tensor(0.6666666666666))
 
@@ -63,10 +51,7 @@ def test_tanimoto_similarity_with_very_unequal_inputs():
 
     x1 = torch.tensor([[1, 3], [2, 4]], dtype=torch.float64)
     x2 = torch.tensor([[4, 2], [3, 1]], dtype=torch.float64)
-    dist_object = BitDistance()
-    tan_similarity = dist_object._sim(
-        x1, x2, postprocess=False, metric="tanimoto"
-    )
+    tan_similarity = batch_tanimoto_sim(x1, x2)
 
     assert torch.allclose(
         tan_similarity,
@@ -86,10 +71,7 @@ def test_tanimoto_similarity_with_batch_dimension():
     x1 = x1[None, :]
     x2 = x2[None, :]
 
-    dist_object = BitDistance()
-    tan_similarity = dist_object._sim(
-        x1, x2, postprocess=False, metric="tanimoto"
-    )
+    tan_similarity = batch_tanimoto_sim(x1, x2)
 
     assert torch.allclose(
         tan_similarity,
