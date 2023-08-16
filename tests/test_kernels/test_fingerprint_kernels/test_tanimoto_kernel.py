@@ -1,6 +1,5 @@
 """
-Test suite for fingerprint kernels.
-Author: Ryan-Rhys Griffiths 2021-2023
+Test suite for Tanimoto kernel.
 """
 
 import gpflow
