@@ -1,29 +1,31 @@
 """
-MinMax Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
+Rogers-Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
 RDKit fragment features.
 """
 
 import torch
 from gpytorch.kernels import Kernel
 
+tkwargs = {"dtype": torch.double}
 
-def batch_minmax_sim(
+
+def batch_rogers_tanimoto_sim(
         x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
-    MinMax similarity between two batched tensors, across last 2 dimensions.
+    Rogers-Tanimoto similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    (|x1| + |x2| - |x1 - x2|) / (|x1| + |x2| + |x1 - x2|)
+    <x1, x2> + d / 2|x1| + 2|x2| - 3*<x1, x2> + d
 
-    Where || is the L1 norm
+    Where || is the L1 norm and <.> is the inner product and d is the number of common zeros
 
     Args:
         x1: `[b x n x d]` Tensor where b is the batch dimension
         x2: `[b x m x d]` Tensor
         eps: Float for numerical stability. Default value is 1e-6
     Returns:
-        Tensor denoting the MinMax similarity.
+        Tensor denoting the Otsuka similarity.
     """
 
     if x1.ndim < 2 or x2.ndim < 2:
@@ -32,24 +34,18 @@ def batch_minmax_sim(
     # Compute L1 norm
     x1_norm = torch.sum(x1, dim=-1, keepdims=True)
     x2_norm = torch.sum(x2, dim=-1, keepdims=True)
-    norm_sum = x1_norm + torch.transpose(x2_norm, -1, -2)
-    pairwise_dist = torch.cdist(x1, x2, p=1)
+    dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
+    d = torch.sum((x1[-1] == 0) & (x2[-1] == 0), dim=-1, keepdims=True)
 
-    similarity = (norm_sum - pairwise_dist + eps) / (norm_sum + pairwise_dist + eps)
+    similarity = (dot_prod + d + eps) / (2 * x1_norm + 2 * x2_norm - 3 * dot_prod + d + eps)
 
-    return similarity.clamp_min_(0)  # zero out negative values for numerical stability
+    return similarity.to(**tkwargs).clamp_min_(0)  # zero out negative values for numerical stability
 
 
-class MinMaxKernel(Kernel):
+class RogersTanimotoKernel(Kernel):
     r"""
-     Computes a covariance matrix based on the MinMax kernel
+     Computes a covariance matrix based on the Rogers-Tanimoto kernel
      between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`:
-
-     .. math::
-
-    \begin{equation*}
-     k_{\text{MinMax}}(\mathbf{x}, \mathbf{x'}) = \frac{\sum_i \min(x_i, x'_i)}
-    \end{equation*}
 
     .. note::
 
@@ -59,12 +55,12 @@ class MinMaxKernel(Kernel):
      Example:
          >>> x = torch.randint(0, 2, (10, 5))
          >>> # Non-batch: Simple option
-         >>> covar_module = gpytorch.kernels.ScaleKernel(MinMaxKernel())
+         >>> covar_module = gpytorch.kernels.ScaleKernel(RogersTanimotoKernel())
          >>> covar = covar_module(x)  # Output: LazyTensor of size (10 x 10)
          >>>
          >>> batch_x = torch.randint(0, 2, (2, 10, 5))
          >>> # Batch: Simple option
-         >>> covar_module = gpytorch.kernels.ScaleKernel(MinMaxKernel())
+         >>> covar_module = gpytorch.kernels.ScaleKernel(RogersTanimotoKernel())
          >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
 
@@ -72,7 +68,7 @@ class MinMaxKernel(Kernel):
     has_lengthscale = False
 
     def __init__(self, **kwargs):
-        super(MinMaxKernel, self).__init__(**kwargs)
+        super(RogersTanimotoKernel, self).__init__(**kwargs)
 
     def forward(self, x1, x2, diag=False, **params):
         if diag:
@@ -113,4 +109,4 @@ class MinMaxKernel(Kernel):
             x1 = x1.transpose(-1, -2).unsqueeze(-1)
             x2 = x2.transpose(-1, -2).unsqueeze(-1)
 
-        return batch_minmax_sim(x1, x2)
+        return batch_rogers_tanimoto_sim(x1, x2)
