@@ -5,7 +5,7 @@ on: [push]
 jobs:
   black:
     name: "Ensure black compliance"
-    runs-on: "ubuntu-18.04"
+    runs-on: "ubuntu-latest"
 
     steps:
       - name: Checkout repository
@@ -24,7 +24,7 @@ jobs:
 
   interrogate:
     name: "Ensure docstring coverage"
-    runs-on: "ubuntu-18.04"
+    runs-on: "ubuntu-latest"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -43,7 +43,7 @@ jobs:
 
   isort:
     name: "Ensure imports are correctly sorted"
-    runs-on: "ubuntu-18.04"
+    runs-on: "ubuntu-latest"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
