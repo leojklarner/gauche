@@ -1,59 +1,54 @@
 """
-Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
+MinMax Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
 RDKit fragment features.
 """
 
-import gpytorch
-from gpytorch.kernels import Kernel
 import torch
+from gpytorch.kernels import Kernel
 
 
-def batch_tanimoto_sim(
+def batch_minmax_sim(
         x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
-    Tanimoto similarity between two batched tensors, across last 2 dimensions.
-    eps argument ensures numerical stability if all zero tensors are added. Tanimoto similarity is proportional to:
+    MinMax similarity between two batched tensors, across last 2 dimensions.
+    eps argument ensures numerical stability if all zero tensors are added.
 
-    (<x, y>) / (||x||^2 + ||y||^2 - <x, y>)
+    (|x1| + |x2| - |x1 - x2|) / (|x1| + |x2| + |x1 - x2|)
 
-    where x and y may be bit or count vectors or in set notation:
-
-    |A \cap B | / |A| + |B| - |A \cap B |
+    Where || is the L1 norm
 
     Args:
         x1: `[b x n x d]` Tensor where b is the batch dimension
         x2: `[b x m x d]` Tensor
         eps: Float for numerical stability. Default value is 1e-6
     Returns:
-        Tensor denoting the Tanimoto similarity.
+        Tensor denoting the MinMax similarity.
     """
 
     if x1.ndim < 2 or x2.ndim < 2:
         raise ValueError("Tensors must have a batch dimension")
 
-    dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
-    x1_norm = torch.sum(x1 ** 2, dim=-1, keepdims=True)
-    x2_norm = torch.sum(x2 ** 2, dim=-1, keepdims=True)
+    # Compute L1 norm
+    x1_norm = torch.sum(x1, dim=-1, keepdims=True)
+    x2_norm = torch.sum(x2, dim=-1, keepdims=True)
+    norm_sum = x1_norm + torch.transpose(x2_norm, -1, -2)
+    pairwise_dist = torch.cdist(x1, x2, p=1)
 
-    tan_similarity = (dot_prod + eps) / (
-            eps + x1_norm + torch.transpose(x2_norm, -1, -2) - dot_prod
-    )
+    similarity = (norm_sum - pairwise_dist + eps) / (norm_sum + pairwise_dist + eps)
 
-    return tan_similarity.clamp_min_(0)  # zero out negative values for numerical stability
+    return similarity.clamp_min_(0)  # zero out negative values for numerical stability
 
 
-class TanimotoKernel(Kernel):
+class MinMaxKernel(Kernel):
     r"""
-     Computes a covariance matrix based on the Tanimoto kernel
+     Computes a covariance matrix based on the MinMax kernel
      between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`:
 
      .. math::
 
     \begin{equation*}
-     k_{\text{Tanimoto}}(\mathbf{x}, \mathbf{x'}) = \frac{\langle\mathbf{x},
-     \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert^2 + \left\lVert\mathbf{x'}\right\rVert^2 -
-     \langle\mathbf{x}, \mathbf{x'}\rangle}
+     k_{\text{MinMax}}(\mathbf{x}, \mathbf{x'}) = \frac{\sum_i \min(x_i, x'_i)}
     \end{equation*}
 
     .. note::
@@ -64,12 +59,12 @@ class TanimotoKernel(Kernel):
      Example:
          >>> x = torch.randint(0, 2, (10, 5))
          >>> # Non-batch: Simple option
-         >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
+         >>> covar_module = gpytorch.kernels.ScaleKernel(MinMaxKernel())
          >>> covar = covar_module(x)  # Output: LazyTensor of size (10 x 10)
          >>>
          >>> batch_x = torch.randint(0, 2, (2, 10, 5))
          >>> # Batch: Simple option
-         >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
+         >>> covar_module = gpytorch.kernels.ScaleKernel(MinMaxKernel())
          >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
 
@@ -77,7 +72,7 @@ class TanimotoKernel(Kernel):
     has_lengthscale = False
 
     def __init__(self, **kwargs):
-        super(TanimotoKernel, self).__init__(**kwargs)
+        super(MinMaxKernel, self).__init__(**kwargs)
 
     def forward(self, x1, x2, diag=False, **params):
         if diag:
@@ -118,4 +113,4 @@ class TanimotoKernel(Kernel):
             x1 = x1.transpose(-1, -2).unsqueeze(-1)
             x2 = x2.transpose(-1, -2).unsqueeze(-1)
 
-        return batch_tanimoto_sim(x1, x2)
+        return batch_minmax_sim(x1, x2)
