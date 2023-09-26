@@ -3,5 +3,5 @@ gauche.data_featuriser
 
 Featurisation
 --------------------
-.. automodule:: gprotorch.data_featuriser.featurisation
+.. automodule:: gauche.data_featuriser.featurisation
     :members:
