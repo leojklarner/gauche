@@ -47,12 +47,12 @@ pip install gpflow grakel
 
 ## Example usage
 
-### BNN Regression on Molecules
+### GP Regression on Molecules
 
 |   |   |  
 |---|---|
-[Tutorial (BNN Regression on Molecules)](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  | [Docs](https://leojklarner.github.io/gauche/modules/dataloader.html)
-| [![Open In Colab(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/assets/colab-badge.svg)]([https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/BNN%20Regression%20on%20Molecules.ipynb)) | |
+[Tutorial (GP Regression on Molecules)](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  | [Docs](https://leojklarner.github.io/gauche/modules/dataloader.html)
+| [![Open In Colab(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/assets/colab-badge.svg)]([https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/GP%20Regression%20on%20Molecules.ipynb)) | |
 
 ```python
 from gauche.dataloader import DataLoaderMP
