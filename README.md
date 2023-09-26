@@ -19,6 +19,9 @@
 A Gaussian Process Library for Molecules, Proteins and Chemical Reactions.
 
 ## What's New?
+
+GAUCHE has been accepted to NeurIPS 2023 Main Track! More details forthcoming!
+
 |   |   |
 |---|---|
 | [GP Regression on Molecules](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/GP%20Regression%20on%20Molecules.ipynb)   |
