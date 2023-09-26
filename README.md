@@ -21,7 +21,7 @@ A Gaussian Process Library for Molecules, Proteins and Reactions.
 ## What's New?
 |   |   |
 |---|---|
-| [BNN Regression on Molecules](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/BNN%20Regression%20on%20Molecules.ipynb)   |
+| [GP Regression on Molecules](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/GP%20Regression%20on%20Molecules.ipynb)   |
 | [Bayesian Optimisation Over Molecules](https://leojklarner.github.io/gauche/notebooks/bayesian_optimisation_over_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb)   |
 
 
