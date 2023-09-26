@@ -3,20 +3,20 @@ gauche.dataloader
 
 Dataloader
 --------------------
-.. automodule:: gprotorch.dataloader.dataloader
+.. automodule:: gauche.dataloader.dataloader
     :members:
 
 Molecular Properties
 --------------------
-.. automodule:: gprotorch.dataloader.mol_prop
+.. automodule:: gauche.dataloader.mol_prop
     :members:
 
 Utils
 --------------------
-.. automodule:: gprotorch.dataloader.data_utils
+.. automodule:: gauche.dataloader.data_utils
     :members:
 
 Reaction Loader
 ------------------
-.. automodule:: gprotorch.dataloader.reaction_loader
+.. automodule:: gauche.dataloader.reaction_loader
     :members:
