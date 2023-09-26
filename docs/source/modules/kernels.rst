@@ -37,7 +37,7 @@ GNN Kernels
 
 Graph Kernels
 --------------
-.. automodule:: gauche.kernels.graph_kernels
+.. automodule:: gauche.gp
     :members:
 
 String Kernels
