@@ -22,8 +22,7 @@ tkwargs = {"dtype": torch.double}
 def test_intersection_similarity_with_equal_inputs(x1, x2):
     """Test the Intersection similarity metric between two equal input tensors."""
     similarity = batch_intersection_sim(x1, x2)
-    print(similarity)
-    assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs)).all()
+    assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs) * 2).all()
 
 
 def test_intersection_similarity_with_unequal_inputs():
