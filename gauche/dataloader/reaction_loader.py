@@ -1,6 +1,4 @@
 import pandas as pd
-
-from gauche.data_featuriser import one_hot, rxnfp, drfp, bag_of_characters
 from gauche.dataloader import DataLoader
 
 
@@ -47,15 +45,23 @@ class ReactionLoader(DataLoader):
         ]
 
         if representation == "ohe":
+            from gauche.representations.fingerprints import one_hot
+
             self.features = one_hot(self.features)
 
         elif representation == "rxnfp":
+            from gauche.representations.fingerprints import rxnfp
+
             self.features = rxnfp(self.features.to_list())
 
         elif representation == "drfp":
+            from gauche.representations.fingerprints import drfp
+
             self.features = drfp(self.features.to_list(), nBits=nBits)
 
         elif representation == "bag_of_smiles":
+            from gauche.representations.strings import bag_of_characters
+
             self.features = bag_of_characters(self.features.to_list())
 
         else:
@@ -65,7 +71,6 @@ class ReactionLoader(DataLoader):
             )
 
     def load_benchmark(self, benchmark, path):
-
         """Loads features and labels from one of the included benchmark datasets
                 and feeds them into the DataLoader.
 
@@ -98,26 +103,19 @@ class ReactionLoader(DataLoader):
         }
 
         if benchmark not in benchmarks.keys():
-
             raise Exception(
                 f"The specified benchmark choice ({benchmark}) is not a valid option. "
                 f"Choose one of {list(benchmarks.keys())}."
             )
 
         else:
-
             df = pd.read_csv(path)
             # drop nans from the datasets
             nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
             nan_indices = [nan for nan, x in enumerate(nans) if x]
-            self.features = df[benchmarks[benchmark]["features"]].drop(
-                nan_indices
-            )
+            self.features = df[benchmarks[benchmark]["features"]].drop(nan_indices)
             self.labels = (
-                df[benchmarks[benchmark]["labels"]]
-                .dropna()
-                .to_numpy()
-                .reshape(-1, 1)
+                df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
             )
 
 

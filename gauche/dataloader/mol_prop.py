@@ -6,13 +6,6 @@ molecular property prediction datasets.
 
 import numpy as np
 import pandas as pd
-from gauche.data_featuriser.featurisation import (
-    fingerprints,
-    fragments,
-    mqn_features,
-    bag_of_characters,
-    graphs,
-)
 
 from gauche.dataloader import DataLoader
 from rdkit.Chem import MolFromSmiles
@@ -53,7 +46,6 @@ class DataLoaderMP(DataLoader):
 
         # iterate through the features
         for i in range(len(self.features)):
-
             # try to convert each SMILES to an rdkit molecule
             mol = MolFromSmiles(self.features[i])
 
@@ -94,44 +86,50 @@ class DataLoaderMP(DataLoader):
             "mqn",
         ]
 
-        if representation == "fingerprints":
+        if representation == "ecfp_fingerprints":
+            from gauche.representations.fingerprints import ecfp_fingerprints
 
-            self.features = fingerprints(
+            self.features = ecfp_fingerprints(
                 self.features, bond_radius=bond_radius, nBits=nBits
             )
 
         elif representation == "fragments":
+            from gauche.representations.fingerprints import fragments
 
             self.features = fragments(self.features)
 
         elif representation == "fragprints":
+            from gauche.representations.fingerprints import ecfp_fingerprints, fragments
 
             self.features = np.concatenate(
                 (
-                    fingerprints(
-                        self.features, bond_radius=bond_radius, nBits=nBits
-                    ),
+                    fingerprints(self.features, bond_radius=bond_radius, nBits=nBits),
                     fragments(self.features),
                 ),
                 axis=1,
             )
 
         elif representation == "mqn":
+            from gauche.representations.fingerprints import mqn_features
+
             self.features = mqn_features(self.features)
 
         elif representation == "bag_of_selfies":
+            from gauche.representations.strings import bag_of_characters
 
             self.features = bag_of_characters(self.features, selfies=True)
 
         elif representation == "bag_of_smiles":
+            from gauche.representations.strings import bag_of_characters
 
             self.features = bag_of_characters(self.features)
 
-        elif representation == "graphs":
-            self.features = graphs(self.features, graphein_config)
+        elif representation == "molecular_graphs":
+            from gauche.representations.graphs import molecular_graphs
+
+            self.features = molecular_graphs(self.features, graphein_config)
 
         else:
-
             raise Exception(
                 f"The specified representation choice {representation} is not a valid option."
                 f"Choose between {valid_representations}."
@@ -179,19 +177,13 @@ class DataLoaderMP(DataLoader):
             nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
             nan_indices = [nan for nan, x in enumerate(nans) if x]
             self.features = (
-                df[benchmarks[benchmark]["features"]]
-                .drop(nan_indices)
-                .to_list()
+                df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
             )
             self.labels = (
-                df[benchmarks[benchmark]["labels"]]
-                .dropna()
-                .to_numpy()
-                .reshape(-1, 1)
+                df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
             )
 
         else:
-
             raise ValueError(
                 f"The specified benchmark choice ({benchmark}) is not a valid option. "
                 f"Choose one of {list(benchmarks.keys())}."
