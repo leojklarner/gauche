@@ -5,7 +5,10 @@ Test suite for Dice kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
-from gauche.kernels.fingerprint_kernels.dice_kernel import batch_dice_sim, DiceKernel
+from gauche.kernels.fingerprint_kernels.dice_kernel import (
+    batch_dice_sim,
+    DiceKernel,
+)
 
 tkwargs = {"dtype": torch.double}
 
@@ -17,15 +20,13 @@ tkwargs = {"dtype": torch.double}
     ],
 )
 def test_minmax_similarity_with_equal_inputs(x1, x2):
-    """Test the Dice similarity metric between two equal input tensors.
-    """
+    """Test the Dice similarity metric between two equal input tensors."""
     similarity = batch_dice_sim(x1, x2)
     assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs)).all()
 
 
 def test_dice_similarity_with_unequal_inputs():
-    """Test the Dice similarity metric between two unequal input tensors.
-    """
+    """Test the Dice similarity metric between two unequal input tensors."""
     x1 = torch.tensor([1, 0, 1, 1], **tkwargs)
     x2 = torch.tensor([1, 1, 0, 0], **tkwargs)
     # Add a batch dimension
@@ -37,8 +38,7 @@ def test_dice_similarity_with_unequal_inputs():
 
 
 def test_dice_kernel():
-    """Test the Dice kernel when integrated with GP.
-    """
+    """Test the Dice kernel when integrated with GP."""
 
     x = torch.randint(0, 2, (10, 5))
     # Non-batch: Simple option

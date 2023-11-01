@@ -5,7 +5,10 @@ Test suite for Faith kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
-from gauche.kernels.fingerprint_kernels.faith_kernel import batch_faith_sim, FaithKernel
+from gauche.kernels.fingerprint_kernels.faith_kernel import (
+    batch_faith_sim,
+    FaithKernel,
+)
 
 tkwargs = {"dtype": torch.double}
 
@@ -17,15 +20,13 @@ tkwargs = {"dtype": torch.double}
     ],
 )
 def test_faith_similarity_with_equal_inputs(x1, x2):
-    """Test the Faith similarity metric between two equal input tensors.
-    """
+    """Test the Faith similarity metric between two equal input tensors."""
     similarity = batch_faith_sim(x1, x2)
     assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs)).all()
 
 
 def test_faith_similarity_with_unequal_inputs():
-    """Test the Faith similarity metric between two unequal input tensors.
-    """
+    """Test the Faith similarity metric between two unequal input tensors."""
     x1 = torch.tensor([1, 0, 1, 1], **tkwargs)
     x2 = torch.tensor([1, 1, 0, 0], **tkwargs)
     # Add a batch dimension
@@ -37,8 +38,7 @@ def test_faith_similarity_with_unequal_inputs():
 
 
 def test_faith_kernel():
-    """Test the Faith kernel when integrated with GP.
-    """
+    """Test the Faith kernel when integrated with GP."""
 
     x = torch.randint(0, 2, (10, 5))
     # Non-batch: Simple option

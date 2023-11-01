@@ -7,7 +7,10 @@ import math
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
-from gauche.kernels.fingerprint_kernels.otsuka_kernel import batch_otsuka_sim, OtsukaKernel
+from gauche.kernels.fingerprint_kernels.otsuka_kernel import (
+    batch_otsuka_sim,
+    OtsukaKernel,
+)
 
 tkwargs = {"dtype": torch.double}
 
@@ -19,15 +22,13 @@ tkwargs = {"dtype": torch.double}
     ],
 )
 def test_otsuka_similarity_with_equal_inputs(x1, x2):
-    """Test the Otsuka similarity metric between two equal input tensors.
-    """
+    """Test the Otsuka similarity metric between two equal input tensors."""
     similarity = batch_otsuka_sim(x1, x2)
     assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs)).all()
 
 
 def test_otsuka_similarity_with_unequal_inputs():
-    """Test the Otsuka similarity metric between two unequal input tensors.
-    """
+    """Test the Otsuka similarity metric between two unequal input tensors."""
     x1 = torch.tensor([1, 0, 1, 1], **tkwargs)
     x2 = torch.tensor([1, 1, 0, 0], **tkwargs)
     # Add a batch dimension
@@ -35,12 +36,13 @@ def test_otsuka_similarity_with_unequal_inputs():
     x2 = x2[None, :]
     similarity = batch_otsuka_sim(x1, x2)
 
-    assert torch.allclose(similarity, torch.tensor(1.0 / math.sqrt(5.0), **tkwargs))
+    assert torch.allclose(
+        similarity, torch.tensor(1.0 / math.sqrt(5.0), **tkwargs)
+    )
 
 
 def test_otsuka_kernel():
-    """Test the Otsuka kernel when integrated with GP.
-    """
+    """Test the Otsuka kernel when integrated with GP."""
 
     x = torch.randint(0, 2, (10, 5))
     # Non-batch: Simple option
