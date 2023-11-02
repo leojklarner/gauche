@@ -3,6 +3,7 @@ Abstract class implementing the data loading, data splitting,
 type validation and feature extraction functionalities.
 """
 
+from typing import Optional
 from abc import ABCMeta, abstractmethod
 
 from sklearn.model_selection import train_test_split
@@ -34,27 +35,36 @@ class DataLoader(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def validate(self, drop=True):
-        """Checks whether the loaded data is a valid instance of the specified
-        data type, potentially dropping invalid entries.
+    def validate(
+        self, drop: Optional[bool] = True, canonicalize: Optional[bool] = True
+    ):
+        """Checks whether the loaded data is a valid instance
+        of the specified data type, optionally dropping invalid
+        entries and standardizing the remaining ones.
 
         :param drop:  whether to drop invalid entries
         :type drop: bool
+        :param canonicalize: whether to standardize the data
+        :type canonicalize: bool
         """
         raise NotImplementedError
 
     @abstractmethod
-    def featurize(self, representation):
+    def featurize(self, representation: str, **kwargs):
         """Transforms the features to the specified representation (in-place).
 
         :param representation: desired feature format
         :type representation: str
-
+        :param kwargs: additional keyword arguments for the representation function
+        :type kwargs: dict
         """
         raise NotImplementedError
 
     def split_and_scale(
-        self, test_size=0.2, scale_labels=True, scale_features=False
+        self,
+        test_size: int = 0.2,
+        scale_labels: bool = True,
+        scale_features: bool = False,
     ):
         """Splits the data into training and testing sets.
 

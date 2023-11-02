@@ -7,28 +7,44 @@ import pytest
 
 import os
 import itertools
+import numpy as np
+import networkx as nx
 from gauche.dataloader import MolPropLoader
 
 
+benckmark_cols = {
+    "Photoswitch": {
+        "features": "SMILES",
+        "labels": "E isomer pi-pi* wavelength in nm",
+    },
+    "ESOL": {
+        "features": "smiles",
+        "labels": "measured log solubility in mols per litre",
+    },
+    "FreeSolv": {"features": "smiles", "labels": "expt"},
+    "Lipophilicity": {"features": "smiles", "labels": "exp"},
+}
+
+
 @pytest.mark.parametrize(
-    "dataset, representation",
+    "dataset, representation, kwargs",
     [
-        (d, f)
-        for d, f in itertools.product(
+        (d, f, kw)
+        for d, (f, kw) in itertools.product(
             ["Photoswitch", "ESOL", "FreeSolv", "Lipophilicity"],
             [
-                "ecfp_fingerprints",
-                "fragments",
-                "ecfp_fragprints",
-                "molecular_graphs",
-                "bag_of_smiles",
-                "bag_of_selfies",
-                "mqn",
+                ("ecfp_fingerprints", {"bond_radius": 2, "nBits": 1024}),
+                ("fragments", {}),
+                ("ecfp_fragprints", {"bond_radius": 2, "nBits": 1024}),
+                ("molecular_graphs", {"graphein_config": None}),
+                ("bag_of_smiles", {"max_ngram": 3}),
+                ("bag_of_selfies", {"max_ngram": 3}),
+                ("mqn", {}),
             ],
         )
     ],
 )
-def test_benchmark_loading(dataset, representation):
+def test_benchmark_loader(dataset, representation, kwargs):
     """
     Test if all benchmarks can be loaded with all representation.
     """
@@ -37,8 +53,27 @@ def test_benchmark_loading(dataset, representation):
         os.path.join("..", "..", "data", "property_prediction")
     )
 
+    # load through benchmark loading method
+
     dataloader = MolPropLoader()
     dataloader.load_benchmark(
-        dataset, path=os.path.join(dataset_root, dataset + ".csv")
+        benchmark=dataset,
     )
-    dataloader.featurize(representation)
+    dataloader.featurize(representation, **kwargs)
+
+    # load through csv loading method
+
+    dataloader_csv = MolPropLoader()
+    dataloader_csv.read_csv(
+        path=os.path.join(dataset_root, dataset + ".csv"),
+        smiles_column=benckmark_cols[dataset]["features"],
+        labels_column=benckmark_cols[dataset]["labels"],
+    )
+    dataloader_csv.featurize(representation, **kwargs)
+
+    # check if both dataloaders have the same features and labels
+    # skip for molecular_graphs representation, since that might
+    # require an isomorphism test
+    if representation != "molecular_graphs":
+        assert np.array_equal(dataloader.features, dataloader_csv.features)
+    assert np.array_equal(dataloader.labels, dataloader_csv.labels)

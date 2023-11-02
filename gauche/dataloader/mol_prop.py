@@ -3,7 +3,9 @@ Instantiation of the abstract data loader class for
 molecular property prediction datasets.
 """
 
+from typing import Optional
 
+import os
 import numpy as np
 import pandas as pd
 
@@ -34,64 +36,67 @@ class MolPropLoader(DataLoader):
     def labels(self, value):
         self._labels = value
 
-    def validate(self, drop=True):
-        """Checks if the features are valid SMILES strings and (potentially)
-        drops the entries that are not.
+    def validate(
+        self, drop: Optional[bool] = True, canonicalize: Optional[bool] = True
+    ) -> None:
+        """
+        Utility function to validate a read-in dataset of smiles and labels by
+        checking that all SMILES strings can be converted to rdkit molecules
+        and that all labels are numeric and not NaNs.
+        Optionally drops all invalid entries and makes the
+        remaining SMILES strings canonical (default).
 
         :param drop: whether to drop invalid entries
         :type drop: bool
+        :param canonicalize: whether to make the SMILES strings canonical
+        :type canonicalize: bool
         """
 
-        invalid_idx = []
+        invalid_mols = np.array(
+            [True if MolFromSmiles(x) is None else False for x in self.features]
+        )
+        if np.any(invalid_mols):
+            print(
+                f"Found invalid SMILES strings "
+                f"{[x for i, x in enumerate(self.features) if invalid_mols[i]]} "
+                f"at indices {np.where(invalid_mols)[0].tolist()}"
+            )
 
-        # iterate through the features
-        for i in range(len(self.features)):
-            # try to convert each SMILES to an rdkit molecule
-            mol = MolFromSmiles(self.features[i])
+        invalid_labels = np.isnan(self.labels).squeeze()
+        if np.any(invalid_labels):
+            print(
+                f"Found invalid labels {self.labels[invalid_labels].squeeze()} "
+                f"at indices {np.where(invalid_labels)[0].tolist()}"
+            )
 
-            # if it does not work, save the index and print its position to the console
-            if mol is None:
-                invalid_idx.append(i)
-                print(f"Invalid SMILES at position {i+1}: {self.features[i]}")
+        invalid_idx = np.logical_or(invalid_mols, invalid_labels)
 
         if drop:
-            self.features = np.delete(self.features, invalid_idx).tolist()
-            self.labels = np.delete(self.labels, invalid_idx)
+            self.features = [
+                x for i, x in enumerate(self.features) if not invalid_idx[i]
+            ]
+            self.labels = self.labels[~invalid_idx]
+            assert len(self.features) == len(self.labels)
 
-    def featurize(
-        self,
-        representation,
-        bond_radius=3,
-        nBits=2048,
-        graphein_config=None,
-        max_ngram=5,
-    ):
+        if canonicalize:
+            self.features = [
+                MolToSmiles(MolFromSmiles(smiles), isomericSmiles=False)
+                for smiles in self.features
+            ]
+
+    def featurize(self, representation: str, **kwargs) -> None:
         """Transforms SMILES into the specified molecular representation.
 
-        :param representation: the desired molecular representation, one of [fingerprints, fragments, fragprints]
+        :param representation: the desired molecular representation, one of [ecfp_fingerprints, fragments, ecfp_fragprints, molecular_graphs, bag_of_smiles, bag_of_selfies, mqn].
         :type representation: str
-        :param bond_radius: int giving the bond radius for Morgan fingerprints. Default is 3
-        :type bond_radius: int
-        :param nBits: int giving the bit vector length for Morgan fingerprints. Default is 2048
-        :type nBits: int
+        :param kwargs: additional keyword arguments for the representation function
+        :type kwargs: dict
         """
-
-        valid_representations = [
-            "ecfp_fingerprints",
-            "fragments",
-            "ecfp_fragprints",
-            "graphs",
-            "bag_of_smiles",
-            "bag_of_selfies",
-            "mqn",
-        ]
 
         if representation == "ecfp_fingerprints":
             from gauche.representations.fingerprints import ecfp_fingerprints
 
-            self.features = ecfp_fingerprints(
-                self.features, bond_radius=bond_radius, nBits=nBits
-            )
+            self.features = ecfp_fingerprints(self.features, **kwargs)
 
         elif representation == "fragments":
             from gauche.representations.fingerprints import fragments
@@ -103,9 +108,7 @@ class MolPropLoader(DataLoader):
 
             self.features = np.concatenate(
                 (
-                    ecfp_fingerprints(
-                        self.features, bond_radius=bond_radius, nBits=nBits
-                    ),
+                    ecfp_fingerprints(self.features, **kwargs),
                     fragments(self.features),
                 ),
                 axis=1,
@@ -119,17 +122,17 @@ class MolPropLoader(DataLoader):
         elif representation == "bag_of_selfies":
             from gauche.representations.strings import bag_of_characters
 
-            self.features = bag_of_characters(self.features, selfies=True)
+            self.features = bag_of_characters(self.features, selfies=True, **kwargs)
 
         elif representation == "bag_of_smiles":
             from gauche.representations.strings import bag_of_characters
 
-            self.features = bag_of_characters(self.features)
+            self.features = bag_of_characters(self.features, **kwargs)
 
         elif representation == "molecular_graphs":
             from gauche.representations.graphs import molecular_graphs
 
-            self.features = molecular_graphs(self.features, graphein_config)
+            self.features = molecular_graphs(self.features, **kwargs)
 
         else:
             raise Exception(
@@ -137,14 +140,37 @@ class MolPropLoader(DataLoader):
                 f"Choose between {valid_representations}."
             )
 
-    def load_benchmark(self, benchmark, path):
-        """Loads features and labels from one of the included benchmark datasets
-        and feeds them into the DataLoader.
+    def read_csv(self, path: str, smiles_column: str, labels_column: str) -> None:
+        """
+        Loads a dataset from a .csv file. The file must contain the two
+        specified columns with the SMILES strings and labels.
+
+        :param path: path to the csv file
+        :type path: str
+        :param smiles_column: name of the column containing the SMILES strings
+        :type smiles_column: str
+        :param labels_column: name of the column containing the labels
+        :type labels_column: str
+        """
+
+        df = pd.read_csv(path, usecols=[smiles_column, labels_column])
+        self.features = df[smiles_column].to_list()
+        self.labels = df[labels_column].values.reshape(-1, 1)
+        self.validate()
+
+    def load_benchmark(
+        self,
+        benchmark: str,
+        path=None,
+    ) -> None:
+        """
+        Loads a selection of existing benchmarks data directory.
 
         :param benchmark: the benchmark dataset to be loaded, one of
             ``[Photoswitch, ESOL, FreeSolv, Lipophilicity]``.
         :type benchmark: str
-        :param path: the path to the dataset in csv format
+        :param path: the path to the directory that contains the dataset,
+            defaults to the data directory of the project if None
         :type path: str
         """
 
@@ -152,18 +178,6 @@ class MolPropLoader(DataLoader):
             "Photoswitch": {
                 "features": "SMILES",
                 "labels": "E isomer pi-pi* wavelength in nm",
-            },
-            "Photoswitch_E_n_pi": {
-                "features": "SMILES",
-                "labels": "E isomer n-pi* wavelength in nm",
-            },
-            "Photoswitch_Z_pi_pi": {
-                "features": "SMILES",
-                "labels": "Z isomer pi-pi* wavelength in nm",
-            },
-            "Photoswitch_Z_n_pi": {
-                "features": "SMILES",
-                "labels": "Z isomer n-pi* wavelength in nm",
             },
             "ESOL": {
                 "features": "smiles",
@@ -173,26 +187,27 @@ class MolPropLoader(DataLoader):
             "Lipophilicity": {"features": "smiles", "labels": "exp"},
         }
 
-        if benchmark in benchmarks:
-            df = pd.read_csv(path)
-            # drop nans from the datasets
-            nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
-            nan_indices = [nan for nan, x in enumerate(nans) if x]
-            self.features = (
-                df[benchmarks[benchmark]["features"]].drop(nan_indices).to_list()
-            )
-            self.labels = (
-                df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
+        assert benchmark in benchmarks.keys(), (
+            f"The specified benchmark choice ({benchmark}) is not a valid option. "
+            f"Choose one of {list(benchmarks.keys())}."
+        )
+
+        # if no path is specified, use the default data directory
+        if path is None:
+            path = os.path.abspath(
+                os.path.join(
+                    os.path.abspath(__file__),
+                    "..",
+                    "..",
+                    "..",
+                    "data",
+                    "property_prediction",
+                    benchmark + ".csv",
+                )
             )
 
-            # make SMILES canoncial
-            self.features = [
-                MolToSmiles(MolFromSmiles(smiles), isomericSmiles=False)
-                for smiles in self.features
-            ]
-
-        else:
-            raise ValueError(
-                f"The specified benchmark choice ({benchmark}) is not a valid option. "
-                f"Choose one of {list(benchmarks.keys())}."
-            )
+        self.read_csv(
+            path=path,
+            smiles_column=benchmarks[benchmark]["features"],
+            labels_column=benchmarks[benchmark]["labels"],
+        )
