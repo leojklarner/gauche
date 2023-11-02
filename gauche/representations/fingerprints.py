@@ -87,8 +87,8 @@ def ecfp_fingerprints(
     """
 
     rdkit_mols = [MolFromSmiles(s) for s in smiles]
-    fpgen = AllChem.GetMorganGenerator(radius=2)
-    fps = [fpgen.GetFingerprint(mol, bond_radius, nBits=nBits) for mol in rdkit_mols]
+    fpgen = AllChem.GetMorganGenerator(radius=bond_radius, fpSize=nBits)
+    fps = [fpgen.GetFingerprint(mol) for mol in rdkit_mols]
     return np.array(fps)
 
 
