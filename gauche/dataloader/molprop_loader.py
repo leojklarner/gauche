@@ -3,7 +3,7 @@ Instantiation of the abstract data loader class for
 molecular property prediction datasets.
 """
 
-from typing import Optional
+from typing import Optional, Union, Callable
 
 import os
 import numpy as np
@@ -14,27 +14,21 @@ from rdkit.Chem import MolFromSmiles, MolToSmiles
 
 
 class MolPropLoader(DataLoader):
+    """
+    Data loader class for molecular property prediction
+    datasets with a single regression target.
+    Expects input to be a csv file with one column for
+    SMILES strings and one column for labels.
+    Contains methods to validate the dataset and to
+    transform the SMILES strings into different
+    molecular representations.
+    """
+
     def __init__(self):
         super(MolPropLoader, self).__init__()
         self.task = "molecular_property_prediction"
         self._features = None
         self._labels = None
-
-    @property
-    def features(self):
-        return self._features
-
-    @features.setter
-    def features(self, value):
-        self._features = value
-
-    @property
-    def labels(self):
-        return self._labels
-
-    @labels.setter
-    def labels(self, value):
-        self._labels = value
 
     def validate(
         self, drop: Optional[bool] = True, canonicalize: Optional[bool] = True
@@ -84,16 +78,37 @@ class MolPropLoader(DataLoader):
                 for smiles in self.features
             ]
 
-    def featurize(self, representation: str, **kwargs) -> None:
+    def featurize(self, representation: Union[str, Callable], **kwargs) -> None:
         """Transforms SMILES into the specified molecular representation.
 
-        :param representation: the desired molecular representation, one of [ecfp_fingerprints, fragments, ecfp_fragprints, molecular_graphs, bag_of_smiles, bag_of_selfies, mqn].
-        :type representation: str
+        :param representation: the desired molecular representation, one of [ecfp_fingerprints, fragments, ecfp_fragprints, molecular_graphs, bag_of_smiles, bag_of_selfies, mqn] or a callable that takes a list of SMILES strings as input and returns the desired featurization.
+
+        :type representation: str or Callable
         :param kwargs: additional keyword arguments for the representation function
         :type kwargs: dict
         """
 
-        if representation == "ecfp_fingerprints":
+        assert isinstance(representation, (str, Callable)), (
+            f"The specified representation choice {representation} is not "
+            f"a valid type. Please choose a string from the list of available "
+            f"representations or provide a callable that takes a list of "
+            f"SMILES strings as input and returns the desired featurization."
+        )
+
+        valid_representations = [
+            "ecfp_fingerprints",
+            "fragments",
+            "ecfp_fragprints",
+            "molecular_graphs",
+            "bag_of_smiles",
+            "bag_of_selfies",
+            "mqn",
+        ]
+
+        if isinstance(representation, Callable):
+            self.features = representation(self.features, **kwargs)
+
+        elif representation == "ecfp_fingerprints":
             from gauche.representations.fingerprints import ecfp_fingerprints
 
             self.features = ecfp_fingerprints(self.features, **kwargs)

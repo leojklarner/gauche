@@ -15,24 +15,20 @@ class DataLoader(metaclass=ABCMeta):
         self.task = None
 
     @property
-    @abstractmethod
     def features(self):
-        raise NotImplementedError
+        return self._features
 
     @features.setter
-    @abstractmethod
     def features(self, value):
-        raise NotImplementedError
+        self._features = value
 
     @property
-    @abstractmethod
     def labels(self):
-        raise NotImplementedError
+        return self._labels
 
     @labels.setter
-    @abstractmethod
     def labels(self, value):
-        raise NotImplementedError
+        self._labels = value
 
     @abstractmethod
     def validate(

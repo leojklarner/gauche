@@ -10,6 +10,9 @@ import itertools
 import numpy as np
 from gauche.dataloader import MolPropLoader
 
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
 
 benckmark_cols = {
     "Photoswitch": {
@@ -116,3 +119,35 @@ def test_invalid_benchmark(benchmark):
     dataloader = MolPropLoader()
     with pytest.raises(Exception):
         dataloader.load_benchmark(benchmark)
+
+
+def test_custom_featurizer_smiles_length():
+    """
+    Test behaviour of data loader for custom featurizer that
+    returns the length of the SMILES string.
+    """
+
+    def custom_featurizer(smiles):
+        return np.array([len(s) for s in smiles]).reshape(-1, 1)
+
+    dataloader = MolPropLoader()
+    dataloader.load_benchmark("ESOL")
+    dataloader.featurize(custom_featurizer)
+    assert dataloader.features.shape == (1128, 1)
+
+
+def test_custom_featurizer_rdkit_fp():
+    """
+    Tests if the data loader accepts a custom featurizer.
+    """
+
+    # use rdkit fingerprints as custom featurizer
+    def custom_featurizer(smiles):
+        fpgen = AllChem.GetRDKitFPGenerator()
+        mols = [Chem.MolFromSmiles(s) for s in smiles]
+        fps = [fpgen.GetFingerprint(x) for x in mols]
+        return np.array(fps)
+
+    dataloader = MolPropLoader()
+    dataloader.load_benchmark("ESOL")
+    dataloader.featurize(custom_featurizer)
