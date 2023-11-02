@@ -9,7 +9,7 @@ import os
 
 import pytest
 import torch
-from gauche.dataloader import DataLoaderMP
+from gauche.dataloader import MolPropLoader
 from gauche.kernels.gnn_kernels.hu_iclr_2020 import GNN, mol_to_pyg
 from rdkit.Chem import MolFromSmiles
 from torch_geometric.data import Batch
@@ -27,7 +27,7 @@ benchmark_path = os.path.abspath(
     )
 )
 
-benchmark_loader = DataLoaderMP()
+benchmark_loader = MolPropLoader()
 benchmark_loader.load_benchmark(benchmark="ESOL", path=benchmark_path)
 
 # get PyTorch Geometric featurisation of molecules

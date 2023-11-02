@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from benchmark_models import ScalarProductGP, TanimotoGP
 from botorch import fit_gpytorch_model
-from gauche.dataloader import DataLoaderMP
+from gauche.dataloader import MolPropLoader
 from gauche.dataloader.data_utils import transform_data
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -80,7 +80,7 @@ def main(
                             f"Choose one of {list(featurisations.values())}.")
 
     # Load the benchmark dataset
-    loader = DataLoaderMP()
+    loader = MolPropLoader()
     loader.load_benchmark(dataset_name, dataset_path)
 
     # Choose the featurisation

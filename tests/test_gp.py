@@ -11,7 +11,7 @@ from grakel.kernels import WeisfeilerLehman
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from gauche.dataloader import DataLoaderMP
+from gauche.dataloader import MolPropLoader
 from gauche.dataloader.data_utils import transform_data
 
 import torch
@@ -48,7 +48,7 @@ class GPyTorchBenchmark(ExactGP):
 class TestReproducibility(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42); np.random.seed(42)
-        loader = DataLoaderMP()
+        loader = MolPropLoader()
         loader.load_benchmark("Photoswitch", "../data/property_prediction/Photoswitch.csv")
 
         loader.featurize('fragprints')
@@ -119,7 +119,7 @@ class GraphGP(SIGP):
 
 class TestGraphKernel(unittest.TestCase):
     def setUp(self):
-        loader = DataLoaderMP()
+        loader = MolPropLoader()
         loader.load_benchmark("Photoswitch", "../data/property_prediction/Photoswitch.csv")
         bond_types = {1.0: 'S', 1.5: 'A', 2.0: 'D', 3.0: 'O'}
 

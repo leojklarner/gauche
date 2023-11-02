@@ -11,9 +11,9 @@ from gauche.dataloader import DataLoader
 from rdkit.Chem import MolFromSmiles, MolToSmiles
 
 
-class DataLoaderMP(DataLoader):
+class MolPropLoader(DataLoader):
     def __init__(self):
-        super(DataLoaderMP, self).__init__()
+        super(MolPropLoader, self).__init__()
         self.task = "molecular_property_prediction"
         self._features = None
         self._labels = None
@@ -196,9 +196,3 @@ class DataLoaderMP(DataLoader):
                 f"The specified benchmark choice ({benchmark}) is not a valid option. "
                 f"Choose one of {list(benchmarks.keys())}."
             )
-
-
-if __name__ == "__main__":
-    loader = DataLoaderMP()
-    loader.load_benchmark("ESOL", "../../data/property_prediction/ESOL.csv")
-    print(loader)

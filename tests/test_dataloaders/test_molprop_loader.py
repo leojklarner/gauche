@@ -7,7 +7,7 @@ import pytest
 
 import os
 import itertools
-from gauche.dataloader import DataLoaderMP
+from gauche.dataloader import MolPropLoader
 
 
 @pytest.mark.parametrize(
@@ -37,7 +37,7 @@ def test_benchmark_loading(dataset, representation):
         os.path.join("..", "..", "data", "property_prediction")
     )
 
-    dataloader = DataLoaderMP()
+    dataloader = MolPropLoader()
     dataloader.load_benchmark(
         dataset, path=os.path.join(dataset_root, dataset + ".csv")
     )
