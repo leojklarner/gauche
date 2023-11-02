@@ -1,8 +1,11 @@
 numpy
 pandas
 scikit-learn
-rdkit
+rdkit-pypi
+torch
+gpytorch
+pytest
 tqdm
 selfies
 graphein==1.4.0
-gpytorch
+gpflow
