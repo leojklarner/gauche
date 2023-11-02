@@ -3,13 +3,14 @@ Contains methods to generate string representations
 of molecules, chemical reactions and proteins.
 """
 
+import numpy as np
 from typing import List, Optional
 from sklearn.feature_extraction.text import CountVectorizer
 
 
 def bag_of_characters(
     strings: List[str], max_ngram: Optional[int] = 5, selfies: Optional[bool] = False
-):
+) -> np.ndarray:
     """
     Featursises any string representation (molecules/chemical reactions/proteins) into a bag of characters (boc) representation.
 

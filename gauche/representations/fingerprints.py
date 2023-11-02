@@ -92,7 +92,7 @@ def ecfp_fingerprints(
     return np.array(fps)
 
 
-def fragments(smiles):
+def fragments(smiles: List[str]) -> np.ndarray:
     """
     Builds molecular representation as a vector of fragment counts.
 
@@ -122,7 +122,7 @@ def fragments(smiles):
     return np.array(frags)
 
 
-def mqn_features(smiles):
+def mqn_features(smiles: List[str]) -> np.ndarray:
     """
     Builds molecular representation as a vector of Molecular Quantum Numbers.
 

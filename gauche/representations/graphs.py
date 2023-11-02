@@ -4,12 +4,12 @@ of molecules, chemical reactions and proteins.
 """
 
 from typing import List, Optional
-import networkx
+import networkx as nx
 
 
 def molecular_graphs(
     smiles: List[str], graphein_config: Optional[bool] = None
-) -> List:
+) -> List[nx.Graph]:
     """
     Convers a list of SMILES strings into molecular graphs
     using the feautrisation utilities of graphein.
