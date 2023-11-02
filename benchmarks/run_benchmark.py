@@ -34,7 +34,7 @@ dataset_names = {
     "Lipophilicity": "Lipophilicity",
 }
 dataset_paths = {
-    "Photoswitch": "../data/property_prediction/photoswitches.csv",
+    "Photoswitch": "../data/property_prediction/Photoswitch.csv",
     "ESOL": "../data/property_prediction/ESOL.csv",
     "FreeSolv": "../data/property_prediction/FreeSolv.csv",
     "Lipophilicity": "../data/property_prediction/Lipophilicity.csv",
@@ -55,7 +55,7 @@ def main(
         n_trials: Number of random train/test splits for the datasets. Default is 20
         test_set_size: Size of the test set for evaluation. Default is 0.2
         dataset_name: Benchmark dataset to use. One of ['Photoswitch', 'ESOL', 'FreeSolv', 'Lipophilicity']
-        dataset_path: Benchmark dataset path. One of ['../data/property_prediction/photoswitches.csv',
+        dataset_path: Benchmark dataset path. One of ['../data/property_prediction/Photoswitch.csv',
                                                        ../data/property_prediction/ESOL.csv',
                                                        '../data/property_prediction/FreeSolv.csv',
                                                        '../data/property_prediction/Lipophilicity.csv']
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         "--path",
         type=str,
         default="../data/property_prediction/Lipophilicity.csv",
-        help="Path to the dataset file. One of [../data/property_prediction/photoswitches.csv, "
+        help="Path to the dataset file. One of [../data/property_prediction/Photoswitch.csv, "
         "../data/property_prediction/ESOL.csv, "
         "../data/property_prediction/FreeSolv.csv, "
         "../data/property_prediction/Lipophilicity.csv]",

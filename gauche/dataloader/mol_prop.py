@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from gauche.dataloader import DataLoader
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import MolFromSmiles, MolToSmiles
 
 
 class DataLoaderMP(DataLoader):
@@ -77,9 +77,9 @@ class DataLoaderMP(DataLoader):
         """
 
         valid_representations = [
-            "fingerprints",
+            "ecfp_fingerprints",
             "fragments",
-            "fragprints",
+            "ecfp_fragprints",
             "graphs",
             "bag_of_smiles",
             "bag_of_selfies",
@@ -98,12 +98,14 @@ class DataLoaderMP(DataLoader):
 
             self.features = fragments(self.features)
 
-        elif representation == "fragprints":
+        elif representation == "ecfp_fragprints":
             from gauche.representations.fingerprints import ecfp_fingerprints, fragments
 
             self.features = np.concatenate(
                 (
-                    fingerprints(self.features, bond_radius=bond_radius, nBits=nBits),
+                    ecfp_fingerprints(
+                        self.features, bond_radius=bond_radius, nBits=nBits
+                    ),
                     fragments(self.features),
                 ),
                 axis=1,
@@ -182,6 +184,12 @@ class DataLoaderMP(DataLoader):
             self.labels = (
                 df[benchmarks[benchmark]["labels"]].dropna().to_numpy().reshape(-1, 1)
             )
+
+            # make SMILES canoncial
+            self.features = [
+                MolToSmiles(MolFromSmiles(smiles), isomericSmiles=False)
+                for smiles in self.features
+            ]
 
         else:
             raise ValueError(

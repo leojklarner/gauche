@@ -49,7 +49,7 @@ class TestReproducibility(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42); np.random.seed(42)
         loader = DataLoaderMP()
-        loader.load_benchmark("Photoswitch", "../data/property_prediction/photoswitches.csv")
+        loader.load_benchmark("Photoswitch", "../data/property_prediction/Photoswitch.csv")
 
         loader.featurize('fragprints')
         X = loader.features
@@ -120,7 +120,7 @@ class GraphGP(SIGP):
 class TestGraphKernel(unittest.TestCase):
     def setUp(self):
         loader = DataLoaderMP()
-        loader.load_benchmark("Photoswitch", "../data/property_prediction/photoswitches.csv")
+        loader.load_benchmark("Photoswitch", "../data/property_prediction/Photoswitch.csv")
         bond_types = {1.0: 'S', 1.5: 'A', 2.0: 'D', 3.0: 'O'}
 
         def to_graph(mol):
