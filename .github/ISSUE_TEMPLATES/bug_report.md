@@ -28,7 +28,7 @@ If applicable, add screenshots to help explain your problem.
 
 - OS: [e.g. iOS]
 - Python Version
-- Graphein Version [e.g. 22] & how it was installed
+- Gauche Version [e.g. 1.0.0] & how it was installed
 
 **Additional context**
 Add any other context about the problem here.

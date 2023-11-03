@@ -4,7 +4,6 @@ scikit-learn
 rdkit
 tqdm
 selfies
-graphein
 torch
 gpytorch
 botorch

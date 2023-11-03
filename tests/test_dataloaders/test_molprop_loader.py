@@ -52,7 +52,9 @@ def test_benchmark_loader(dataset, representation, kwargs):
     """
 
     dataset_root = os.path.abspath(
-        os.path.join("..", "..", "data", "property_prediction")
+        os.path.join(
+            os.path.abspath(__file__), "..", "..", "..", "data", "property_prediction"
+        )
     )
 
     # load through benchmark loading method
@@ -89,7 +91,7 @@ def test_invalid_data():
 
     dataloader = MolPropLoader()
     dataloader.read_csv(
-        path=os.path.join(os.getcwd(), "invalid_molprop_data.csv"),
+        path=os.path.join(os.path.abspath(__file__), "invalid_molprop_data.csv"),
         smiles_column="SMILES",
         label_column="labels",
     )

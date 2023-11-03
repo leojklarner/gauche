@@ -11,6 +11,7 @@ from setuptools import find_packages, setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+
 def read(*parts):
     # intentionally *not* adding an encoding option to open
     return codecs.open(os.path.join(HERE, *parts), "r").read()
@@ -54,25 +55,23 @@ def read_requirements(*parts) -> List[str]:
 
 INSTALL_REQUIRES: List[str] = read_requirements(".requirements/base.in")
 EXTRA_REQUIRES: Dict[str, List[str]] = {
+    "rxn": read_requirements(".requirements/rxn.in"),
+    "graphs": read_requirements(".requirements/graphs.in"),
     "dev": read_requirements(".requirements/dev.in"),
     "docs": read_requirements(".requirements/docs.in"),
-    "cpu": read_requirements(".requirements/cpu.in"),
-    "cu116": read_requirements(".requirements/cu116.in"),
-    "cu117": read_requirements(".requirements/cu117.in"),
 }
+
 # Add all requires
 all_requires: List[str] = []
 for k, v in EXTRA_REQUIRES.items():
-    if k not in ["cu116", "cu117"]:
+    if k not in ["dev", "docs"]:
         all_requires.extend(v)
 EXTRA_REQUIRES["all"] = list(set(all_requires))
 
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
-    )
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
@@ -86,7 +85,7 @@ packages = find_packages(".", exclude=["tests"])
 setup(
     name="gauche",
     version=version,
-    description="Gaussian Process Library for Molecules, Proteins and General Chemistry in PyTorch.",
+    description="Gaussian Process Library for Molecules, Chemical Reactions and Proteins.",
     long_description=readme,
     long_description_content_type="text/markdown",
     license="MIT",
