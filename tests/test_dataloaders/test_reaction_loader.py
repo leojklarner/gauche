@@ -82,7 +82,9 @@ def test_invalid_data():
 
     dataloader = ReactionLoader()
     dataloader.read_csv(
-        path=os.path.join(os.path.abspath(__file__), "invalid_reaction_data.csv"),
+        path=os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "invalid_reaction_data.csv"
+        ),
         reactant_column=["ligand", "additive", "base", "aryl halide"],
         label_column="yield",
     )

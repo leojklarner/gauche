@@ -91,7 +91,9 @@ def test_invalid_data():
 
     dataloader = MolPropLoader()
     dataloader.read_csv(
-        path=os.path.join(os.path.abspath(__file__), "invalid_molprop_data.csv"),
+        path=os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "invalid_molprop_data.csv"
+        ),
         smiles_column="SMILES",
         label_column="labels",
     )
