@@ -45,12 +45,17 @@ class ReactionLoader(DataLoader):
 
         if isinstance(self.features, pd.Series):
             # reaction SMARTS are provided as a single strings
-            invalid_rxns = self.features.apply(ReactionFromSmarts).isnull().values
+            invalid_rxns = (
+                self.features.apply(ReactionFromSmarts).isnull().values
+            )
 
         elif isinstance(self.features, pd.DataFrame):
             # reactant SMILES are provided as list of strings
             invalid_rxns = (
-                self.features.applymap(MolFromSmiles).isnull().any(axis=1).values
+                self.features.applymap(MolFromSmiles)
+                .isnull()
+                .any(axis=1)
+                .values
             )
         else:
             raise ValueError(
@@ -149,7 +154,9 @@ class ReactionLoader(DataLoader):
                 f"for a single reaction SMARTS string. Received "
                 f"{len(self.features.columns)} columns instead."
             )
-            self.features = bag_of_characters(self.features.to_list(), **kwargs)
+            self.features = bag_of_characters(
+                self.features.to_list(), **kwargs
+            )
 
         else:
             raise Exception(
@@ -178,7 +185,9 @@ class ReactionLoader(DataLoader):
         :type validate: bool
         """
 
-        assert isinstance(label_column, str), "label_column must be a single string"
+        assert isinstance(
+            label_column, str
+        ), "label_column must be a single string"
 
         df = pd.read_csv(
             path,

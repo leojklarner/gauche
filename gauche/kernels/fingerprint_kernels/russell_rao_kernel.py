@@ -10,7 +10,7 @@ tkwargs = {"dtype": torch.double}
 
 
 def batch_russell_rao_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
     Russell-Rao similarity between two batched tensors, across last 2 dimensions.
@@ -36,7 +36,9 @@ def batch_russell_rao_sim(
 
     similarity = (dot_prod + eps) / (n + eps)
 
-    return similarity.to(**tkwargs).clamp_min_(0)  # zero out negative values for numerical stability
+    return similarity.to(**tkwargs).clamp_min_(
+        0
+    )  # zero out negative values for numerical stability
 
 
 class RussellRaoKernel(Kernel):
@@ -77,11 +79,11 @@ class RussellRaoKernel(Kernel):
             return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            **params,
+        self,
+        x1,
+        x2,
+        last_dim_is_batch=False,
+        **params,
     ):
         r"""This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.

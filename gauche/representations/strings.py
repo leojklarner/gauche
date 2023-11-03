@@ -9,7 +9,9 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 
 def bag_of_characters(
-    strings: List[str], max_ngram: Optional[int] = 5, selfies: Optional[bool] = False
+    strings: List[str],
+    max_ngram: Optional[int] = 5,
+    selfies: Optional[bool] = False,
 ) -> np.ndarray:
     """
     Featursises any string representation (molecules/chemical reactions/proteins) into a bag of characters (boc) representation.
@@ -36,5 +38,7 @@ def bag_of_characters(
         strings = [sf.encoder(strings[i]) for i in range(len(strings))]
 
     # extract bag of character (boc) representation from strings
-    cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
+    cv = CountVectorizer(
+        ngram_range=(1, max_ngram), analyzer="char", lowercase=False
+    )
     return cv.fit_transform(strings).toarray()

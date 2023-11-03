@@ -6,9 +6,6 @@ type validation and feature extraction functionalities.
 from typing import Optional
 from abc import ABCMeta, abstractmethod
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-
 
 class DataLoader(metaclass=ABCMeta):
     def __init__(self):

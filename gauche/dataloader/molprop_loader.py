@@ -47,7 +47,10 @@ class MolPropLoader(DataLoader):
         """
 
         invalid_mols = np.array(
-            [True if MolFromSmiles(x) is None else False for x in self.features]
+            [
+                True if MolFromSmiles(x) is None else False
+                for x in self.features
+            ]
         )
         if np.any(invalid_mols):
             print(
@@ -85,7 +88,9 @@ class MolPropLoader(DataLoader):
                 for smiles in self.features
             ]
 
-    def featurize(self, representation: Union[str, Callable], **kwargs) -> None:
+    def featurize(
+        self, representation: Union[str, Callable], **kwargs
+    ) -> None:
         """Transforms SMILES into the specified molecular representation.
 
         :param representation: the desired molecular representation, one of [ecfp_fingerprints, fragments, ecfp_fragprints, molecular_graphs, bag_of_smiles, bag_of_selfies, mqn] or a callable that takes a list of SMILES strings as input and returns the desired featurization.
@@ -125,7 +130,10 @@ class MolPropLoader(DataLoader):
             self.features = fragments(self.features)
 
         elif representation == "ecfp_fragprints":
-            from gauche.representations.fingerprints import ecfp_fingerprints, fragments
+            from gauche.representations.fingerprints import (
+                ecfp_fingerprints,
+                fragments,
+            )
 
             self.features = np.concatenate(
                 (
@@ -143,7 +151,9 @@ class MolPropLoader(DataLoader):
         elif representation == "bag_of_selfies":
             from gauche.representations.strings import bag_of_characters
 
-            self.features = bag_of_characters(self.features, selfies=True, **kwargs)
+            self.features = bag_of_characters(
+                self.features, selfies=True, **kwargs
+            )
 
         elif representation == "bag_of_smiles":
             from gauche.representations.strings import bag_of_characters
@@ -162,7 +172,11 @@ class MolPropLoader(DataLoader):
             )
 
     def read_csv(
-        self, path: str, smiles_column: str, label_column: str, validate: bool = True
+        self,
+        path: str,
+        smiles_column: str,
+        label_column: str,
+        validate: bool = True,
     ) -> None:
         """
         Loads a dataset from a .csv file. The file must contain the two

@@ -23,4 +23,6 @@ def molecular_graphs(
 
     import graphein.molecule as gm
 
-    return [gm.construct_graph(smiles=i, config=graphein_config) for i in smiles]
+    return [
+        gm.construct_graph(smiles=i, config=graphein_config) for i in smiles
+    ]

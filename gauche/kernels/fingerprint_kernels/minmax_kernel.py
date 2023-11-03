@@ -8,7 +8,7 @@ from gpytorch.kernels import Kernel
 
 
 def batch_minmax_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
     MinMax similarity between two batched tensors, across last 2 dimensions.
@@ -35,9 +35,13 @@ def batch_minmax_sim(
     norm_sum = x1_norm + torch.transpose(x2_norm, -1, -2)
     pairwise_dist = torch.cdist(x1, x2, p=1)
 
-    similarity = (norm_sum - pairwise_dist + eps) / (norm_sum + pairwise_dist + eps)
+    similarity = (norm_sum - pairwise_dist + eps) / (
+        norm_sum + pairwise_dist + eps
+    )
 
-    return similarity.clamp_min_(0)  # zero out negative values for numerical stability
+    return similarity.clamp_min_(
+        0
+    )  # zero out negative values for numerical stability
 
 
 class MinMaxKernel(Kernel):
@@ -84,11 +88,11 @@ class MinMaxKernel(Kernel):
             return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            **params,
+        self,
+        x1,
+        x2,
+        last_dim_is_batch=False,
+        **params,
     ):
         r"""This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.

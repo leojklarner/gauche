@@ -50,7 +50,9 @@ def rxnfp(reaction_smiles: List[str]) -> np.ndarray:
     return np.array(rxnfps, dtype=np.float64)
 
 
-def drfp(reaction_smiles: List[str], nBits: Optional[int] = 2048) -> np.ndarray:
+def drfp(
+    reaction_smiles: List[str], nBits: Optional[int] = 2048
+) -> np.ndarray:
     """
     https://github.com/reymond-group/drfp
 
@@ -71,7 +73,9 @@ def drfp(reaction_smiles: List[str], nBits: Optional[int] = 2048) -> np.ndarray:
 
 
 def ecfp_fingerprints(
-    smiles: List[str], bond_radius: Optional[int] = 3, nBits: Optional[int] = 2048
+    smiles: List[str],
+    bond_radius: Optional[int] = 3,
+    nBits: Optional[int] = 2048,
 ) -> np.ndarray:
     """
     Builds molecular representation as a binary ECFP fingerprints.
@@ -132,5 +136,7 @@ def mqn_features(smiles: List[str]) -> np.ndarray:
 
     """
     molecules = [MolFromSmiles(smile) for smile in smiles]
-    mqn_descriptors = [rdMolDescriptors.MQNs_(molecule) for molecule in molecules]
+    mqn_descriptors = [
+        rdMolDescriptors.MQNs_(molecule) for molecule in molecules
+    ]
     return np.array(mqn_descriptors)
