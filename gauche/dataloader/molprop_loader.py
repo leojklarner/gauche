@@ -1,5 +1,5 @@
 """
-Instantiation of the abstract data loader class for
+Subclass of the abstract data loader class for
 molecular property prediction datasets.
 """
 
@@ -51,16 +51,23 @@ class MolPropLoader(DataLoader):
         )
         if np.any(invalid_mols):
             print(
-                f"Found invalid SMILES strings "
+                f"Found {invalid_mols.sum()} SMILES strings "
                 f"{[x for i, x in enumerate(self.features) if invalid_mols[i]]} "
                 f"at indices {np.where(invalid_mols)[0].tolist()}"
+            )
+            print(
+                "To turn validation off, use dataloader.read_csv(..., validate=False)."
             )
 
         invalid_labels = np.isnan(self.labels).squeeze()
         if np.any(invalid_labels):
             print(
-                f"Found invalid labels {self.labels[invalid_labels].squeeze()} "
+                f"Found {invalid_labels.sum()} invalid labels "
+                f"{self.labels[invalid_labels].squeeze()} "
                 f"at indices {np.where(invalid_labels)[0].tolist()}"
+            )
+            print(
+                "To turn validation off, use dataloader.read_csv(..., validate=False)."
             )
 
         invalid_idx = np.logical_or(invalid_mols, invalid_labels)
@@ -82,7 +89,6 @@ class MolPropLoader(DataLoader):
         """Transforms SMILES into the specified molecular representation.
 
         :param representation: the desired molecular representation, one of [ecfp_fingerprints, fragments, ecfp_fragprints, molecular_graphs, bag_of_smiles, bag_of_selfies, mqn] or a callable that takes a list of SMILES strings as input and returns the desired featurization.
-
         :type representation: str or Callable
         :param kwargs: additional keyword arguments for the representation function
         :type kwargs: dict
@@ -155,7 +161,9 @@ class MolPropLoader(DataLoader):
                 f"Choose between {valid_representations}."
             )
 
-    def read_csv(self, path: str, smiles_column: str, labels_column: str) -> None:
+    def read_csv(
+        self, path: str, smiles_column: str, label_column: str, validate: bool = True
+    ) -> None:
         """
         Loads a dataset from a .csv file. The file must contain the two
         specified columns with the SMILES strings and labels.
@@ -164,14 +172,24 @@ class MolPropLoader(DataLoader):
         :type path: str
         :param smiles_column: name of the column containing the SMILES strings
         :type smiles_column: str
-        :param labels_column: name of the column containing the labels
-        :type labels_column: str
+        :param label_column: name of the column containing the labels
+        :type label_column: str
+        :param validate: whether to validate the loaded data
+        :type validate: bool
         """
 
-        df = pd.read_csv(path, usecols=[smiles_column, labels_column])
+        assert isinstance(
+            smiles_column, str
+        ), f"smiles_column ({smiles_column}) must be a single string"
+        assert isinstance(
+            label_column, str
+        ), f"label_column ({label_column}) must be a single string"
+
+        df = pd.read_csv(path, usecols=[smiles_column, label_column])
         self.features = df[smiles_column].to_list()
-        self.labels = df[labels_column].values.reshape(-1, 1)
-        self.validate()
+        self.labels = df[label_column].values.reshape(-1, 1)
+        if validate:
+            self.validate()
 
     def load_benchmark(
         self,
@@ -224,5 +242,5 @@ class MolPropLoader(DataLoader):
         self.read_csv(
             path=path,
             smiles_column=benchmarks[benchmark]["features"],
-            labels_column=benchmarks[benchmark]["labels"],
+            label_column=benchmarks[benchmark]["labels"],
         )

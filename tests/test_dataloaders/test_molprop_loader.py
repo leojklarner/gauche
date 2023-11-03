@@ -69,7 +69,7 @@ def test_benchmark_loader(dataset, representation, kwargs):
     dataloader_csv.read_csv(
         path=os.path.join(dataset_root, dataset + ".csv"),
         smiles_column=benckmark_cols[dataset]["features"],
-        labels_column=benckmark_cols[dataset]["labels"],
+        label_column=benckmark_cols[dataset]["labels"],
     )
     dataloader_csv.featurize(representation, **kwargs)
 
@@ -91,7 +91,7 @@ def test_invalid_data():
     dataloader.read_csv(
         path=os.path.join(os.getcwd(), "invalid_molprop_data.csv"),
         smiles_column="SMILES",
-        labels_column="labels",
+        label_column="labels",
     )
     assert len(dataloader.features) == 2 and len(dataloader.labels) == 2
 
