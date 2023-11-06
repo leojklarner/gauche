@@ -4,6 +4,6 @@ scikit-learn
 rdkit
 tqdm
 selfies
-torch
+torch==1.13
 gpytorch
 botorch
