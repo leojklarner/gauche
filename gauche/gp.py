@@ -2,57 +2,36 @@ from copy import deepcopy
 from functools import lru_cache
 
 import torch
-import gpytorch
 
-from gpytorch import Module, settings
+from gpytorch import settings
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import _GaussianLikelihoodBase
 from gpytorch.models.exact_prediction_strategies import prediction_strategy
 from gpytorch.models import ExactGP
 
-Softplus = torch.nn.Softplus()
 
-
-class Inputs:
+class NonTensorialInputs:
     def __init__(self, data):
         self.data = data
 
     def append(self, new_data):
         self.data.extend(new_data.data)
 
+    def __iter__(self):
+        return iter(self.data)
 
-class GraphKernel(Module):
-    """
-    A class suporting externel kernels.
-    The external kernel must have a method `fit_transform`, which, when
-    evaluated on an `Inputs` instance `X`, returns a scaled kernel matrix
-    v * k(X, X).
+    def __len__(self):
+        return len(self.data)
 
-    As gradients are not propagated through to the external kernel, outputs are
-    cached to avoid repeated computation.
-    """
-
-    def __init__(self, graph_kernel, dtype=torch.float):
-        super().__init__()
-        self._scale_variance = torch.nn.Parameter(torch.tensor([0.1], dtype=dtype))
-        self.kernel = graph_kernel
-
-    def scale(self, S):
-        return Softplus(self._scale_variance) * S
-
-    def forward(self, X):
-        return self.scale(self.kern(X))
-
-    @lru_cache(maxsize=5)
-    def kern(self, X):
-        return torch.tensor(self.kernel.fit_transform(X.data)).float()
+    def __getitem__(self, idx):
+        return self.data[idx]
 
 
 class SIGP(ExactGP):
     """
-    A reimplementation of gpytorch(==1.7.0)'s ExactGP that allows for non-tensorial inputs.
-    The inputs to this class may be a gauche.gp.Inputs instance, with graphs stored within
-    the object's .data attribute.
+    A reimplementation of gpytorch's ExactGP that allows for non-tensorial inputs.
+    The inputs to this class may be a gauche.NonTensorialInputs instance, with graphs
+    stored within the object's .data attribute.
 
     In the longer term, if ExactGP can be refactored such that the validation checks ensuring
     that the inputs are torch.Tensors are optional, this class should subclass ExactGP without
@@ -60,7 +39,7 @@ class SIGP(ExactGP):
     """
 
     def __init__(self, train_inputs, train_targets, likelihood):
-        if train_inputs is not None and type(train_inputs) is Inputs:
+        if train_inputs is not None and type(train_inputs) is NonTensorialInputs:
             train_inputs = (train_inputs,)
         if not isinstance(likelihood, _GaussianLikelihoodBase):
             raise RuntimeError("SIGP can only handle Gaussian likelihoods")
