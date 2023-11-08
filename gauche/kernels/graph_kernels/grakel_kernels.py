@@ -36,7 +36,9 @@ class _GraphKernel(Module):
         super().__init__()
         self.node_label = None
         self.edge_label = None
-        self._scale_variance = torch.nn.Parameter(torch.tensor([0.1], dtype=dtype))
+        self._scale_variance = torch.nn.Parameter(
+            torch.tensor([0.1], dtype=dtype)
+        )
 
     def scale(self, S: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.softplus(self._scale_variance) * S
@@ -74,7 +76,9 @@ class VertexHistogramKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(VertexHistogram(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            VertexHistogram(**grakel_kwargs).fit_transform(X)
+        ).float()
 
 
 class EdgeHistogramKernel(_GraphKernel):
@@ -99,7 +103,9 @@ class EdgeHistogramKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(EdgeHistogram(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            EdgeHistogram(**grakel_kwargs).fit_transform(X)
+        ).float()
 
 
 class WeisfeilerLehmanKernel(_GraphKernel):
@@ -113,7 +119,10 @@ class WeisfeilerLehmanKernel(_GraphKernel):
     """
 
     def __init__(
-        self, node_label: str, edge_label: Optional[str] = None, dtype=torch.float
+        self,
+        node_label: str,
+        edge_label: Optional[str] = None,
+        dtype=torch.float,
     ):
         super().__init__(dtype=dtype)
         self.node_label = node_label
@@ -128,7 +137,9 @@ class WeisfeilerLehmanKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(WeisfeilerLehman(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            WeisfeilerLehman(**grakel_kwargs).fit_transform(X)
+        ).float()
 
 
 class NeighborhoodHashKernel(_GraphKernel):
@@ -153,7 +164,9 @@ class NeighborhoodHashKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(NeighborhoodHash(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            NeighborhoodHash(**grakel_kwargs).fit_transform(X)
+        ).float()
 
 
 class RandomWalkKernel(_GraphKernel):
@@ -178,7 +191,9 @@ class RandomWalkKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(RandomWalk(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            RandomWalk(**grakel_kwargs).fit_transform(X)
+        ).float()
 
 
 class RandomWalkLabeledKernel(_GraphKernel):
@@ -203,7 +218,9 @@ class RandomWalkLabeledKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(RandomWalkLabeled(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            RandomWalkLabeled(**grakel_kwargs).fit_transform(X)
+        ).float()
 
 
 class ShortestPathKernel(_GraphKernel):
@@ -281,4 +298,6 @@ class GraphletSamplingKernel(_GraphKernel):
             X, node_labels_tag=self.node_label, edge_labels_tag=self.edge_label
         )
 
-        return torch.tensor(GraphletSampling(**grakel_kwargs).fit_transform(X)).float()
+        return torch.tensor(
+            GraphletSampling(**grakel_kwargs).fit_transform(X)
+        ).float()

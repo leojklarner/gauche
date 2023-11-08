@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 from functools import lru_cache
 
 import torch
@@ -26,6 +26,9 @@ class NonTensorialInputs:
     def __getitem__(self, idx):
         return self.data[idx]
 
+    def __deepcopy__(self, memo):
+        return NonTensorialInputs(copy(self.data))
+
 
 class SIGP(ExactGP):
     """
@@ -39,7 +42,10 @@ class SIGP(ExactGP):
     """
 
     def __init__(self, train_inputs, train_targets, likelihood):
-        if train_inputs is not None and type(train_inputs) is NonTensorialInputs:
+        if (
+            train_inputs is not None
+            and type(train_inputs) is NonTensorialInputs
+        ):
             train_inputs = (train_inputs,)
         if not isinstance(likelihood, _GaussianLikelihoodBase):
             raise RuntimeError("SIGP can only handle Gaussian likelihoods")
@@ -47,7 +53,9 @@ class SIGP(ExactGP):
         super(ExactGP, self).__init__()
         if train_inputs is not None:
             self.train_inputs = tuple(
-                i.unsqueeze(-1) if torch.is_tensor(i) and i.ndimension() == 1 else i
+                i.unsqueeze(-1)
+                if torch.is_tensor(i) and i.ndimension() == 1
+                else i
                 for i in train_inputs
             )
             self.train_targets = train_targets
@@ -59,10 +67,14 @@ class SIGP(ExactGP):
         self.prediction_strategy = None
 
     def __call__(self, *args, **kwargs):
-        train_inputs = list(self.train_inputs) if self.train_inputs is not None else []
+        train_inputs = (
+            list(self.train_inputs) if self.train_inputs is not None else []
+        )
 
         inputs = [
-            i.unsqueeze(-1) if torch.is_tensor(i) and i.ndimension() == 1 else i
+            i.unsqueeze(-1)
+            if torch.is_tensor(i) and i.ndimension() == 1
+            else i
             for i in args
         ]
 
@@ -86,14 +98,18 @@ class SIGP(ExactGP):
             full_output = super(ExactGP, self).__call__(*full_inputs, **kwargs)
             if settings.debug().on():
                 if not isinstance(full_output, MultivariateNormal):
-                    raise RuntimeError("SIGP.forward must return a MultivariateNormal")
+                    raise RuntimeError(
+                        "SIGP.forward must return a MultivariateNormal"
+                    )
             return full_output
 
         # Posterior mode
         else:
             # Get the terms that only depend on training data
             if self.prediction_strategy is None:
-                train_output = super(ExactGP, self).__call__(*train_inputs, **kwargs)
+                train_output = super(ExactGP, self).__call__(
+                    *train_inputs, **kwargs
+                )
 
                 # Create the prediction strategy for
                 self.prediction_strategy = prediction_strategy(
@@ -134,7 +150,9 @@ class SIGP(ExactGP):
             full_output = super(ExactGP, self).__call__(*full_inputs, **kwargs)
             if settings.debug().on():
                 if not isinstance(full_output, MultivariateNormal):
-                    raise RuntimeError("SIGP.forward must return a MultivariateNormal")
+                    raise RuntimeError(
+                        "SIGP.forward must return a MultivariateNormal"
+                    )
             full_mean, full_covar = (
                 full_output.loc,
                 full_output.lazy_covariance_matrix,
@@ -156,7 +174,9 @@ class SIGP(ExactGP):
                 (
                     predictive_mean,
                     predictive_covar,
-                ) = self.prediction_strategy.exact_prediction(full_mean, full_covar)
+                ) = self.prediction_strategy.exact_prediction(
+                    full_mean, full_covar
+                )
 
             # Reshape predictive mean to match the appropriate event shape
             predictive_mean = predictive_mean.view(
