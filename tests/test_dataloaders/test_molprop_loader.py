@@ -56,7 +56,8 @@ def test_benchmark_loader(dataset, representation, kwargs):
             "..",
             "..",
             "..",
-            "data",
+            "gauche",
+            "datasets",
             "property_prediction",
         )
     )

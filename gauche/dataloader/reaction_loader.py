@@ -249,8 +249,7 @@ class ReactionLoader(DataLoader):
                     os.path.abspath(__file__),
                     "..",
                     "..",
-                    "..",
-                    "data",
+                    "datasets",
                     "reactions",
                     benchmark.removesuffix("RXN") + ".csv",
                 )

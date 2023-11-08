@@ -85,7 +85,6 @@ version = find_version("gauche", "__init__.py")
 readme = open("README.md").read()
 packages = find_packages(".", exclude=["tests"])
 
-
 setup(
     name="gauche",
     version=version,
@@ -95,6 +94,7 @@ setup(
     license="MIT",
     keywords="machine-learning gaussian-processes kernels pytorch chemistry biology protein ligand",
     packages=packages,
+    include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRA_REQUIRES,
     python_requires=">=3.8",

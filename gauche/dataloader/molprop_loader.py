@@ -246,8 +246,7 @@ class MolPropLoader(DataLoader):
                     os.path.abspath(__file__),
                     "..",
                     "..",
-                    "..",
-                    "data",
+                    "datasets",
                     "property_prediction",
                     benchmark + ".csv",
                 )
