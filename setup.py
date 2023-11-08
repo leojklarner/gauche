@@ -70,8 +70,6 @@ for k, v in EXTRA_REQUIRES.items():
         all_requires.extend(v)
 EXTRA_REQUIRES["all"] = list(set(all_requires))
 
-print(EXTRA_REQUIRES)
-
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
