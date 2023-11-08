@@ -4,8 +4,8 @@ RDKit fragment features.
 """
 
 import gpytorch
-from gpytorch.kernels import Kernel
 import torch
+from gpytorch.kernels import Kernel
 
 
 def batch_tanimoto_sim(

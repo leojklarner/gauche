@@ -1,20 +1,19 @@
+from functools import lru_cache
 from typing import List, Optional
 
-import torch
 import networkx as nx
-from functools import lru_cache
+import torch
 from gpytorch import Module
-
 from grakel import graph_from_networkx
 from grakel.kernels import (
-    VertexHistogram,
     EdgeHistogram,
-    WeisfeilerLehman,
+    GraphletSampling,
     NeighborhoodHash,
     RandomWalk,
     RandomWalkLabeled,
     ShortestPath,
-    GraphletSampling,
+    VertexHistogram,
+    WeisfeilerLehman,
 )
 
 

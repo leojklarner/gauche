@@ -3,8 +3,9 @@ Contains methods to generate string representations
 of molecules, chemical reactions and proteins.
 """
 
-import numpy as np
 from typing import List, Optional
+
+import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 
 

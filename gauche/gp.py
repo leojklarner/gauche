@@ -2,12 +2,11 @@ from copy import copy, deepcopy
 from functools import lru_cache
 
 import torch
-
 from gpytorch import settings
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import _GaussianLikelihoodBase
-from gpytorch.models.exact_prediction_strategies import prediction_strategy
 from gpytorch.models import ExactGP
+from gpytorch.models.exact_prediction_strategies import prediction_strategy
 
 
 class NonTensorialInputs:

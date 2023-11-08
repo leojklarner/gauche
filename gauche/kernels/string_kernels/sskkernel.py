@@ -11,11 +11,12 @@ Boss: Bayesian optimization over string spaces.
 Advances in neural information processing systems, 33, 15476-15486.
 """
 
-import math
 import itertools
+import math
+
 import torch
-from gpytorch.kernels import Kernel
 from gpytorch.constraints import Interval
+from gpytorch.kernels import Kernel
 
 
 def pad(s, length):

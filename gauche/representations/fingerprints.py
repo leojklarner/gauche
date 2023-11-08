@@ -7,8 +7,7 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from rdkit.Chem import MolFromSmiles, AllChem, rdMolDescriptors, Descriptors
-
+from rdkit.Chem import AllChem, Descriptors, MolFromSmiles, rdMolDescriptors
 
 ### ------------------ Reactions ------------------ ###
 
@@ -40,8 +39,8 @@ def rxnfp(reaction_smiles: List[str]) -> np.ndarray:
     """
 
     from rxnfp.transformer_fingerprints import (
-        get_default_model_and_tokenizer,
         RXNBERTFingerprintGenerator,
+        get_default_model_and_tokenizer,
     )
 
     rxn_model, tokenizer = get_default_model_and_tokenizer()

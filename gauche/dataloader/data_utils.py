@@ -3,8 +3,8 @@ Utility functions for molecular data
 """
 
 from typing import Optional
-import numpy as np
 
+import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 

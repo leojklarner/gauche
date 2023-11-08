@@ -4,6 +4,7 @@ of molecules, chemical reactions and proteins.
 """
 
 from typing import List, Optional
+
 import networkx as nx
 
 

@@ -3,19 +3,19 @@ Subclass of the abstract data loader class for
 reaction yield prediction datasets.
 """
 
-from typing import Optional, Union, Callable, List
-
 import os
+from typing import Callable, List, Optional, Union
+
 import numpy as np
 import pandas as pd
-
-from gauche.dataloader import DataLoader
 from rdkit.Chem.AllChem import (
-    ReactionFromSmarts,
-    ReactionToSmarts,
     MolFromSmiles,
     MolToSmiles,
+    ReactionFromSmarts,
+    ReactionToSmarts,
 )
+
+from gauche.dataloader import DataLoader
 
 
 class ReactionLoader(DataLoader):

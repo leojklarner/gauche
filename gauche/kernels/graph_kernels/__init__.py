@@ -1,13 +1,13 @@
 from .grakel_kernels import (
-    VertexHistogramKernel,
     EdgeHistogramKernel,
-    WeisfeilerLehmanKernel,
+    GraphletSamplingKernel,
     NeighborhoodHashKernel,
     RandomWalkKernel,
     RandomWalkLabeledKernel,
     ShortestPathKernel,
     ShortestPathLabeledKernel,
-    GraphletSamplingKernel,
+    VertexHistogramKernel,
+    WeisfeilerLehmanKernel,
 )
 
 __all__ = [
