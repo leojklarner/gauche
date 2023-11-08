@@ -5,9 +5,10 @@ Test suite for Russell-Rao kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.russell_rao_kernel import (
-    batch_russell_rao_sim,
     RussellRaoKernel,
+    batch_russell_rao_sim,
 )
 
 tkwargs = {"dtype": torch.double}

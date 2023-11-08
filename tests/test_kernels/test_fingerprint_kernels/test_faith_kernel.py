@@ -5,9 +5,10 @@ Test suite for Faith kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.faith_kernel import (
-    batch_faith_sim,
     FaithKernel,
+    batch_faith_sim,
 )
 
 tkwargs = {"dtype": torch.double}

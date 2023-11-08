@@ -7,9 +7,10 @@ import math
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.otsuka_kernel import (
-    batch_otsuka_sim,
     OtsukaKernel,
+    batch_otsuka_sim,
 )
 
 tkwargs = {"dtype": torch.double}

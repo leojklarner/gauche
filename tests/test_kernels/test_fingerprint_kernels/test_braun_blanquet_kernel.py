@@ -5,9 +5,10 @@ Test suite for Braun-Blanquet kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.braun_blanquet_kernel import (
-    batch_braun_blanquet_sim,
     BraunBlanquetKernel,
+    batch_braun_blanquet_sim,
 )
 
 tkwargs = {"dtype": torch.double}

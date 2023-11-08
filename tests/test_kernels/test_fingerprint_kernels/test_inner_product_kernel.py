@@ -5,9 +5,10 @@ Test suite for Inner product kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.inner_product_kernel import (
-    batch_inner_product_sim,
     InnerProductKernel,
+    batch_inner_product_sim,
 )
 
 tkwargs = {"dtype": torch.double}

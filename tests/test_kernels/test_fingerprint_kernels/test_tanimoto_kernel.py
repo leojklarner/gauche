@@ -2,16 +2,17 @@
 Test suite for Tanimoto kernel.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
+from gpytorch.kernels import ScaleKernel
+from rdkit import DataStructs
+from rdkit.Chem import AllChem, MolFromSmiles
+
 from gauche.kernels.fingerprint_kernels.tanimoto_kernel import (
     TanimotoKernel,
     batch_tanimoto_sim,
 )
-from gpytorch.kernels import ScaleKernel
-from rdkit import DataStructs
-from rdkit.Chem import AllChem, MolFromSmiles
 
 
 @pytest.mark.parametrize(

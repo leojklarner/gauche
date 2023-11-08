@@ -5,9 +5,10 @@ Test suite for Forbes kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.forbes_kernel import (
-    batch_forbes_sim,
     ForbesKernel,
+    batch_forbes_sim,
 )
 
 tkwargs = {"dtype": torch.double}

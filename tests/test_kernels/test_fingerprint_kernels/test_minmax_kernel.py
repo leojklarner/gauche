@@ -5,9 +5,10 @@ Test suite for MinMax kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.minmax_kernel import (
-    batch_minmax_sim,
     MinMaxKernel,
+    batch_minmax_sim,
 )
 
 tkwargs = {"dtype": torch.double}

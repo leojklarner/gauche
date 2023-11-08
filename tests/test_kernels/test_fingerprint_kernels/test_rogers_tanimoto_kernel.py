@@ -5,9 +5,10 @@ Test suite for Rogers-Tanimoto kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.rogers_tanimoto_kernel import (
-    batch_rogers_tanimoto_sim,
     RogersTanimotoKernel,
+    batch_rogers_tanimoto_sim,
 )
 
 tkwargs = {"dtype": torch.double}

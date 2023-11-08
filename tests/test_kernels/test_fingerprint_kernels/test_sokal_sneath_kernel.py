@@ -5,9 +5,10 @@ Test suite for Sokal-Sneath kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.sokal_sneath_kernel import (
-    batch_sokal_sneath_sim,
     SokalSneathKernel,
+    batch_sokal_sneath_sim,
 )
 
 tkwargs = {"dtype": torch.double}

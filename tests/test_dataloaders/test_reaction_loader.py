@@ -3,11 +3,12 @@ Pytest-based unit tests for the reaction yield
 prediction data loader.
 """
 
+import itertools
+import os
+
+import numpy as np
 import pytest
 
-import os
-import itertools
-import numpy as np
 from gauche.dataloader import ReactionLoader
 
 benckmark_cols = {
@@ -36,7 +37,12 @@ benckmark_cols = {
     [
         (d, f, kw)
         for d, (f, kw) in itertools.product(
-            ["DreherDoyle", "DreherDoyleRXN", "SuzukiMiyaura", "SuzukiMiyauraRXN"],
+            [
+                "DreherDoyle",
+                "DreherDoyleRXN",
+                "SuzukiMiyaura",
+                "SuzukiMiyauraRXN",
+            ],
             [
                 ("ohe", {}),
                 ("rxnfp", {}),
@@ -83,7 +89,8 @@ def test_invalid_data():
     dataloader = ReactionLoader()
     dataloader.read_csv(
         path=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "invalid_reaction_data.csv"
+            os.path.dirname(os.path.abspath(__file__)),
+            "invalid_reaction_data.csv",
         ),
         reactant_column=["ligand", "additive", "base", "aryl halide"],
         label_column="yield",
@@ -91,7 +98,9 @@ def test_invalid_data():
     assert len(dataloader.features) == 1 and len(dataloader.labels) == 1
 
 
-@pytest.mark.parametrize("representation", ["XYZ", 2, True, None, ("ohe", "rxnfp")])
+@pytest.mark.parametrize(
+    "representation", ["XYZ", 2, True, None, ("ohe", "rxnfp")]
+)
 def test_invalid_representation(representation):
     """
     Test behaviour of data loader for invalid representation choice.

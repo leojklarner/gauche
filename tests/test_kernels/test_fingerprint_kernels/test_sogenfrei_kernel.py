@@ -5,9 +5,10 @@ Test suite for Sogenfrei kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.sogenfrei_kernel import (
-    batch_sogenfrei_sim,
     SogenfreiKernel,
+    batch_sogenfrei_sim,
 )
 
 tkwargs = {"dtype": torch.double}

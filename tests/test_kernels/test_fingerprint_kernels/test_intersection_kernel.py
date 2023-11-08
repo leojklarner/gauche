@@ -5,9 +5,10 @@ Test suite for Intersection kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.intersection_kernel import (
-    batch_intersection_sim,
     IntersectionKernel,
+    batch_intersection_sim,
 )
 
 tkwargs = {"dtype": torch.double}

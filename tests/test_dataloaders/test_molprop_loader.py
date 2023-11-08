@@ -3,16 +3,15 @@ Pytest-based unit tests for the molecular property
 prediction data loader.
 """
 
-import pytest
-
-import os
 import itertools
-import numpy as np
-from gauche.dataloader import MolPropLoader
+import os
 
+import numpy as np
+import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+from gauche.dataloader import MolPropLoader
 
 benckmark_cols = {
     "Photoswitch": {
@@ -53,7 +52,12 @@ def test_benchmark_loader(dataset, representation, kwargs):
 
     dataset_root = os.path.abspath(
         os.path.join(
-            os.path.abspath(__file__), "..", "..", "..", "data", "property_prediction"
+            os.path.abspath(__file__),
+            "..",
+            "..",
+            "..",
+            "data",
+            "property_prediction",
         )
     )
 
@@ -92,7 +96,8 @@ def test_invalid_data():
     dataloader = MolPropLoader()
     dataloader.read_csv(
         path=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "invalid_molprop_data.csv"
+            os.path.dirname(os.path.abspath(__file__)),
+            "invalid_molprop_data.csv",
         ),
         smiles_column="SMILES",
         label_column="labels",
@@ -101,7 +106,8 @@ def test_invalid_data():
 
 
 @pytest.mark.parametrize(
-    "representation", ["XYZ", 2, True, None, ("ecfp_fingerprints", "fragments")]
+    "representation",
+    ["XYZ", 2, True, None, ("ecfp_fingerprints", "fragments")],
 )
 def test_invalid_representation(representation):
     """
@@ -114,7 +120,9 @@ def test_invalid_representation(representation):
         dataloader.featurize(representation)
 
 
-@pytest.mark.parametrize("benchmark", ["XYZ", 2, True, None, ("ESOL", "Photoswitch")])
+@pytest.mark.parametrize(
+    "benchmark", ["XYZ", 2, True, None, ("ESOL", "Photoswitch")]
+)
 def test_invalid_benchmark(benchmark):
     """
     Test behaviour of data loader for invalid benchmark choice.

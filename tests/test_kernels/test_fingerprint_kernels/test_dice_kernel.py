@@ -5,9 +5,10 @@ Test suite for Dice kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
+
 from gauche.kernels.fingerprint_kernels.dice_kernel import (
-    batch_dice_sim,
     DiceKernel,
+    batch_dice_sim,
 )
 
 tkwargs = {"dtype": torch.double}
