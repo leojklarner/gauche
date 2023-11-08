@@ -55,8 +55,10 @@ def read_requirements(*parts) -> List[str]:
 
 INSTALL_REQUIRES: List[str] = read_requirements(".requirements/base.in")
 EXTRA_REQUIRES: Dict[str, List[str]] = {
-    "rxn": read_requirements(".requirements/rxn.in"),
-    "graphs": read_requirements(".requirements/graphs.in"),
+    "rxn": read_requirements(".requirements/base.in")
+    + read_requirements(".requirements/rxn.in"),
+    "graphs": read_requirements(".requirements/base.in")
+    + read_requirements(".requirements/graphs.in"),
     "dev": read_requirements(".requirements/dev.in"),
     "docs": read_requirements(".requirements/docs.in"),
 }
@@ -68,10 +70,14 @@ for k, v in EXTRA_REQUIRES.items():
         all_requires.extend(v)
 EXTRA_REQUIRES["all"] = list(set(all_requires))
 
+print(EXTRA_REQUIRES)
+
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M
+    )
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
