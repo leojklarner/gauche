@@ -2,13 +2,17 @@
 Unit tests for the graphlet sampling graph kernel.
 """
 
+import gpytorch
+import graphein.molecule as gm
+import numpy as np
 import pytest
 import torch
-import gpytorch
+from sklearn.model_selection import train_test_split
+
 from gauche import SIGP, NonTensorialInputs
-from gauche.kernels.graph_kernels import GraphletSamplingKernel
 from gauche.dataloader import MolPropLoader
-import graphein.molecule as gm
+from gauche.dataloader.data_utils import transform_data
+from gauche.kernels.graph_kernels import GraphletSamplingKernel
 
 graphein_config = gm.MoleculeGraphConfig(
     node_metadata_functions=[gm.total_degree],
@@ -41,12 +45,30 @@ def test_graphlet_sampling_kernel():
     loader.load_benchmark("Photoswitch")
     loader.featurize("molecular_graphs", graphein_config=graphein_config)
 
-    X = NonTensorialInputs(loader.features)
+    X, y = loader.features, loader.labels
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    _, y_train, _, y_test, _ = transform_data(
+        np.zeros_like(y_train), y_train, np.zeros_like(y_test), y_test
+    )
+
+    X_train, X_test = NonTensorialInputs(X_train), NonTensorialInputs(X_test)
+    y_train = torch.tensor(y_train).flatten().float()
+    y_test = torch.tensor(y_test).flatten().float()
+
     likelihood = gpytorch.likelihoods.GaussianLikelihood()
-    model = GraphGP(X, loader.labels, likelihood)
+    model = GraphGP(X_train, y_train, likelihood)
+
     model.train()
     likelihood.train()
-    output = model(X)
+    output = model(X_train)
+
+    model.eval()
+    likelihood.eval()
+    output = model(X_test)
 
 
 @pytest.mark.parametrize(
@@ -78,10 +100,24 @@ def test_graphlet_sampling_kernel_node_label(node_label):
     loader.load_benchmark("Photoswitch")
     loader.featurize("molecular_graphs", graphein_config=graphein_config)
 
+    X, y = loader.features, loader.labels
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    _, y_train, _, y_test, _ = transform_data(
+        np.zeros_like(y_train), y_train, np.zeros_like(y_test), y_test
+    )
+
+    X_train, X_test = NonTensorialInputs(X_train), NonTensorialInputs(X_test)
+    y_train = torch.tensor(y_train).flatten().float()
+    y_test = torch.tensor(y_test).flatten().float()
+
     with pytest.raises(Exception):
-        X = NonTensorialInputs(loader.features)
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        model = GraphGP(X, loader.labels, likelihood)
+        model = GraphGP(X_train, y_train, likelihood)
+
         model.train()
         likelihood.train()
         output = model(X)
@@ -116,10 +152,24 @@ def test_graphlet_sampling_kernel_edge_label(edge_label):
     loader.load_benchmark("Photoswitch")
     loader.featurize("molecular_graphs", graphein_config=graphein_config)
 
+    X, y = loader.features, loader.labels
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    _, y_train, _, y_test, _ = transform_data(
+        np.zeros_like(y_train), y_train, np.zeros_like(y_test), y_test
+    )
+
+    X_train, X_test = NonTensorialInputs(X_train), NonTensorialInputs(X_test)
+    y_train = torch.tensor(y_train).flatten().float()
+    y_test = torch.tensor(y_test).flatten().float()
+
     with pytest.raises(Exception):
-        X = NonTensorialInputs(loader.features)
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        model = GraphGP(X, loader.labels, likelihood)
+        model = GraphGP(X_train, y_train, likelihood)
+
         model.train()
         likelihood.train()
         output = model(X)
