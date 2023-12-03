@@ -4,12 +4,12 @@ RDKit fragment features.
 """
 
 import gpytorch
-from gpytorch.kernels import Kernel
 import torch
+from gpytorch.kernels import Kernel
 
 
 def batch_tanimoto_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
     Tanimoto similarity between two batched tensors, across last 2 dimensions.
@@ -33,14 +33,16 @@ def batch_tanimoto_sim(
         raise ValueError("Tensors must have a batch dimension")
 
     dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
-    x1_norm = torch.sum(x1 ** 2, dim=-1, keepdims=True)
-    x2_norm = torch.sum(x2 ** 2, dim=-1, keepdims=True)
+    x1_norm = torch.sum(x1**2, dim=-1, keepdims=True)
+    x2_norm = torch.sum(x2**2, dim=-1, keepdims=True)
 
     tan_similarity = (dot_prod + eps) / (
-            eps + x1_norm + torch.transpose(x2_norm, -1, -2) - dot_prod
+        eps + x1_norm + torch.transpose(x2_norm, -1, -2) - dot_prod
     )
 
-    return tan_similarity.clamp_min_(0)  # zero out negative values for numerical stability
+    return tan_similarity.clamp_min_(
+        0
+    )  # zero out negative values for numerical stability
 
 
 class TanimotoKernel(Kernel):
@@ -89,11 +91,11 @@ class TanimotoKernel(Kernel):
             return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            **params,
+        self,
+        x1,
+        x2,
+        last_dim_is_batch=False,
+        **params,
     ):
         r"""This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.

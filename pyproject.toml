@@ -26,7 +26,7 @@ force_grid_wrap = 0
 include_trailing_comma = true
 line_length = 79 # match our custom config above
 multi_line_output = 3
-src_paths = ["graphein", "test"]
+src_paths = ["gauche"]
 float_to_top = true
 use_parentheses = true
 

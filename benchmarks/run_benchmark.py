@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from benchmark_models import ScalarProductGP, TanimotoGP
 from botorch import fit_gpytorch_model
-from gauche.dataloader import DataLoaderMP
+from gauche.dataloader import MolPropLoader
 from gauche.dataloader.data_utils import transform_data
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -33,19 +33,20 @@ dataset_names = {
     "FreeSolv": "FreeSolv",
     "Lipophilicity": "Lipophilicity",
 }
-dataset_paths = {
-    "Photoswitch": "../data/property_prediction/photoswitches.csv",
-    "ESOL": "../data/property_prediction/ESOL.csv",
-    "FreeSolv": "../data/property_prediction/FreeSolv.csv",
-    "Lipophilicity": "../data/property_prediction/Lipophilicity.csv",
-}
+
+featurisations = [
+    "ecfp_fingerprints",
+    "fragments",
+    "ecfp_fragprints",
+    "bag_of_smiles",
+    "bag_of_selfies",
+]
 
 
 def main(
     n_trials,
     test_set_size,
     dataset_name,
-    dataset_path,
     featurisation,
     gp_model,
 ):
@@ -55,11 +56,7 @@ def main(
         n_trials: Number of random train/test splits for the datasets. Default is 20
         test_set_size: Size of the test set for evaluation. Default is 0.2
         dataset_name: Benchmark dataset to use. One of ['Photoswitch', 'ESOL', 'FreeSolv', 'Lipophilicity']
-        dataset_path: Benchmark dataset path. One of ['../data/property_prediction/photoswitches.csv',
-                                                       ../data/property_prediction/ESOL.csv',
-                                                       '../data/property_prediction/FreeSolv.csv',
-                                                       '../data/property_prediction/Lipophilicity.csv']
-        featurisation: Choice of features. One of ['fingerprints', 'fragments', 'fragprints', 'bag_of_smiles',
+        featurisation: Choice of features. One of ['ecfp_fingerprints', 'fragments', 'ecfp_fragprints', 'bag_of_smiles',
                                                    'bag_of_selfies']
         gp_model: Choice of model. One of ['Tanimoto', 'Scalar Product']
 
@@ -72,16 +69,15 @@ def main(
             f"The specified dataset choice ({dataset_name}) is not a valid option. "
             f"Choose one of {list(dataset_names.keys())}."
         )
-    if dataset_path not in dataset_paths.values():
-        raise ValueError(f"The specified dataset path ({dataset_path}) is not a valid option. "
-                            f"Choose one of {list(dataset_paths.values())}.")
-    if featurisation not in featurisations.values():
-        raise ValueError(f"The specified featurisation ({featurisation}) is not a valid option. "
-                            f"Choose one of {list(featurisations.values())}.")
+    if featurisation not in featurisations:
+        raise ValueError(
+            f"The specified featurisation ({featurisation}) is not a valid option. "
+            f"Choose one of {featurisations}."
+        )
 
     # Load the benchmark dataset
-    loader = DataLoaderMP()
-    loader.load_benchmark(dataset_name, dataset_path)
+    loader = MolPropLoader()
+    loader.load_benchmark(dataset_name)
 
     # Choose the featurisation
     loader.featurize(featurisation)
@@ -99,7 +95,6 @@ def main(
     qce_list = []
 
     for i in range(0, n_trials):
-
         print(f"Trial {i} of {n_trials}")
 
         X_train, X_test, y_train, y_test = train_test_split(
@@ -157,7 +152,7 @@ def main(
         try:
             nlpd = negative_log_predictive_density(trained_pred_dist, y_test)
         except:
-            Exception(f'NLPD calculation failed on trial {i}')
+            Exception(f"NLPD calculation failed on trial {i}")
             continue
 
         # Compute MSLL on Test set
@@ -254,7 +249,6 @@ def main(
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -279,22 +273,12 @@ if __name__ == "__main__":
         help="Dataset to use. One of [Photoswitch, ESOL, FreeSolv, Lipophilicity]",
     )
     parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        default="../data/property_prediction/Lipophilicity.csv",
-        help="Path to the dataset file. One of [../data/property_prediction/photoswitches.csv, "
-        "../data/property_prediction/ESOL.csv, "
-        "../data/property_prediction/FreeSolv.csv, "
-        "../data/property_prediction/Lipophilicity.csv]",
-    )
-    parser.add_argument(
         "-r",
         "--featurisation",
         type=str,
-        default="fingerprints",
-        help="str specifying the molecular featurisation. "
-        "One of [fingerprints, fragments, fragprints].",
+        default="ecfp_fingerprints",
+        help="Choice of features. One of ['ecfp_fingerprints', 'fragments', "
+        "'ecfp_fragprints', 'bag_of_smiles', 'bag_of_selfies']",
     )
     parser.add_argument(
         "-m",
@@ -309,7 +293,6 @@ if __name__ == "__main__":
         args.n_trials,
         args.test_set_size,
         args.dataset,
-        args.path,
         args.featurisation,
         args.model,
     )

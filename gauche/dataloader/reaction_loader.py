@@ -1,6 +1,20 @@
-import pandas as pd
+"""
+Subclass of the abstract data loader class for
+reaction yield prediction datasets.
+"""
 
-from gauche.data_featuriser import one_hot, rxnfp, drfp, bag_of_characters
+import os
+from typing import Callable, List, Optional, Union
+
+import numpy as np
+import pandas as pd
+from rdkit.Chem.AllChem import (
+    MolFromSmiles,
+    MolToSmiles,
+    ReactionFromSmarts,
+    ReactionToSmarts,
+)
+
 from gauche.dataloader import DataLoader
 
 
@@ -11,32 +25,90 @@ class ReactionLoader(DataLoader):
         self._features = None
         self._labels = None
 
-    @property
-    def features(self):
-        return self._features
+    def validate(
+        self, drop: Optional[bool] = True, canonicalize: Optional[bool] = True
+    ):
+        """
+        Utility function to validate a read-in dataset of
+        reaction representations and reactions yield labels.
+        Checks if all SMILES/reaction SMARTS strings can be
+        converted to rdkit molecules/reactions and if all
+        labels are numeric and not NaNs.
+        Optionally drops all invalid entries and makes the
+        remaining SMILES/SMARTS strings canonical (default).
 
-    @features.setter
-    def features(self, value):
-        self._features = value
+        :param drop: whether to drop invalid entries
+        :type drop: bool
+        :param canonicalize: whether to make the SMILES/SMARTS strings canonical
+        :type canonicalize: bool
+        """
 
-    @property
-    def labels(self):
-        return self._labels
+        if isinstance(self.features, pd.Series):
+            # reaction SMARTS are provided as a single strings
+            invalid_rxns = (
+                self.features.apply(ReactionFromSmarts).isnull().values
+            )
 
-    @labels.setter
-    def labels(self, value):
-        self._labels = value
+        elif isinstance(self.features, pd.DataFrame):
+            # reactant SMILES are provided as list of strings
+            invalid_rxns = (
+                self.features.applymap(MolFromSmiles)
+                .isnull()
+                .any(axis=1)
+                .values
+            )
+        else:
+            raise ValueError(
+                f"Invalid reaction representation type {type(self.features)}. Must be either str or List[str]"
+            )
+        if np.any(invalid_rxns):
+            print(
+                f"Found {invalid_rxns.sum()} invalid reaction strings "
+                f"{[x for i, x in enumerate(self.features) if invalid_rxns[i]]} "
+                f"at indices {np.where(invalid_rxns)[0].tolist()}"
+            )
+            print(
+                "To turn validation off, use dataloader.read_csv(..., validate=False)."
+            )
 
-    def validate(self, drop=True):
-        invalid_idx = []
+        invalid_labels = np.isnan(self.labels).squeeze()
+        if np.any(invalid_labels):
+            print(
+                f"Found {invalid_labels.sum()} invalid labels {self.labels[invalid_labels].squeeze()} "
+                f"at indices {np.where(invalid_labels)[0].tolist()}"
+            )
+            print(
+                "To turn validation off, use dataloader.read_csv(..., validate=False)."
+            )
 
-    def featurize(self, representation, nBits=2048):
+        invalid_idx = np.logical_or(invalid_rxns, invalid_labels)
+
+        if drop:
+            self.features = self.features.loc[~invalid_idx]
+            self.labels = self.labels[~invalid_idx]
+            assert len(self.features) == len(self.labels)
+
+        if canonicalize:
+            if isinstance(self.features, pd.Series):
+                # reaction SMARTS are provided as a single column
+                self.features = self.features.apply(
+                    lambda r: ReactionToSmarts(ReactionFromSmarts(r))
+                )
+            elif isinstance(self.features, pd.DataFrame):
+                # reactants are provided as separate columns
+                self.features = self.features.applymap(
+                    lambda r: MolToSmiles(MolFromSmiles(r))
+                )
+
+    def featurize(self, representation: Union[str, Callable], **kwargs):
         """Transforms reactions into the specified representation.
 
-        :param representation: the desired reaction representation, one of [ohe, rxnfp, drfp, bag_of_smiles]
-        :type representation: str
-        :param nBits: int giving the bit vector length for drfp representation. Default is 2048
-        :type nBits: int
+        :param representation: the desired reaction representation, one of
+            [ohe, rxnfp, drfp, bag_of_smiles] or a callable that takes a list
+            of SMILES strings as input and returns the desired featurization.
+        :type representation: str or Callable
+        :param kwargs: additional keyword arguments for the representation function
+        :type kwargs: dict
         """
 
         valid_representations = [
@@ -46,26 +118,96 @@ class ReactionLoader(DataLoader):
             "bag_of_smiles",
         ]
 
-        if representation == "ohe":
-            self.features = one_hot(self.features)
+        if isinstance(representation, Callable):
+            self.features = representation(self.features, **kwargs)
+
+        elif representation == "ohe":
+            from gauche.representations.fingerprints import one_hot
+
+            self.features = one_hot(self.features, **kwargs)
 
         elif representation == "rxnfp":
-            self.features = rxnfp(self.features.to_list())
+            from gauche.representations.fingerprints import rxnfp
+
+            assert isinstance(self.features, pd.Series), (
+                f"Reaction fingerprints can only be computed "
+                f"for a single reaction SMARTS string. Received "
+                f"{len(self.features.columns)} columns instead."
+            )
+            self.features = rxnfp(self.features.to_list(), **kwargs)
 
         elif representation == "drfp":
-            self.features = drfp(self.features.to_list(), nBits=nBits)
+            from gauche.representations.fingerprints import drfp
+
+            assert isinstance(self.features, pd.Series), (
+                f"Reaction fingerprints can only be computed "
+                f"for a single reaction SMARTS string. Received "
+                f"{len(self.features.columns)} columns instead."
+            )
+            self.features = drfp(self.features.to_list(), **kwargs)
 
         elif representation == "bag_of_smiles":
-            self.features = bag_of_characters(self.features.to_list())
+            from gauche.representations.strings import bag_of_characters
+
+            assert isinstance(self.features, pd.Series), (
+                f"Reaction fingerprints can only be computed "
+                f"for a single reaction SMARTS string. Received "
+                f"{len(self.features.columns)} columns instead."
+            )
+            self.features = bag_of_characters(
+                self.features.to_list(), **kwargs
+            )
 
         else:
             raise Exception(
-                f"The specified representation choice {representation} is not a valid option. "
+                f"The specified representation choice {representation} is not a valid option."
                 f"Choose between {valid_representations}."
             )
 
-    def load_benchmark(self, benchmark, path):
+    def read_csv(
+        self,
+        path: str,
+        reactant_column: Union[str, List[str]],
+        label_column: str,
+        validate: bool = True,
+    ) -> None:
+        """
+        Loads a dataset from a .csv file. Reactants must be provided
+        as either multple SMILES columns or a single reaction SMARTS column.
 
+        :param path: path to the csv file
+        :type path: str
+        :param reactant_column: name of the column(s) containing the reactants
+        :type reactant_column: str or List[str]
+        :param label_column: name of the column containing the labels
+        :type label_column: str
+        :param validate: whether to validate the loaded data
+        :type validate: bool
+        """
+
+        assert isinstance(
+            label_column, str
+        ), "label_column must be a single string"
+
+        df = pd.read_csv(
+            path,
+            usecols=[reactant_column, label_column]
+            if isinstance(reactant_column, str)
+            else reactant_column + [label_column],
+        )
+        # assumes that data is properly pre-processed and that
+        # NaNs indicate valid reactions without optional reagents
+        # that do not fit neatly into a tabular format
+        self.features = df[reactant_column].fillna("")
+        self.labels = df[label_column].values.reshape(-1, 1)
+        if validate:
+            self.validate()
+
+    def load_benchmark(
+        self,
+        benchmark: str,
+        path=None,
+    ) -> None:
         """Loads features and labels from one of the included benchmark datasets
                 and feeds them into the DataLoader.
 
@@ -73,8 +215,6 @@ class ReactionLoader(DataLoader):
             ``[DreherDoyle, SuzukiMiyaura, DreherDoyleRXN, SuzukiMiyauraRXN]``
               RXN suffix denotes that csv file contains reaction smiles in a dedicated column.
         :type benchmark: str
-        :param path: the path to the dataset in csv format
-        :type path: str
         """
 
         benchmarks = {
@@ -97,35 +237,26 @@ class ReactionLoader(DataLoader):
             "SuzukiMiyauraRXN": {"features": "rxn", "labels": "yield"},
         }
 
-        if benchmark not in benchmarks.keys():
+        assert benchmark in benchmarks.keys(), (
+            f"The specified benchmark choice ({benchmark}) is not a valid option. "
+            f"Choose one of {list(benchmarks.keys())}."
+        )
 
-            raise Exception(
-                f"The specified benchmark choice ({benchmark}) is not a valid option. "
-                f"Choose one of {list(benchmarks.keys())}."
+        # if no path is specified, use the default data directory
+        if path is None:
+            path = os.path.abspath(
+                os.path.join(
+                    os.path.abspath(__file__),
+                    "..",
+                    "..",
+                    "datasets",
+                    "reactions",
+                    benchmark.removesuffix("RXN") + ".csv",
+                )
             )
 
-        else:
-
-            df = pd.read_csv(path)
-            # drop nans from the datasets
-            nans = df[benchmarks[benchmark]["labels"]].isnull().to_list()
-            nan_indices = [nan for nan, x in enumerate(nans) if x]
-            self.features = df[benchmarks[benchmark]["features"]].drop(
-                nan_indices
-            )
-            self.labels = (
-                df[benchmarks[benchmark]["labels"]]
-                .dropna()
-                .to_numpy()
-                .reshape(-1, 1)
-            )
-
-
-if __name__ == "__main__":
-    loader = ReactionLoader()
-    loader.load_benchmark(
-        "DreherDoyle", "../../data/reactions/dreher_doyle_science_aar5169.csv"
-    )
-
-    loader.featurize("ohe")
-    print(loader.features.shape)
+        self.read_csv(
+            path=path,
+            reactant_column=benchmarks[benchmark]["features"],
+            label_column=benchmarks[benchmark]["labels"],
+        )

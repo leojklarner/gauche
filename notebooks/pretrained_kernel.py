@@ -15,7 +15,7 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from gauche.dataloader import DataLoaderMP
+from gauche.dataloader import MolPropLoader
 from gauche.kernels.gnn_kernels.pretrained_kernel import GNN, mol_to_pyg
 
 def set_seed(seed):
@@ -135,8 +135,8 @@ warnings.filterwarnings('ignore', category=RuntimeWarning)
 best_observed_all_ei, best_random_all = [], []
 
 # Load the Photoswitch dataset
-loader = DataLoaderMP()
-loader.load_benchmark("Photoswitch", "../data/property_prediction/photoswitches.csv")
+loader = MolPropLoader()
+loader.load_benchmark("Photoswitch", "../data/property_prediction/Photoswitch.csv")
 
 # We use the fragprints representations (a concatenation of Morgan fingerprints and RDKit fragment features)
 y = loader.labels

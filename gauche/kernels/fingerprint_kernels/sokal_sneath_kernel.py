@@ -10,7 +10,7 @@ tkwargs = {"dtype": torch.double}
 
 
 def batch_sokal_sneath_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
     Sokal-Sneath similarity between two batched tensors, across last 2 dimensions.
@@ -36,9 +36,13 @@ def batch_sokal_sneath_sim(
     x2_norm = torch.sum(x2, dim=-1, keepdims=True)
     dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
 
-    similarity = (dot_prod + eps) / (2 * x1_norm + 2 * x2_norm - 3 * dot_prod + eps)
+    similarity = (dot_prod + eps) / (
+        2 * x1_norm + 2 * x2_norm - 3 * dot_prod + eps
+    )
 
-    return similarity.to(**tkwargs).clamp_min_(0)  # zero out negative values for numerical stability
+    return similarity.to(**tkwargs).clamp_min_(
+        0
+    )  # zero out negative values for numerical stability
 
 
 class SokalSneathKernel(Kernel):
@@ -79,11 +83,11 @@ class SokalSneathKernel(Kernel):
             return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            **params,
+        self,
+        x1,
+        x2,
+        last_dim_is_batch=False,
+        **params,
     ):
         r"""This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.

@@ -4,5 +4,6 @@ scikit-learn
 rdkit
 tqdm
 selfies
-graphein==1.4.0
+torch==1.13
 gpytorch
+botorch

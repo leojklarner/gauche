@@ -1,5 +1,5 @@
 from .dataloader import DataLoader
-from .mol_prop import DataLoaderMP
+from .molprop_loader import MolPropLoader
 from .reaction_loader import ReactionLoader
 
-__all__ = ["DataLoader", "DataLoaderMP", "ReactionLoader"]
+__all__ = ["DataLoader", "MolPropLoader", "ReactionLoader"]

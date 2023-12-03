@@ -1,0 +1,3 @@
+transformers
+rxnfp @ git+https://github.com/leojklarner/rxnfp.git@master
+drfp

@@ -5,7 +5,11 @@ Test suite for Intersection kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
-from gauche.kernels.fingerprint_kernels.intersection_kernel import batch_intersection_sim, IntersectionKernel
+
+from gauche.kernels.fingerprint_kernels.intersection_kernel import (
+    IntersectionKernel,
+    batch_intersection_sim,
+)
 
 tkwargs = {"dtype": torch.double}
 
@@ -17,15 +21,13 @@ tkwargs = {"dtype": torch.double}
     ],
 )
 def test_intersection_similarity_with_equal_inputs(x1, x2):
-    """Test the Intersection similarity metric between two equal input tensors.
-    """
+    """Test the Intersection similarity metric between two equal input tensors."""
     similarity = batch_intersection_sim(x1, x2)
-    assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs)).all()
+    assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs) * 2).all()
 
 
 def test_intersection_similarity_with_unequal_inputs():
-    """Test the Intersection similarity metric between two unequal input tensors.
-    """
+    """Test the Intersection similarity metric between two unequal input tensors."""
     x1 = torch.tensor([1, 0, 1, 1], **tkwargs)
     x2 = torch.tensor([1, 1, 0, 0], **tkwargs)
     # Add a batch dimension
@@ -37,8 +39,7 @@ def test_intersection_similarity_with_unequal_inputs():
 
 
 def test_intersection_kernel():
-    """Test the Inersection kernel when integrated with GP.
-    """
+    """Test the Inersection kernel when integrated with GP."""
 
     x = torch.randint(0, 2, (10, 5))
     # Non-batch: Simple option

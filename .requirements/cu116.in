@@ -1,7 +1,0 @@
-torch --extra-index-url https://download.pytorch.org/whl/cu116
-pyg-lib -f https://data.pyg.org/whl/torch-1.13.0+cu116.html
-torch-scatter -f https://data.pyg.org/whl/torch-1.13.0+cu116.html
-torch-sparse -f https://data.pyg.org/whl/torch-1.13.0+cu116.html
-torch-cluster -f https://data.pyg.org/whl/torch-1.13.0+cu116.html
-torch-spline-conv -f https://data.pyg.org/whl/torch-1.13.0+cu116.html
-torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cu116.html

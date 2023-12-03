@@ -8,7 +8,7 @@ from gpytorch.kernels import Kernel
 
 
 def batch_dice_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
     Dice similarity between two batched tensors, across last 2 dimensions.
@@ -34,9 +34,13 @@ def batch_dice_sim(
     x2_norm = torch.sum(x2, dim=-1, keepdims=True)
     dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
 
-    dice_similarity = (2 * dot_prod + eps) / (x1_norm + torch.transpose(x2_norm, -1, -2) + eps)
+    dice_similarity = (2 * dot_prod + eps) / (
+        x1_norm + torch.transpose(x2_norm, -1, -2) + eps
+    )
 
-    return dice_similarity.clamp_min_(0)  # zero out negative values for numerical stability
+    return dice_similarity.clamp_min_(
+        0
+    )  # zero out negative values for numerical stability
 
 
 class DiceKernel(Kernel):
@@ -84,11 +88,11 @@ class DiceKernel(Kernel):
             return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            **params,
+        self,
+        x1,
+        x2,
+        last_dim_is_batch=False,
+        **params,
     ):
         r"""This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.

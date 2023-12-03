@@ -5,7 +5,11 @@ Test suite for Forbes kernel.
 import pytest
 import torch
 from gpytorch.kernels import ScaleKernel
-from gauche.kernels.fingerprint_kernels.forbes_kernel import batch_forbes_sim, ForbesKernel
+
+from gauche.kernels.fingerprint_kernels.forbes_kernel import (
+    ForbesKernel,
+    batch_forbes_sim,
+)
 
 tkwargs = {"dtype": torch.double}
 
@@ -17,15 +21,13 @@ tkwargs = {"dtype": torch.double}
     ],
 )
 def test_forbes_similarity_with_equal_inputs(x1, x2):
-    """Test the Forbes similarity metric between two equal input tensors.
-    """
+    """Test the Forbes similarity metric between two equal input tensors."""
     similarity = batch_forbes_sim(x1, x2)
     assert torch.isclose(similarity, torch.ones((2, 2), **tkwargs)).all()
 
 
 def test_forbes_similarity_with_unequal_inputs():
-    """Test the Forbes similarity metric between two unequal input tensors.
-    """
+    """Test the Forbes similarity metric between two unequal input tensors."""
     x1 = torch.tensor([1, 0, 1, 1], **tkwargs)
     x2 = torch.tensor([1, 1, 0, 0], **tkwargs)
     # Add a batch dimension
@@ -37,8 +39,7 @@ def test_forbes_similarity_with_unequal_inputs():
 
 
 def test_forbes_kernel():
-    """Test the Forbes kernel when integrated with GP.
-    """
+    """Test the Forbes kernel when integrated with GP."""
 
     x = torch.randint(0, 2, (10, 5))
     # Non-batch: Simple option

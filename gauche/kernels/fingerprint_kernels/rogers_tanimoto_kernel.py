@@ -10,7 +10,7 @@ tkwargs = {"dtype": torch.double}
 
 
 def batch_rogers_tanimoto_sim(
-        x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
     Rogers-Tanimoto similarity between two batched tensors, across last 2 dimensions.
@@ -37,9 +37,13 @@ def batch_rogers_tanimoto_sim(
     dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
     d = torch.sum((x1[-1] == 0) & (x2[-1] == 0), dim=-1, keepdims=True)
 
-    similarity = (dot_prod + d + eps) / (2 * x1_norm + 2 * x2_norm - 3 * dot_prod + d + eps)
+    similarity = (dot_prod + d + eps) / (
+        2 * x1_norm + 2 * x2_norm - 3 * dot_prod + d + eps
+    )
 
-    return similarity.to(**tkwargs).clamp_min_(0)  # zero out negative values for numerical stability
+    return similarity.to(**tkwargs).clamp_min_(
+        0
+    )  # zero out negative values for numerical stability
 
 
 class RogersTanimotoKernel(Kernel):
@@ -80,11 +84,11 @@ class RogersTanimotoKernel(Kernel):
             return self.covar_dist(x1, x2, **params)
 
     def covar_dist(
-            self,
-            x1,
-            x2,
-            last_dim_is_batch=False,
-            **params,
+        self,
+        x1,
+        x2,
+        last_dim_is_batch=False,
+        **params,
     ):
         r"""This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.
