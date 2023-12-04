@@ -2,11 +2,12 @@
 package setup
 """
 
+import codecs
 import io
 import os
 import re
-import codecs
 from typing import Dict, List
+
 from setuptools import find_packages, setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
