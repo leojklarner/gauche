@@ -24,9 +24,6 @@ from gauche.kernels.gnn_kernels.pretrained_kernel import GNN, mol_to_pyg
 sys.path.append("..")
 
 
-
-
-
 def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
