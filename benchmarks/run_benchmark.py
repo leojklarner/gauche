@@ -11,8 +11,6 @@ import numpy as np
 import torch
 from benchmark_models import ScalarProductGP, TanimotoGP
 from botorch import fit_gpytorch_model
-from gauche.dataloader import MolPropLoader
-from gauche.dataloader.data_utils import transform_data
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch_metrics import (
@@ -22,6 +20,9 @@ from gpytorch_metrics import (
 )
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+
+from gauche.dataloader import MolPropLoader
+from gauche.dataloader.data_utils import transform_data
 
 # Remove Graphein warnings
 logging.getLogger("graphein").setLevel("ERROR")
