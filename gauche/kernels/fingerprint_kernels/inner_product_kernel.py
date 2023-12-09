@@ -16,7 +16,7 @@ def batch_inner_product_sim(
     Inner product similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    <x1, x2>
+    :math:`<x1, x2>`
 
     Where <.> is the inner product
 
@@ -47,10 +47,10 @@ class InnerProductKernel(Kernel):
 
      .. math::
 
-    \begin{equation*}
-     k_{\text{Inner Product}}(\mathbf{x}, \mathbf{x'}) = \langle\mathbf{x},
-     \mathbf{x'}\rangle
-    \end{equation*}
+        \begin{equation*}
+        k_{\text{Inner Product}}(\mathbf{x}, \mathbf{x'}) = \langle\mathbf{x},
+        \mathbf{x'}\rangle
+        \end{equation*}
 
     .. note::
 

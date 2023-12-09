@@ -16,7 +16,7 @@ def batch_russell_rao_sim(
     Russell-Rao similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    <x1, x2> / n
+    :math:`<x1, x2> / n`
 
     Where <.> is the inner product and n is the dimension of the vectors x1/x2
 

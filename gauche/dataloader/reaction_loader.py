@@ -19,6 +19,16 @@ from gauche.dataloader import DataLoader
 
 
 class ReactionLoader(DataLoader):
+    """
+    Data loader class for reaction yield prediction
+    datasets with a single regression target.
+    Expects input to be a csv file with either multiple SMILES 
+    columns or a single reaction SMARTS column.
+    Contains methods to validate the dataset and to
+    transform the SMILES/SMARTS strings into different
+    molecular representations.
+    """
+
     def __init__(self):
         super(ReactionLoader, self).__init__()
         self.task = "reaction_yield_prediction"

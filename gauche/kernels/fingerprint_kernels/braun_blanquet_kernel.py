@@ -16,7 +16,7 @@ def batch_braun_blanquet_sim(
     Braun-Blanquet similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    <x1, x2> / max(|x1|, |x2|)
+    :math:`<x1, x2> / max(|x1|, |x2|)`
 
     Where || is the L1 norm and <.> is the inner product
 

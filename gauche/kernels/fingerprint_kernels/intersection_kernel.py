@@ -17,7 +17,7 @@ def batch_intersection_sim(
     eps argument ensures numerical stability if all zero tensors are added. Must be
     used with binary-valued vectors only
 
-    <x1, x2> + <x1', x2'>
+    :math:`<x1, x2> + <x1', x2'>`
 
     Where <.> is the inner product and x1' and x2' denote the bit flipped vectors such
     that ones and zeros are interchanged
