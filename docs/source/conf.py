@@ -10,10 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
 
-# sys.path.insert(0, os.path.abspath("../../../gauche"))
+import os
+import sys
+
+print(sys.executable)
+sys.path.insert(0, os.path.abspath("."))
 
 
 # -- Project information -----------------------------------------------------
@@ -23,7 +25,7 @@ copyright = "2022, Ryan Rhys-Griffiths"
 author = "Ryan Rhys-Griffiths"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+# release = "1.0.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,15 +35,19 @@ release = "0.1.0"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
-    # "sphinx_copybutton",
-    # "sphinx_inline_tabs",
-    # "sphinxcontrib.gtagjs",
-    # "sphinxext.opengraph",
-    # "m2r2",
-    # "nbsphinx",
-    # "nbsphinx_link",
+    "sphinx_copybutton",
+    "sphinx_inline_tabs",
+    "sphinxcontrib.gtagjs",
+    "sphinxext.opengraph",
+    "m2r2",
+    "nbsphinx",
+    "nbsphinx_link",
+    "sphinx.ext.napoleon",
+    "sphinx_codeautolink",
+    # "sphinx_autorun",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

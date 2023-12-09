@@ -17,11 +17,9 @@ def one_hot(df: pd.DataFrame) -> np.ndarray:
     Builds reaction representation as a bit vector which indicates whether
     a certain condition, reagent, reactant etc. is present in the reaction.
 
-    :param df: pandas DataFrame with columns representing different
-    parameters of the reaction (e.g. reactants, reagents, conditions).
+    :param df: pandas DataFrame with columns representing different parameters of the reaction (e.g. reactants, reagents, conditions).
     :type df: pandas DataFrame
-    :return: array of shape [len(reaction_smiles), sum(unique values for different columns in df)]
-     with one-hot encoding of reactions
+    :return: array of shape [len(reaction_smiles), sum(unique values for different columns in df)] with one-hot encoding of reactions
     """
     df_ohe = pd.get_dummies(df)
     return df_ohe.to_numpy(dtype=np.float64)

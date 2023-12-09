@@ -14,9 +14,9 @@ def batch_minmax_sim(
     MinMax similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    (|x1| + |x2| - |x1 - x2|) / (|x1| + |x2| + |x1 - x2|)
+    :math:`(|x1| + |x2| - |x1 - x2|) / (|x1| + |x2| + |x1 - x2|)`
 
-    Where || is the L1 norm
+    Where :math:`||` is the L1 norm
 
     Args:
         x1: `[b x n x d]` Tensor where b is the batch dimension
@@ -51,9 +51,9 @@ class MinMaxKernel(Kernel):
 
      .. math::
 
-    \begin{equation*}
-     k_{\text{MinMax}}(\mathbf{x}, \mathbf{x'}) = \frac{\sum_i \min(x_i, x'_i)}
-    \end{equation*}
+        \begin{equation*}
+        k_{\text{MinMax}}(\mathbf{x}, \mathbf{x'}) = \frac{\sum_i \min(x_i, x'_i)}
+        \end{equation*}
 
     .. note::
 

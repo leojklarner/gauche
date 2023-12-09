@@ -16,7 +16,7 @@ def batch_sokal_sneath_sim(
     Sokal-Sneath similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    <x1, x2> / 2|x1| + 2|x2| - 3*<x1, x2>
+    :math:`<x1, x2> / 2|x1| + 2|x2| - 3*<x1, x2>`
 
     Where <.> is the inner product and || is the L1 norm
 

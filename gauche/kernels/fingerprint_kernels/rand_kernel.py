@@ -16,7 +16,7 @@ def batch_rand_sim(
     Rand similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    <x1, x2> + d / n
+    :math:`<x1, x2> + d / n`
 
     Where <.> is the inner product, d is the number of common zeros and n is the dimensionality
 

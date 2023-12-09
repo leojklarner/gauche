@@ -8,7 +8,7 @@ Dataloader
 
 Molecular Properties
 ----------------------
-.. automodule:: gauche.dataloader.mol_prop_loader
+.. automodule:: gauche.dataloader.molprop_loader
     :members:
 
 Reaction Loader
