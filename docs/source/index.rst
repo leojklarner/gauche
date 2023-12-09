@@ -27,10 +27,11 @@ Welcome to GAUCHE's documentation!
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: API Reference
 
    modules/kernels
+   modules/representations
    modules/dataloader
 
 

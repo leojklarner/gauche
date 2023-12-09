@@ -1,9 +1,11 @@
 gauche.kernels
-====================
+=====================
 
 Fingerprint Kernels
---------------------
+---------------------
 .. automodule:: gauche.kernels.fingerprint_kernels.tanimoto_kernel
+    :members:
+.. automodule:: gauche.kernels.fingerprint_kernels.braun_blanquet_kernel
     :members:
 .. automodule:: gauche.kernels.fingerprint_kernels.dice_kernel
     :members:
@@ -30,17 +32,12 @@ Fingerprint Kernels
 .. automodule:: gauche.kernels.fingerprint_kernels.sokal_sneath_kernel
     :members:
 
-GNN Kernels
--------------
-.. automodule:: gauche.kernels.gnn_kernels.pretrained_kernel
-    :members:
-
 Graph Kernels
---------------
-.. automodule:: gauche.gp
+---------------------
+.. automodule:: gauche.kernels.graph_kernels
     :members:
 
 String Kernels
---------------
+---------------------
 .. automodule:: gauche.kernels.string_kernels
     :members:

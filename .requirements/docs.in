@@ -1,9 +1,2 @@
 sphinx
 furo
-sphinx-copybutton
-sphinx-inline-tabs
-sphinxcontrib-gtagjs
-sphinxext-opengraph
-m2r2
-nbsphinx
-nvsphinx-link
