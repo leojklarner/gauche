@@ -14,7 +14,7 @@ def batch_dice_sim(
     Dice similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    (2 * <x1, x2>) / (|x1| + |x2|)
+    :math:`(2 * <x1, x2>) / (|x1| + |x2|)`
 
     Where || is the L1 norm and <.> is the inner product
 
@@ -50,10 +50,10 @@ class DiceKernel(Kernel):
 
      .. math::
 
-    \begin{equation*}
-     k_{\text{Dice}}(\mathbf{x}, \mathbf{x'}) = \frac{2\langle\mathbf{x},
-     \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert + \left\lVert\mathbf{x'}\right\rVert}
-    \end{equation*}
+        \begin{equation*}
+        k_{\text{Dice}}(\mathbf{x}, \mathbf{x'}) = \frac{2\langle\mathbf{x},
+        \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert + \left\lVert\mathbf{x'}\right\rVert}
+        \end{equation*}
 
     .. note::
 

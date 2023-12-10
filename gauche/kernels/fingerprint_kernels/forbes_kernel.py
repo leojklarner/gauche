@@ -16,9 +16,9 @@ def batch_forbes_sim(
     Forbes similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    n * <x1, x2> / (|x1| + |x2|)
+    :math:`n * <x1, x2> / (|x1| + |x2|)`
 
-    Where <.> is the inner product, || is the L1 norm, and n is the dimension of the input vectors
+    Where <.> is the inner product, :math:`||` is the L1 norm, and n is the dimension of the input vectors
 
     Args:
         x1: `[b x n x d]` Tensor where b is the batch dimension

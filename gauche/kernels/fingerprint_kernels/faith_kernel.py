@@ -16,7 +16,7 @@ def batch_faith_sim(
     Faith similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    (2 * <x1, x2>) + d / 2n
+    :math:`(2 * <x1, x2>) + d / 2n`
 
     Where <.> is the inner product, d is the number of common zeros and n is the dimension of the input vectors
 

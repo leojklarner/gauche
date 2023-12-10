@@ -15,16 +15,17 @@ def batch_tanimoto_sim(
     Tanimoto similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added. Tanimoto similarity is proportional to:
 
-    (<x, y>) / (||x||^2 + ||y||^2 - <x, y>)
+    :math:`(<x, y>) / (||x||^2 + ||y||^2 - <x, y>)`
 
     where x and y may be bit or count vectors or in set notation:
 
-    |A \cap B | / |A| + |B| - |A \cap B |
+    :math:`|A \\cap B| / |A| + |B| - |A \\cap B|`
 
     Args:
         x1: `[b x n x d]` Tensor where b is the batch dimension
         x2: `[b x m x d]` Tensor
         eps: Float for numerical stability. Default value is 1e-6
+
     Returns:
         Tensor denoting the Tanimoto similarity.
     """
@@ -52,11 +53,11 @@ class TanimotoKernel(Kernel):
 
      .. math::
 
-    \begin{equation*}
-     k_{\text{Tanimoto}}(\mathbf{x}, \mathbf{x'}) = \frac{\langle\mathbf{x},
-     \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert^2 + \left\lVert\mathbf{x'}\right\rVert^2 -
-     \langle\mathbf{x}, \mathbf{x'}\rangle}
-    \end{equation*}
+        \begin{equation*}
+        k_{\text{Tanimoto}}(\mathbf{x}, \mathbf{x'}) = \frac{\langle\mathbf{x},
+        \mathbf{x'}\rangle}{\left\lVert\mathbf{x}\right\rVert^2 + \left\lVert\mathbf{x'}\right\rVert^2 -
+        \langle\mathbf{x}, \mathbf{x'}\rangle}
+        \end{equation*}
 
     .. note::
 

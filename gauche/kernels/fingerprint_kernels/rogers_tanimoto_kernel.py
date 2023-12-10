@@ -16,7 +16,7 @@ def batch_rogers_tanimoto_sim(
     Rogers-Tanimoto similarity between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
 
-    <x1, x2> + d / 2|x1| + 2|x2| - 3*<x1, x2> + d
+    :math:`<x1, x2> + d / 2|x1| + 2|x2| - 3*<x1, x2> + d`
 
     Where || is the L1 norm and <.> is the inner product and d is the number of common zeros
 
