@@ -78,6 +78,11 @@ def test_benchmark_loader(dataset, representation, kwargs):
         dataloader.load_benchmark(
             benchmark=dataset,
         )
+
+        # only perform featurization on a subset of the data
+        # to speed up testing
+        dataloader.features = dataloader.features[:100]
+        dataloader.labels = dataloader.labels[:100]
         dataloader.featurize(representation, **kwargs)
 
 

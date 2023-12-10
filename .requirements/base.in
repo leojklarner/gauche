@@ -1,6 +1,11 @@
 numpy
 pandas
 scikit-learn
+scipy
+matplotlib
+seaborn
+jupyterlab
+ipykernel
 rdkit
 tqdm
 selfies
