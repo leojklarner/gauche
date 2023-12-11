@@ -75,14 +75,34 @@ GAUCHE supports any representation that is based on bit/count vectors, strings o
 
 ### Extensions
 
-If there are any specific kernels or representations that you would like to see included in GAUCHE, please reach out or submit an issue/pull request.
+If there are any specific kernels or representations that you would like to see included in GAUCHE, feel free to submit an issue or pull request.
+
 
 ## Getting Started
 
-The easiest way to get started with GAUCHE is to check out our tutorial notebooks:
+The easiest way to install Gauche is via pip. 
+
+```bash
+pip install gauche
+```
+
+As not all users will need the full functionality of the package, we provide a range of installation options: 
+
+* `pip install gauche` - installs the core functionality of GAUCHE (kernels, representations, data loaders, etc.) and should cover a wide range of use cases.
+* `pip install gauche[rxn]` - additionally installs the [rxnfp](https://github.com/rxn4chemistry/rxnfp) and [drfp](https://github.com/reymond-group/drfp) fingerprints that can be used to represent chemical reactions.
+* `pip install gauche[graphs]` - installs all dependencies for graph kernels and representations.
+
+If you aren't sure which installation option is right for you, you can simply install all of them with `pip install gauche[all]`.
+
+---
+
+### Tutorial Notebooks
+
+The best way to get started with GAUCHE is to check out our [tutorial notebooks](https://leojklarner.github.io/gauche/). These notebooks provide a step-by-step introduction to the core functionality of GAUCHE and illustrate how it can be used to solve a range of common problems in molecular property prediction and optimisation.
 
 |   |   |
 |---|---|
+| [Loading and Featurising Molecules](https://leojklarner.github.io/gauche/notebooks/loading_and_featurising_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Loading%20and%20Featurising%20Molecules.ipynb)   |
 | [GP Regression on Molecules](https://leojklarner.github.io/gauche/notebooks/gp_regression_on_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/GP%20Regression%20on%20Molecules.ipynb)   |
 | [Bayesian Optimisation Over Molecules](https://leojklarner.github.io/gauche/notebooks/bayesian_optimisation_over_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb)   |
 | [Multioutput Gaussian Processes for Multitask Learning](https://leojklarner.github.io/gauche/notebooks/multitask_gp_regression_on_molecules.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Multitask%20GP%20Regression%20on%20Molecules.ipynb)   |
@@ -91,22 +111,28 @@ The easiest way to get started with GAUCHE is to check out our tutorial notebook
 |[Molecular Preference Learning](https://github.com/leojklarner/gauche/blob/main/notebooks/Molecular%20Preference%20Learning.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Molecular%20Preference%20Learning.ipynb) |
 |[Preferential Bayesian Optimisation](https://github.com/leojklarner/gauche/blob/main/notebooks/Preferential%20Bayesian%20Optimisation.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Preferential%20Bayesian%20Optimisation.ipynb) |
 
-### Installation
+---
 
-We recommend using a conda virtual environment:
-```
-git clone https://github.com/leojklarner/gauche.git
-cd gauche
+### Example Usage: Loading and Featurising Molecules
 
-conda env create -f conda_env.yml
+GAUCHE provides a range of helper functions for loading and preprocessing datasets for molecular property and reaction yield prediction and optimisation tasks. For more detail, check out our [Loading and Featurising Molecules Tutorial](https://leojklarner.github.io/gauche/notebooks/loading_and_featurising_molecules.html) and the corresponding section in the [Docs](https://leojklarner.github.io/gauche/notebooks/loading_and_featurising_molecules.html).
 
-pip install --no-deps rxnfp
-pip install --no-deps drfp
-pip install transformers
-pip install mordred
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Loading%20and%20Featurising%20Molecules.ipynb)
 
-# optional for running tests
-pip install gpflow grakel
+```python	
+from gauche.dataloader import MolPropLoader
+
+loader = MolPropLoader()
+
+# load one of the included benchmarks
+loader.load_benchmark("Photoswitch")
+
+# or a custom dataset
+loader.read_csv(path="data.csv", smiles_column="smiles", label_column="y")
+
+# and quickly featurise the provided molecules
+loader.featurize('ecfp_fragprints')
+X, y = loader.features, loader.labels
 ```
 
 ### Example Usage: GP Regression on Molecules
@@ -120,6 +146,7 @@ import gpytorch
 from botorch import fit_gpytorch_model
 from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
+# define GP model with Tanimoto kernel
 class TanimotoGP(gpytorch.models.ExactGP):
   def __init__(self, train_x, train_y, likelihood):
     super(TanimotoGP, self).__init__(train_x, train_y, likelihood)
@@ -149,31 +176,6 @@ preds = model(X_test)
 pred_means, pred_vars = preds.mean, preds.variance
 ```
 
-### Example Usage: Bayesian Optimisation Over Molecules
-
-|   |   |  
-|---|---|
-[Tutorial (Bayesian Optimisation Over Molecules)](https://leojklarner.github.io/gauche/notebooks/bayesian_optimisation_over_molecules.html)  | [Docs](https://leojklarner.github.io/gauche/modules/kernels.html)
-| [![Open In Colab(https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb) | |
-
-```python
-from botorch.models.gp_regression import SingleTaskGP
-from gprotorch.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
-
-# We define our custom GP surrogate model using the Tanimoto kernel
-class TanimotoGP(SingleTaskGP):
-
-    def __init__(self, train_X, train_Y):
-        super().__init__(train_X, train_Y, GaussianLikelihood())
-        self.mean_module = ConstantMean()
-        self.covar_module = ScaleKernel(base_kernel=TanimotoKernel())
-        self.to(train_X)  # make sure we're on the right device/dtype
-
-    def forward(self, x):
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return MultivariateNormal(mean_x, covar_x)
-```
 
 ## Citing GAUCHE
 

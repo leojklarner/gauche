@@ -55,12 +55,25 @@ GAUCHE supports any representation that is based on bit/count vectors, strings o
 Getting Started
 -----------------
 
-The easiest way to get started with GAUCHE is to check out our tutorial notebooks:
+The easiest way to install Gauche is via pip. 
 
+`pip install gauche`
+
+As not all users will need the full functionality of the package, we provide a range of installation options: 
+
+* `pip install gauche` - installs the core functionality of GAUCHE (kernels, representations, data loaders, etc.) and should cover a wide range of use cases.
+* `pip install gauche[rxn]` - additionally installs the rxnfp and drfp fingerprints that can be used to represent chemical reactions.
+* `pip install gauche[graphs]` - installs all dependencies for graph kernels and representations.
+
+If you aren't sure which installation option is right for you, you can simply install all of them with `pip install gauche[all]`.
+
+
+The best way to get started with GAUCHE is to check out our tutorial notebooks. These notebooks provide a step-by-step introduction to the core functionality of GAUCHE and illustrate how it can be used to solve a range of common problems in molecular property prediction and optimisation.
 
 .. toctree::
    :maxdepth: 1
-
+   
+   notebooks/loading_and_featurising_molecules.nblink
    notebooks/gp_regression_on_molecules.nblink
    notebooks/bayesian_optimisation_over_molecules.nblink
    notebooks/sparse_gp_regression_for_big_molecular_data.nblink

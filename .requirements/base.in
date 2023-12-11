@@ -9,6 +9,6 @@ ipykernel
 rdkit
 tqdm
 selfies
-torch==1.13
+torch
 gpytorch
 botorch

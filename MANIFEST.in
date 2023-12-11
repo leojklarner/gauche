@@ -1,4 +1,5 @@
 include README.md
 include .requirements/*
+include .images/*
 recursive-include gauche/datasets *
 
