@@ -82,8 +82,6 @@ The best way to get started with GAUCHE is to check out our tutorial notebooks. 
    notebooks/preferential_bayesian_optimisation.nblink
    notebooks/protein_fitness_prediction_bag_of_amino_acids.nblink
    notebooks/protein_fitness_prediction_ssk_gp.nblink
-   notebooks/wl_graph_kernel.nblink
-   notebooks/external_graph_kernels.nblink
 
 
 
