@@ -98,7 +98,9 @@ If you aren't sure which installation option is right for you, you can simply in
 
 ### Tutorial Notebooks
 
-The best way to get started with GAUCHE is to check out our [tutorial notebooks](https://leojklarner.github.io/gauche/). These notebooks provide a step-by-step introduction to the core functionality of GAUCHE and illustrate how it can be used to solve a range of common problems in molecular property prediction and optimisation.
+The best way to get started with GAUCHE is to check out our [tutorial notebooks](https://leojklarner.github.io/gauche/). These notebooks provide a step-by-step introduction to the core functionality of GAUCHE and illustrate how it can be used to solve a range of common problems in molecular property prediction and optimisation. To install gauche in the colab environment run:
+
+`pip install gauche`
 
 |   |   |
 |---|---|
