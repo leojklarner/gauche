@@ -110,6 +110,7 @@ The best way to get started with GAUCHE is to check out our [tutorial notebooks]
 | [Sparse GP Regression for Big Molecular Data](https://leojklarner.github.io/gauche/notebooks/sparse_gp_regression_for_big_molecular_data.html)  |  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Sparse%20GP%20Regression%20for%20Big%20Molecular%20Data.ipynb)   |
 |[Molecular Preference Learning](https://github.com/leojklarner/gauche/blob/main/notebooks/Molecular%20Preference%20Learning.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Molecular%20Preference%20Learning.ipynb) |
 |[Preferential Bayesian Optimisation](https://github.com/leojklarner/gauche/blob/main/notebooks/Preferential%20Bayesian%20Optimisation.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Preferential%20Bayesian%20Optimisation.ipynb) |
+|[Training Bayesian GNNs on Molecules](https://leojklarner.github.io/gauche/notebooks/bayesian_gnn_on_molecules.html)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/leojklarner/gauche/blob/main/notebooks/Bayesian_GNN_on_Molecules.ipynb) |
 
 ---
 
