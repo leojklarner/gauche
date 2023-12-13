@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html class="no-js" data-content_root="../" lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="light dark" name="color-scheme"/><meta content="width=device-width, initial-scale=1" name="viewport">
+<meta content="Learning an Objective Function through Interaction with a Human Chemist" property="og:title"/>
+<meta content="website" property="og:type"/>
+<meta content="notebooks/molecular_preference_learning.html" property="og:url"/>
+<meta content="GAUCHE" property="og:site_name"/>
+<meta content="An example notebook using Gaussian process preference learning [1] to model the latent utility function of a human medicinal chemist from pairwise preference data. The human medicinal chemist is pr..." property="og:description"/>
+<meta content="1146" property="og:image:width"/>
+<meta content="600" property="og:image:height"/>
+<meta content="/_images/social_previews/summary_notebooks_molecular_preference_learning_d6394e73.png" property="og:image"/>
+<meta content="An example notebook using Gaussian process preference learning [1] to model the latent utility function of a human medicinal chemist from pairwise preference..." property="og:image:alt"/>
+<meta content="An example notebook using Gaussian process preference learning [1] to model the latent utility function of a human medicinal chemist from pairwise preference data. The human medicinal chemist is pr..." name="description"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<link href="../genindex.html" rel="index" title="Index"/><link href="../search.html" rel="search" title="Search"/><link href="preferential_bayesian_optimisation.html" rel="next" title="Preferential Bayesian Optimisation"/><link href="multitask_gp_regression_on_molecules.html" rel="prev" title="Multitask GP Regression on Molecules"/>
+<!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+<title>Learning an Objective Function through Interaction with a Human Chemist - GAUCHE documentation</title>
+<link href="../_static/pygments.css?v=a746c00c" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo.css?v=135e06be" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/tabs.css?v=4c969af8" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-codeautolink.css?v=125d5c1c" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo-extensions.css?v=36a5483c" rel="stylesheet" type="text/css"/>
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></meta></head>
+<body>
+<script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+<symbol id="svg-toc" viewbox="0 0 24 24">
+<title>Contents</title>
+<svg fill="currentColor" stroke="currentColor" stroke-width="0" viewbox="0 0 1024 1024">
+<path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"></path>
+</svg>
+</symbol>
+<symbol id="svg-menu" viewbox="0 0 24 24">
+<title>Menu</title>
+<svg class="feather-menu" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<line x1="3" x2="21" y1="12" y2="12"></line>
+<line x1="3" x2="21" y1="6" y2="6"></line>
+<line x1="3" x2="21" y1="18" y2="18"></line>
+</svg>
+</symbol>
+<symbol id="svg-arrow-right" viewbox="0 0 24 24">
+<title>Expand</title>
+<svg class="feather-chevron-right" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</symbol>
+<symbol id="svg-sun" viewbox="0 0 24 24">
+<title>Light mode</title>
+<svg class="feather-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="5"></circle>
+<line x1="12" x2="12" y1="1" y2="3"></line>
+<line x1="12" x2="12" y1="21" y2="23"></line>
+<line x1="4.22" x2="5.64" y1="4.22" y2="5.64"></line>
+<line x1="18.36" x2="19.78" y1="18.36" y2="19.78"></line>
+<line x1="1" x2="3" y1="12" y2="12"></line>
+<line x1="21" x2="23" y1="12" y2="12"></line>
+<line x1="4.22" x2="5.64" y1="19.78" y2="18.36"></line>
+<line x1="18.36" x2="19.78" y1="5.64" y2="4.22"></line>
+</svg>
+</symbol>
+<symbol id="svg-moon" viewbox="0 0 24 24">
+<title>Dark mode</title>
+<svg class="icon-tabler-moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+</svg>
+</symbol>
+<symbol id="svg-sun-half" viewbox="0 0 24 24">
+<title>Auto light/dark mode</title>
+<svg class="icon-tabler-shadow" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M13 12h5"></path>
+<path d="M13 15h4"></path>
+<path d="M13 18h1"></path>
+<path d="M13 9h4"></path>
+<path d="M13 6h1"></path>
+</svg>
+</symbol>
+</svg>
+<input class="sidebar-toggle" id="__navigation" name="__navigation" type="checkbox"/>
+<input class="sidebar-toggle" id="__toc" name="__toc" type="checkbox"/>
+<label class="overlay sidebar-overlay" for="__navigation">
+<div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+<div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+<div class="page">
+<header class="mobile-header">
+<div class="header-left">
+<label class="nav-overlay-icon" for="__navigation">
+<div class="visually-hidden">Toggle site navigation sidebar</div>
+<i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+</label>
+</div>
+<div class="header-center">
+<a href="../index.html"><div class="brand">GAUCHE  documentation</div></a>
+</div>
+<div class="header-right">
+<div class="theme-toggle-container theme-toggle-header">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-header-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+</header>
+<aside class="sidebar-drawer">
+<div class="sidebar-container">
+<div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+<span class="sidebar-brand-text">GAUCHE  documentation</span>
+</a><form action="../search.html" class="sidebar-search-container" method="get" role="search">
+<input aria-label="Search" class="sidebar-search" name="q" placeholder="Search"/>
+<input name="check_keywords" type="hidden" value="yes"/>
+<input name="area" type="hidden" value="default"/>
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="loading_and_featurising_molecules.html">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sparse_gp_regression_for_big_molecular_data.html">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_ssk_gp.html">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_gnn_on_molecules.html">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/kernels.html">gauche.kernels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/representations.html">gauche.representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataloader.html">gauche.dataloader</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<div class="main">
+<div class="content">
+<div class="article-container">
+<a class="back-to-top muted-link" href="#">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+</svg>
+<span>Back to top</span>
+</a>
+<div class="content-icon-container">
+<div class="theme-toggle-container theme-toggle-content">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-content-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+<article role="main">
+<section id="Learning-an-Objective-Function-through-Interaction-with-a-Human-Chemist">
+<h1>Learning an Objective Function through Interaction with a Human Chemist<a class="headerlink" href="#Learning-an-Objective-Function-through-Interaction-with-a-Human-Chemist" title="Link to this heading">#</a></h1>
+<p>An example notebook using Gaussian process preference learning [1] to model the latent utility function of a human medicinal chemist from pairwise preference data. The human medicinal chemist is presented with pairwise observations of molecules <span class="math notranslate nohighlight">\((m_1, m_2)\)</span> and asked to indicate their preference <span class="math notranslate nohighlight">\(r(m_1, m_2) \in \{0, 1\}\)</span>. The preference Gaussian process then models the latent utility function <span class="math notranslate nohighlight">\(g(m)\)</span> via a fit to the pairwise preferences.</p>
+<p>In this tutorial we use the pairwise GP with Laplace approximation introduced in [1] as our preference GP. It is also possible to use a skew GP model as in [2].</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Library imports"""</span>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#module-warnings" title="warnings"><span class="nn">warnings</span></a>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#warnings.filterwarnings" title="warnings.filterwarnings"><span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span></a><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span> <span class="c1"># Turn off Graphein warnings</span>
+
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/itertools.html#module-itertools" title="itertools"><span class="nn">itertools</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/itertools.html#itertools.combinations" title="itertools.combinations"><span class="n">combinations</span></a>
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.pairwise_gp</span> <span class="kn">import</span> <span class="n">PairwiseGP</span><span class="p">,</span> <span class="n">PairwiseLaplaceMarginalLogLikelihood</span>
+<span class="kn">import</span> <span class="nn">gpytorch</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="numpy"><span class="nn">numpy</span></a> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.model_selection" title="sklearn.model_selection"><span class="nn">sklearn.model_selection</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/torch.html#module-torch" title="torch"><span class="nn">torch</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://docs.scipy.org/doc/scipy/reference/stats.html#module-scipy.stats" title="scipy.stats"><span class="nn">scipy.stats</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kendalltau.html#scipy.stats.kendalltau" title="scipy.stats.kendalltau"><span class="n">kendalltau</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/index.html#module-matplotlib" title="matplotlib"><span class="nn">matplotlib</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/pyplot_summary.html#module-matplotlib.pyplot" title="matplotlib.pyplot"><span class="n">pyplot</span></a> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">gauche.dataloader</span> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#module-gauche.dataloader.data_utils" title="gauche.dataloader.data_utils"><span class="nn">gauche.dataloader.data_utils</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.data_utils.transform_data" title="gauche.dataloader.data_utils.transform_data"><span class="n">transform_data</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="../modules/kernels.html#module-gauche.kernels.fingerprint_kernels.tanimoto_kernel" title="gauche.kernels.fingerprint_kernels.tanimoto_kernel"><span class="nn">gauche.kernels.fingerprint_kernels.tanimoto_kernel</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/kernels.html#gauche.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel" title="gauche.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel"><span class="n">TanimotoKernel</span></a>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<p>We use the photoswitch dataset for purposes of illustration.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Load the Photoswitch dataset"""</span>
+
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark" title="gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"Photoswitch"</span><span class="p">)</span>
+
+<span class="c1"># Featurise the molecules.</span>
+
+<span class="c1"># We use the fragprints representations (a concatenation of Morgan fingerprints and RDKit fragment features)</span>
+
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.featurize" title="gauche.dataloader.molprop_loader.MolPropLoader.featurize"><span class="n">loader</span><span class="o">.</span><span class="n">featurize</span></a><span class="p">(</span><span class="s1">'ecfp_fragprints'</span><span class="p">)</span>
+<span class="n">X_fragprints</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">features</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">labels</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Found 13 invalid labels [nan nan nan nan nan nan nan nan nan nan nan nan nan] at indices [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 158]
+To turn validation off, use dataloader.read_csv(..., validate=False).
+2023.09.2
+</pre></div></div>
+</div>
+<p>We implement a utility function for generating ground truth pairwise comparison data i.e. preferences voiced by a simulated medicinal chemist.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">generate_comparisons</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">n_comp</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Function simulating the preferences of a human chemist.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        y: 1D NumPy array of training data labels</span>
+<span class="sd">        n_comp: Int indicating the number of pairwise comparisons to generate</span>
+<span class="sd">        noise: Float indicating the level of noise in the chemist's decisions</span>
+<span class="sd">        replace: Bool indicating whether to generate comparisons with replacement</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        comp_pairs: A NumPy array of comparison pairs of the form (m1, m2)</span>
+
+<span class="sd">    """</span>
+    <span class="c1"># generate all possible pairs of elements in y</span>
+    <span class="n">all_pairs</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#list" title="list"><span class="nb">list</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/itertools.html#itertools.combinations" title="itertools.combinations"><span class="n">combinations</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="c1"># randomly select n_comp pairs from all_pairs</span>
+    <span class="n">comp_pairs</span> <span class="o">=</span> <span class="n">all_pairs</span><span class="p">[</span>
+        <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html#numpy.random.choice" title="numpy.random.choice"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">all_pairs</span><span class="p">)),</span> <span class="n">n_comp</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="c1"># add gaussian noise to the latent y values</span>
+    <span class="n">c0</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">comp_pairs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.standard_normal.html#numpy.random.standard_normal" title="numpy.random.standard_normal"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">comp_pairs</span><span class="p">))</span> <span class="o">*</span> <span class="n">noise</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">comp_pairs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.standard_normal.html#numpy.random.standard_normal" title="numpy.random.standard_normal"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">comp_pairs</span><span class="p">))</span> <span class="o">*</span> <span class="n">noise</span>
+    <span class="n">reverse_comp</span> <span class="o">=</span> <span class="p">(</span><span class="n">c0</span> <span class="o">&lt;</span> <span class="n">c1</span><span class="p">)</span>
+    <span class="n">comp_pairs</span><span class="p">[</span><span class="n">reverse_comp</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.flip.html#numpy.flip" title="numpy.flip"><span class="n">np</span><span class="o">.</span><span class="n">flip</span></a><span class="p">(</span><span class="n">comp_pairs</span><span class="p">[</span><span class="n">reverse_comp</span><span class="p">,</span> <span class="p">:],</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">comp_pairs</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">comp_pairs</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">comp_pairs</span>
+</pre></div>
+</div>
+</div>
+<p>As a performance metric we use the Kendall-Tau rank correlation. Importantly, when a GP is learned on pairwise comparisons, the absolute scale of the predictions will be unavailable but the rank order will be available. As such, we can use a rank-based performance metric.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Utility function for computing the Kendall-Tau rank correlation between the predictions and the ground truth."""</span>
+
+<span class="k">def</span> <span class="nf">eval_kt_cor</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_X</span><span class="p">,</span> <span class="n">test_y</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Kendall-Tau rank correlation</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model: Instance of pairwise GP</span>
+<span class="sd">        test_X: n x d Tensor of test input locations</span>
+<span class="sd">        test_y: n x 1 Tensor of test labels</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The Kendall-Tau rank correlation, a number between 0 and 1.</span>
+<span class="sd">    """</span>
+    <span class="n">pred_y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="k">return</span> <a class="sphinx-codeautolink-a" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kendalltau.html#scipy.stats.kendalltau" title="scipy.stats.kendalltau"><span class="n">kendalltau</span></a><span class="p">(</span><span class="n">pred_y</span><span class="p">,</span> <span class="n">test_y</span><span class="p">)</span><span class="o">.</span><span class="n">correlation</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Utility function for model evaluation"""</span>
+
+<span class="c1"># Experiment parameters</span>
+<span class="n">n_trials</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">test_set_size</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c1"># train/test split</span>
+<span class="n">m</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">noise</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># simulate a noiseless oracle</span>
+
+<span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Helper function for model evaluation</span>
+<span class="sd">    Args:</span>
+<span class="sd">        X: n x d NumPy array of the full set of inputs. Typically some molecular representation such as fragprints, framgents or fingerprints</span>
+<span class="sd">        y: n x d NumPy array of the full set of output labels</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Mean KT correlation on the train set, mean KT correlation on the test set.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># initialise performance metric lists</span>
+    <span class="n">kt_list_train</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">kt_list_test</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Beginning training loop...'</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">):</span>
+
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'Starting trial </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_set_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="n">train_comp</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">generate_comparisons</span><span class="p">(</span><span class="n">y_train</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">))</span>
+
+        <span class="c1"># Convert numpy arrays to PyTorch tensors and flatten the label vectors</span>
+        <span class="n">X_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64"><span class="n">np</span><span class="o">.</span><span class="n">float64</span></a><span class="p">))</span>
+        <span class="n">X_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64"><span class="n">np</span><span class="o">.</span><span class="n">float64</span></a><span class="p">))</span>
+        <span class="n">y_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="c1"># initialise pairwise GP model</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">PairwiseGP</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">train_comp</span><span class="p">,</span> <span class="n">covar_module</span><span class="o">=</span><span class="n">gpytorch</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">ScaleKernel</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="../modules/kernels.html#gauche.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel" title="gauche.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel"><span class="n">TanimotoKernel</span></a><span class="p">()))</span>
+        <span class="c1"># Find optimal model hyperparameters</span>
+        <span class="n">mll</span> <span class="o">=</span> <span class="n">PairwiseLaplaceMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+        <span class="c1"># Use the BoTorch utility for fitting GPs in order to use the LBFGS-B optimiser (recommended)</span>
+        <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+        <span class="c1"># Get into evaluation (predictive posterior) mode</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="c1"># To compute metrics and detach gradients. Must unsqueeze dimension</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">y_test</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Compute Kendall-Tau rank correlation</span>
+        <span class="n">train_score</span> <span class="o">=</span> <span class="n">eval_kt_cor</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+        <span class="n">test_score</span> <span class="o">=</span> <span class="n">eval_kt_cor</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+
+        <span class="n">kt_list_train</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_score</span><span class="p">)</span>
+        <span class="n">kt_list_test</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_score</span><span class="p">)</span>
+
+
+    <span class="n">kt_list_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">kt_list_train</span><span class="p">)</span>
+    <span class="n">kt_list_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">kt_list_test</span><span class="p">)</span>
+
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">mean train KT: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">kt_list_train</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">kt_list_train</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">kt_list_train</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">mean test KT: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">kt_list_test</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">kt_list_test</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">kt_list_test</span><span class="p">))))</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">evaluate_model</span><span class="p">(</span><span class="n">X_fragprints</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Beginning training loop...
+Starting trial 0
+Starting trial 1
+Starting trial 2
+Starting trial 3
+Starting trial 4
+Starting trial 5
+Starting trial 6
+Starting trial 7
+Starting trial 8
+Starting trial 9
+Starting trial 10
+Starting trial 11
+Starting trial 12
+Starting trial 13
+Starting trial 14
+Starting trial 15
+Starting trial 16
+Starting trial 17
+Starting trial 18
+Starting trial 19
+
+mean train KT: 0.7969 +- 0.0023
+
+mean test KT: 0.7201 +- 0.0067
+</pre></div></div>
+</div>
+<section id="References">
+<h2>References<a class="headerlink" href="#References" title="Link to this heading">#</a></h2>
+<p>[1] Chu, W. and Ghahramani, Z., <a class="reference external" href="https://icml.cc/Conferences/2005/proceedings/papers/018_Preference_ChuGhahramani.pdf">Preference learning with Gaussian processes</a>. ICML, 2005.</p>
+<p>[2] Benavoli, A., Azzimonti, D. and Piga, D., 2021, July. <a class="reference external" href="https://dl.acm.org/doi/abs/10.1145/3449726.3463128">Preferential Bayesian optimisation with Skew Gaussian Processes</a>. In Proceedings of the Genetic and Evolutionary Computation Conference Companion (pp. 1842-1850).</p>
+</section>
+</section>
+</article>
+</div>
+<footer>
+<div class="related-pages">
+<a class="next-page" href="preferential_bayesian_optimisation.html">
+<div class="page-info">
+<div class="context">
+<span>Next</span>
+</div>
+<div class="title">Preferential Bayesian Optimisation</div>
+</div>
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+</a>
+<a class="prev-page" href="multitask_gp_regression_on_molecules.html">
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+<div class="page-info">
+<div class="context">
+<span>Previous</span>
+</div>
+<div class="title">Multitask GP Regression on Molecules</div>
+</div>
+</a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+<div class="copyright">
+                Copyright © 2022, Ryan Rhys-Griffiths
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+</div>
+<div class="right-details">
+</div>
+</div>
+</footer>
+</div>
+<aside class="toc-drawer">
+<div class="toc-sticky toc-scroll">
+<div class="toc-title-container">
+<span class="toc-title">
+            On this page
+          </span>
+</div>
+<div class="toc-tree-container">
+<div class="toc-tree">
+<ul>
+<li><a class="reference internal" href="#">Learning an Objective Function through Interaction with a Human Chemist</a><ul>
+<li><a class="reference internal" href="#References">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+<script src="../_static/doctools.js?v=888ff710"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=f281be69"></script>
+<script src="../_static/tabs.js?v=3ee01567"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>

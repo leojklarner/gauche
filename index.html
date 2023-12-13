@@ -1,0 +1,457 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta property="og:title" content="Documentation" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="index.html" />
+<meta property="og:site_name" content="GAUCHE" />
+<meta property="og:description" content="GAUCHE Logo GAUCHE is a collaborative, open-source software library that aims to make state-of-the-art probabilistic modelling and black-box optimisation techniques more easily accessible to scient..." />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_index_0647f2ad.png" />
+<meta property="og:image:alt" content="GAUCHE Logo GAUCHE is a collaborative, open-source software library that aims to make state-of-the-art probabilistic modelling and black-box optimisation tec..." />
+<meta name="description" content="GAUCHE Logo GAUCHE is a collaborative, open-source software library that aims to make state-of-the-art probabilistic modelling and black-box optimisation techniques more easily accessible to scient..." />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Loading and Featurising Molecular Data" href="notebooks/loading_and_featurising_molecules.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+        <title>GAUCHE documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=4c969af8" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-codeautolink.css?v=125d5c1c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="#"><div class="brand">GAUCHE  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  
+  
+  <span class="sidebar-brand-text">GAUCHE  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/loading_and_featurising_molecules.html">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/sparse_gp_regression_for_big_molecular_data.html">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/molecular_preference_learning.html">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/protein_fitness_prediction_ssk_gp.html">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/bayesian_gnn_on_molecules.html">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/kernels.html">gauche.kernels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/representations.html">gauche.representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/dataloader.html">gauche.dataloader</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="documentation">
+<h1>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h1>
+<a class="reference internal image-reference" href="_images/gauche_banner_1.png"><img alt="GAUCHE Logo" class="align-left" src="_images/gauche_banner_1.png" style="width: 100%;" /></a>
+<p><strong>GAUCHE</strong> is a collaborative, open-source software library that aims to make state-of-the-art probabilistic modelling and black-box optimisation techniques more easily accessible to scientific experts in chemistry, materials science and beyond. We provide 30+ bespoke kernels for molecules, chemical reactions and proteins and illustrate how they can be used for Gaussian processes and Bayesian optimisation in 10+ easy-to-adapt tutorial notebooks.</p>
+<p><a class="reference external" href="https://arxiv.org/abs/2212.04450">Paper (NeurIPS 2023)</a></p>
+</section>
+<section id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h1>
+<p>General-purpose Gaussian process (GP) and Bayesian optimisation (BO) libraries do not cater for molecular representations. Likewise, general-purpose molecular machine learning libraries do not consider GPs and BO. To bridge this gap, GAUCHE provides a modular, robust and easy-to-use framework of 30+ parallelisable and batch-GP-compatible implementations of string, fingerprint and graph kernels that operate on a range of widely-used molecular representations.</p>
+<a class="reference internal image-reference" href="_images/gauche_overview.png"><img alt="GAUCHE Overview" class="align-left" src="_images/gauche_overview.png" style="width: 100%;" /></a>
+<section id="kernels">
+<h2>Kernels<a class="headerlink" href="#kernels" title="Link to this heading">#</a></h2>
+<p>Standard GP packages typically assume continuous input spaces of low and fixed dimensionality. This makes it difficult to apply them to common molecular representations: molecular graphs are discrete objects, SMILES strings vary in length and topological fingerprints tend to be high-dimensional and sparse. To bridge this gap, GAUCHE provides:</p>
+<ul class="simple">
+<li><p><strong>Fingerprint Kernels</strong> that measure the similarity between bit/count vectors of descriptor by examining the degree to which their elements overlap.</p></li>
+<li><p><strong>String Kernels</strong> that measure the similarity between strings by examining the degree to which their sub-strings overlap.</p></li>
+<li><p><strong>Graph Kernels</strong> that measure between graphs by examining the degree to which certain substructural motifs overlap.</p></li>
+</ul>
+</section>
+<section id="representations">
+<h2>Representations<a class="headerlink" href="#representations" title="Link to this heading">#</a></h2>
+<p>GAUCHE supports any representation that is based on bit/count vectors, strings or graphs. For rapid prototyping and benchmarking, we also provide a range of standard featurisation techniques for molecules, chemical reactions and proteins:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Domain</p></th>
+<th class="head"><p>Representation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Molecules</p></td>
+<td><p>ECFP Fingerprints [1], rdkit Fragments, Fragprints, Graphs [2], SMILES [3], SELFIES [4]</p></td>
+</tr>
+<tr class="row-odd"><td><p>Chemical Reactions</p></td>
+<td><p>One-Hot Encoding, Data-Driven Reaction Fingerprints [5], Differential Reaction Fingerprints [6], Reaction SMARTS</p></td>
+</tr>
+<tr class="row-even"><td><p>Proteins</p></td>
+<td><p>Sequences, Graphs [2]</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h2>
+<p>The easiest way to install Gauche is via pip.</p>
+<p><cite>pip install gauche</cite></p>
+<p>As not all users will need the full functionality of the package, we provide a range of installation options:</p>
+<ul class="simple">
+<li><p><cite>pip install gauche</cite> - installs the core functionality of GAUCHE (kernels, representations, data loaders, etc.) and should cover a wide range of use cases.</p></li>
+<li><p><cite>pip install gauche[rxn]</cite> - additionally installs the rxnfp and drfp fingerprints that can be used to represent chemical reactions.</p></li>
+<li><p><cite>pip install gauche[graphs]</cite> - installs all dependencies for graph kernels and representations.</p></li>
+</ul>
+<p>If you aren’t sure which installation option is right for you, you can simply install all of them with <cite>pip install gauche[all]</cite>.</p>
+<p>The best way to get started with GAUCHE is to check out our tutorial notebooks. These notebooks provide a step-by-step introduction to the core functionality of GAUCHE and illustrate how it can be used to solve a range of common problems in molecular property prediction and optimisation.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/loading_and_featurising_molecules.html">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/sparse_gp_regression_for_big_molecular_data.html">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/molecular_preference_learning.html">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/protein_fitness_prediction_ssk_gp.html">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/bayesian_gnn_on_molecules.html">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+</div>
+</section>
+<section id="extensions">
+<h2>Extensions<a class="headerlink" href="#extensions" title="Link to this heading">#</a></h2>
+<p>If there are any specific kernels or representations that you would like to see included in GAUCHE, please reach out or submit an issue/pull request.</p>
+</section>
+</section>
+<section id="gauche-s-api">
+<h1>Gauche’s API<a class="headerlink" href="#gauche-s-api" title="Link to this heading">#</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/kernels.html">gauche.kernels</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/kernels.html#module-gauche.kernels.fingerprint_kernels.tanimoto_kernel">Fingerprint Kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel"><code class="docutils literal notranslate"><span class="pre">TanimotoKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.tanimoto_kernel.batch_tanimoto_sim"><code class="docutils literal notranslate"><span class="pre">batch_tanimoto_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.braun_blanquet_kernel.BraunBlanquetKernel"><code class="docutils literal notranslate"><span class="pre">BraunBlanquetKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.braun_blanquet_kernel.batch_braun_blanquet_sim"><code class="docutils literal notranslate"><span class="pre">batch_braun_blanquet_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.dice_kernel.DiceKernel"><code class="docutils literal notranslate"><span class="pre">DiceKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.dice_kernel.batch_dice_sim"><code class="docutils literal notranslate"><span class="pre">batch_dice_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.faith_kernel.FaithKernel"><code class="docutils literal notranslate"><span class="pre">FaithKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.faith_kernel.batch_faith_sim"><code class="docutils literal notranslate"><span class="pre">batch_faith_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.forbes_kernel.ForbesKernel"><code class="docutils literal notranslate"><span class="pre">ForbesKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.forbes_kernel.batch_forbes_sim"><code class="docutils literal notranslate"><span class="pre">batch_forbes_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.inner_product_kernel.InnerProductKernel"><code class="docutils literal notranslate"><span class="pre">InnerProductKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.inner_product_kernel.batch_inner_product_sim"><code class="docutils literal notranslate"><span class="pre">batch_inner_product_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.intersection_kernel.IntersectionKernel"><code class="docutils literal notranslate"><span class="pre">IntersectionKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.intersection_kernel.batch_intersection_sim"><code class="docutils literal notranslate"><span class="pre">batch_intersection_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.minmax_kernel.MinMaxKernel"><code class="docutils literal notranslate"><span class="pre">MinMaxKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.minmax_kernel.batch_minmax_sim"><code class="docutils literal notranslate"><span class="pre">batch_minmax_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.otsuka_kernel.OtsukaKernel"><code class="docutils literal notranslate"><span class="pre">OtsukaKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.otsuka_kernel.batch_otsuka_sim"><code class="docutils literal notranslate"><span class="pre">batch_otsuka_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.rand_kernel.RandKernel"><code class="docutils literal notranslate"><span class="pre">RandKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.rand_kernel.batch_rand_sim"><code class="docutils literal notranslate"><span class="pre">batch_rand_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.rogers_tanimoto_kernel.RogersTanimotoKernel"><code class="docutils literal notranslate"><span class="pre">RogersTanimotoKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.rogers_tanimoto_kernel.batch_rogers_tanimoto_sim"><code class="docutils literal notranslate"><span class="pre">batch_rogers_tanimoto_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.russell_rao_kernel.RussellRaoKernel"><code class="docutils literal notranslate"><span class="pre">RussellRaoKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.russell_rao_kernel.batch_russell_rao_sim"><code class="docutils literal notranslate"><span class="pre">batch_russell_rao_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.sogenfrei_kernel.SogenfreiKernel"><code class="docutils literal notranslate"><span class="pre">SogenfreiKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.sogenfrei_kernel.batch_sogenfrei_sim"><code class="docutils literal notranslate"><span class="pre">batch_sogenfrei_sim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.sokal_sneath_kernel.SokalSneathKernel"><code class="docutils literal notranslate"><span class="pre">SokalSneathKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.fingerprint_kernels.sokal_sneath_kernel.batch_sokal_sneath_sim"><code class="docutils literal notranslate"><span class="pre">batch_sokal_sneath_sim()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/kernels.html#module-gauche.kernels.graph_kernels">Graph Kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.EdgeHistogramKernel"><code class="docutils literal notranslate"><span class="pre">EdgeHistogramKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.GraphletSamplingKernel"><code class="docutils literal notranslate"><span class="pre">GraphletSamplingKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.NeighborhoodHashKernel"><code class="docutils literal notranslate"><span class="pre">NeighborhoodHashKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.RandomWalkKernel"><code class="docutils literal notranslate"><span class="pre">RandomWalkKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.RandomWalkLabeledKernel"><code class="docutils literal notranslate"><span class="pre">RandomWalkLabeledKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.ShortestPathKernel"><code class="docutils literal notranslate"><span class="pre">ShortestPathKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.ShortestPathLabeledKernel"><code class="docutils literal notranslate"><span class="pre">ShortestPathLabeledKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.VertexHistogramKernel"><code class="docutils literal notranslate"><span class="pre">VertexHistogramKernel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.graph_kernels.WeisfeilerLehmanKernel"><code class="docutils literal notranslate"><span class="pre">WeisfeilerLehmanKernel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/kernels.html#module-gauche.kernels.string_kernels">String Kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/kernels.html#gauche.kernels.string_kernels.SubsequenceStringKernel"><code class="docutils literal notranslate"><span class="pre">SubsequenceStringKernel</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/representations.html">gauche.representations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/representations.html#module-gauche.representations.fingerprints">Fingerprint Representations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.fingerprints.drfp"><code class="docutils literal notranslate"><span class="pre">drfp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.fingerprints.ecfp_fingerprints"><code class="docutils literal notranslate"><span class="pre">ecfp_fingerprints()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.fingerprints.fragments"><code class="docutils literal notranslate"><span class="pre">fragments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.fingerprints.mqn_features"><code class="docutils literal notranslate"><span class="pre">mqn_features()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.fingerprints.one_hot"><code class="docutils literal notranslate"><span class="pre">one_hot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.fingerprints.rxnfp"><code class="docutils literal notranslate"><span class="pre">rxnfp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/representations.html#module-gauche.representations.graphs">Graph Representations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.graphs.molecular_graphs"><code class="docutils literal notranslate"><span class="pre">molecular_graphs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/representations.html#module-gauche.representations.strings">String Representations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/representations.html#gauche.representations.strings.bag_of_characters"><code class="docutils literal notranslate"><span class="pre">bag_of_characters()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/dataloader.html">gauche.dataloader</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/dataloader.html#module-gauche.dataloader.dataloader">Dataloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/dataloader.html#module-gauche.dataloader.molprop_loader">Molecular Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader"><code class="docutils literal notranslate"><span class="pre">MolPropLoader</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/dataloader.html#module-gauche.dataloader.reaction_loader">Reaction Loader</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader"><code class="docutils literal notranslate"><span class="pre">ReactionLoader</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/dataloader.html#module-gauche.dataloader.data_utils">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/dataloader.html#gauche.dataloader.data_utils.transform_data"><code class="docutils literal notranslate"><span class="pre">transform_data()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+<section id="references">
+<h1>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h1>
+<p id="bibliography">[1] Rogers, D. and Hahn, M., 2010. <a class="reference external" href="https://pubs.acs.org/doi/abs/10.1021/ci100050t">Extended-connectivity fingerprints.</a> Journal of Chemical Information and Modeling, 50(5), pp.742-754.</p>
+<p>[2] Jamasb, A., Viñas Torné, R., Ma, E., Du, Y., Harris, C., Huang, K., Hall, D., Lió, P. and Blundell, T., 2022. <a class="reference external" href="https://proceedings.neurips.cc/paper_files/paper/2022/hash/ade039c1db0391106a3375bd2feb310a-Abstract-Conference.html">Graphein-a Python library for geometric deep learning and network analysis on biomolecular structures and interaction networks</a>. Advances in Neural Information Processing Systems, 35, pp.27153-27167.</p>
+<p>[3] Weininger, D., 1988. <a class="reference external" href="https://pubs.acs.org/doi/pdf/10.1021/ci00057a005">SMILES, a chemical language and information system. 1. Introduction to methodology and encoding rules.</a> Journal of Chemical Information and Computer Sciences, 28(1), pp.31-36.</p>
+<p>[4] Krenn, M., Häse, F., Nigam, A., Friederich, P. and Aspuru-Guzik, A., 2020. <a class="reference external" href="https://iopscience.iop.org/article/10.1088/2632-2153/aba947/meta">Self-referencing embedded strings (SELFIES): A 100% robust molecular string representation</a>. Machine Learning: Science and Technology, 1(4), p.045024.</p>
+<p>[5] Probst, D., Schwaller, P. and Reymond, J.L., 2022. <a class="reference external" href="https://pubs.rsc.org/en/content/articlehtml/2022/dd/d1dd00006c">Reaction classification and yield prediction using the differential reaction fingerprint DRFP</a>. Digital Discovery, 1(2), pp.91-97.</p>
+<p>[6] Schwaller, P., Probst, D., Vaucher, A.C., Nair, V.H., Kreutter, D., Laino, T. and Reymond, J.L., 2021. <a class="reference external" href="https://www.nature.com/articles/s42256-020-00284-w">Mapping the space of chemical reactions using attention-based neural networks</a>. Nature Machine Intelligence, 3(2), pp.144-152.</p>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="notebooks/loading_and_featurising_molecules.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Loading and Featurising Molecular Data</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022, Ryan Rhys-Griffiths
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/tabs.js?v=3ee01567"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    </body>
+</html>

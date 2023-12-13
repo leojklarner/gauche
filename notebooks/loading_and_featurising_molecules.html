@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+<html class="no-js" data-content_root="../" lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="light dark" name="color-scheme"/><meta content="width=device-width, initial-scale=1" name="viewport">
+<meta content="Loading and Featurising Molecular Data" property="og:title"/>
+<meta content="website" property="og:type"/>
+<meta content="notebooks/loading_and_featurising_molecules.html" property="og:url"/>
+<meta content="GAUCHE" property="og:site_name"/>
+<meta content="In this noteboook, we will use GAUCHE’s to quickly and easily load and preprocess molecular property and yield prediction datasets Molecular Property Prediction: The MolPropLoader class provides a ..." property="og:description"/>
+<meta content="1146" property="og:image:width"/>
+<meta content="600" property="og:image:height"/>
+<meta content="/_images/social_previews/summary_notebooks_loading_and_featurising_molecules_5176dd44.png" property="og:image"/>
+<meta content="In this noteboook, we will use GAUCHE’s to quickly and easily load and preprocess molecular property and yield prediction datasets Molecular Property Predict..." property="og:image:alt"/>
+<meta content="In this noteboook, we will use GAUCHE’s to quickly and easily load and preprocess molecular property and yield prediction datasets Molecular Property Prediction: The MolPropLoader class provides a ..." name="description"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<link href="../genindex.html" rel="index" title="Index"/><link href="../search.html" rel="search" title="Search"/><link href="gp_regression_on_molecules.html" rel="next" title="GP Regression on Molecules"/><link href="../index.html" rel="prev" title="Documentation"/>
+<!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+<title>Loading and Featurising Molecular Data - GAUCHE documentation</title>
+<link href="../_static/pygments.css?v=a746c00c" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo.css?v=135e06be" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/tabs.css?v=4c969af8" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-codeautolink.css?v=125d5c1c" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo-extensions.css?v=36a5483c" rel="stylesheet" type="text/css"/>
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></meta></head>
+<body>
+<script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+<symbol id="svg-toc" viewbox="0 0 24 24">
+<title>Contents</title>
+<svg fill="currentColor" stroke="currentColor" stroke-width="0" viewbox="0 0 1024 1024">
+<path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"></path>
+</svg>
+</symbol>
+<symbol id="svg-menu" viewbox="0 0 24 24">
+<title>Menu</title>
+<svg class="feather-menu" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<line x1="3" x2="21" y1="12" y2="12"></line>
+<line x1="3" x2="21" y1="6" y2="6"></line>
+<line x1="3" x2="21" y1="18" y2="18"></line>
+</svg>
+</symbol>
+<symbol id="svg-arrow-right" viewbox="0 0 24 24">
+<title>Expand</title>
+<svg class="feather-chevron-right" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</symbol>
+<symbol id="svg-sun" viewbox="0 0 24 24">
+<title>Light mode</title>
+<svg class="feather-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="5"></circle>
+<line x1="12" x2="12" y1="1" y2="3"></line>
+<line x1="12" x2="12" y1="21" y2="23"></line>
+<line x1="4.22" x2="5.64" y1="4.22" y2="5.64"></line>
+<line x1="18.36" x2="19.78" y1="18.36" y2="19.78"></line>
+<line x1="1" x2="3" y1="12" y2="12"></line>
+<line x1="21" x2="23" y1="12" y2="12"></line>
+<line x1="4.22" x2="5.64" y1="19.78" y2="18.36"></line>
+<line x1="18.36" x2="19.78" y1="5.64" y2="4.22"></line>
+</svg>
+</symbol>
+<symbol id="svg-moon" viewbox="0 0 24 24">
+<title>Dark mode</title>
+<svg class="icon-tabler-moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+</svg>
+</symbol>
+<symbol id="svg-sun-half" viewbox="0 0 24 24">
+<title>Auto light/dark mode</title>
+<svg class="icon-tabler-shadow" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M13 12h5"></path>
+<path d="M13 15h4"></path>
+<path d="M13 18h1"></path>
+<path d="M13 9h4"></path>
+<path d="M13 6h1"></path>
+</svg>
+</symbol>
+</svg>
+<input class="sidebar-toggle" id="__navigation" name="__navigation" type="checkbox"/>
+<input class="sidebar-toggle" id="__toc" name="__toc" type="checkbox"/>
+<label class="overlay sidebar-overlay" for="__navigation">
+<div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+<div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+<div class="page">
+<header class="mobile-header">
+<div class="header-left">
+<label class="nav-overlay-icon" for="__navigation">
+<div class="visually-hidden">Toggle site navigation sidebar</div>
+<i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+</label>
+</div>
+<div class="header-center">
+<a href="../index.html"><div class="brand">GAUCHE  documentation</div></a>
+</div>
+<div class="header-right">
+<div class="theme-toggle-container theme-toggle-header">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-header-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+</header>
+<aside class="sidebar-drawer">
+<div class="sidebar-container">
+<div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+<span class="sidebar-brand-text">GAUCHE  documentation</span>
+</a><form action="../search.html" class="sidebar-search-container" method="get" role="search">
+<input aria-label="Search" class="sidebar-search" name="q" placeholder="Search"/>
+<input name="check_keywords" type="hidden" value="yes"/>
+<input name="area" type="hidden" value="default"/>
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sparse_gp_regression_for_big_molecular_data.html">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="molecular_preference_learning.html">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_ssk_gp.html">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_gnn_on_molecules.html">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/kernels.html">gauche.kernels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/representations.html">gauche.representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataloader.html">gauche.dataloader</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<div class="main">
+<div class="content">
+<div class="article-container">
+<a class="back-to-top muted-link" href="#">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+</svg>
+<span>Back to top</span>
+</a>
+<div class="content-icon-container">
+<div class="theme-toggle-container theme-toggle-content">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-content-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+<article role="main">
+<section id="Loading-and-Featurising-Molecular-Data">
+<h1>Loading and Featurising Molecular Data<a class="headerlink" href="#Loading-and-Featurising-Molecular-Data" title="Link to this heading">#</a></h1>
+<p><strong>In this noteboook, we will use GAUCHE’s to quickly and easily load and preprocess molecular property and yield prediction datasets</strong></p>
+<section id="Molecular-Property-Prediction">
+<h2>Molecular Property Prediction<a class="headerlink" href="#Molecular-Property-Prediction" title="Link to this heading">#</a></h2>
+<p>The <a class="reference external" href="https://leojklarner.github.io/gauche/modules/dataloader.html#module-gauche.dataloader.molprop_loader">MolPropLoader class</a> provides a range of useful helper function for loading and featurising molecular property prediction datasets. It comes with a number of built-in datasets that you can use to test your models:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Photoswitch</span></code>: The task is to predict the values of the E isomer π − π∗ transition wavelength for 392 photoswitch molecules.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ESOL</span></code> The task is to predict the logarithmic aqueous solubility values for 1128 organic small molecules.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FreeSolv</span></code> The task is to predict the hydration free energy values for 642 organic small molecules.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Lipophilicity</span></code> The task is to predict the octanol/water distribution coefficients for 4200 organic small molecules.</p></li>
+</ul>
+<p>You can load them by calling the <code class="docutils literal notranslate"><span class="pre">load_benchmark</span></code> function with the corresponding argument. Alternatively, you can simply load your own dataset by calling the <code class="docutils literal notranslate"><span class="pre">read_csv(path,</span> <span class="pre">smiles_column,</span> <span class="pre">label_column)</span></code> with the path to your dataset and the name of the columns containing the SMILES strings and labels instead.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gauche.dataloader</span> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a>
+
+<span class="c1"># load a benchmark dataset</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark" title="gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"Photoswitch"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Found 13 invalid labels [nan nan nan nan nan nan nan nan nan nan nan nan nan] at indices [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 158]
+To turn validation off, use dataloader.read_csv(..., validate=False).
+</pre></div></div>
+</div>
+<p>As you can see, the dataloader automatically runs a validation function that filters out invalid SMILES strings and non-numeric labels. The valid and canonicalised SMILES strings and labels are now stored in the <code class="docutils literal notranslate"><span class="pre">loader.features</span></code> and <code class="docutils literal notranslate"><span class="pre">loader.labels</span></code> attributes.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">display</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">labels</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+['Cn1nnc(N=Nc2ccccc2)n1',
+ 'Cn1cnc(N=Nc2ccccc2)n1',
+ 'Cn1ccc(N=Nc2ccccc2)n1',
+ 'Cc1cn(C)nc1N=Nc1ccccc1',
+ 'Cn1cc(N=Nc2ccccc2)cn1']
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[310.],
+       [310.],
+       [320.],
+       [325.],
+       [328.]])
+</pre></div></div>
+</div>
+<p>We can now use the <code class="docutils literal notranslate"><span class="pre">loader.featurize</span></code> function to featurise the molecules. These featurisers are simply functions that take a list of SMILES strings and return a list of feature vectors. GAUCHE comes with a number of built-in featurisers that you can use:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ecfp_fingerprints</span></code>: Extended Connectivity Fingerprints (ECFP) that encode all circular substructures up to a certain diameter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fragments</span></code>: A featuriser that encodes the presence of a number of predefined rdkit fragments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ecfp_fragprints</span></code>: A combination of <code class="docutils literal notranslate"><span class="pre">ecfp_fingerprints</span></code> and <code class="docutils literal notranslate"><span class="pre">fragments</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">molecular_graphs</span></code>: A featuriser that encodes the molecular graph as a graph of atoms and bonds.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bag_of_smiles</span></code>: A featuriser that encodes the SMILES strings as a bag of characters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bag_of_selfies</span></code>: A featuriser that encodes the SMILES strings as a bag of SELFIES characters.</p></li>
+</ul>
+<p>When calling the <code class="docutils literal notranslate"><span class="pre">loader.featurize</span></code> function, we can additionally specify a range of keyword arguments that are passed to the featuriser. For example, we can specify the diameter of the ECFP fingerprints or the maximum number of fragments to encode. For a full list of keyword arguments, please refer to the <a class="reference external" href="https://leojklarner.github.io/gauche/modules/representations.html">documentation</a>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.featurize" title="gauche.dataloader.molprop_loader.MolPropLoader.featurize"><span class="n">loader</span><span class="o">.</span><span class="n">featurize</span></a><span class="p">(</span><span class="s2">"ecfp_fingerprints"</span><span class="p">)</span>
+<span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[0, 0, 0, ..., 0, 0, 0],
+       [0, 0, 0, ..., 0, 0, 0],
+       [0, 0, 0, ..., 0, 0, 0],
+       [0, 0, 0, ..., 0, 0, 0],
+       [0, 0, 0, ..., 0, 0, 0]])
+</pre></div></div>
+</div>
+<p>We can also pass any custom featuriser that maps a list of SMILES strings to a list of feature vectors. For example, we can just return the length of the SMILES strings as a feature vector:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load dataset again to undo featurisation</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark" title="gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"Photoswitch"</span><span class="p">)</span>
+
+<span class="c1"># define custom featurisation function</span>
+<span class="k">def</span> <span class="nf">smiles_length</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
+
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.featurize" title="gauche.dataloader.molprop_loader.MolPropLoader.featurize"><span class="n">loader</span><span class="o">.</span><span class="n">featurize</span></a><span class="p">(</span><span class="n">smiles_length</span><span class="p">)</span>
+<span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Found 13 invalid labels [nan nan nan nan nan nan nan nan nan nan nan nan nan] at indices [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 158]
+To turn validation off, use dataloader.read_csv(..., validate=False).
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[21, 21, 21, 22, 21]
+</pre></div></div>
+</div>
+<p>This was all we needed to do to load and featurise our dataset. The featurised molecules are now stored in the <code class="docutils literal notranslate"><span class="pre">loader.features</span></code> attribute and can be passed to the GP models.</p>
+</section>
+<section id="Reaction-Yield-Prediction">
+<h2>Reaction Yield Prediction<a class="headerlink" href="#Reaction-Yield-Prediction" title="Link to this heading">#</a></h2>
+<p>The <a class="reference external" href="https://leojklarner.github.io/gauche/modules/dataloader.html#module-gauche.dataloader.reaction_loader">ReactionYieldLoader class</a> provides a range of useful helper function for loading and featurising reaction yield prediction datasets. The reaction data can be provided as either multple SMILES columns or a single reaction SMARTS column. It comes with a number of built-in datasets that you can use to test your models:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DreherDoyle</span></code>: Data from <a class="reference external" href="https://www.science.org/doi/10.1126/science.aar5169">Predicting reaction performance in C–N cross-coupling using machine learning. Science, 2018.</a> as multiple SMILES columns. The task is to predict the yields for 3955 Pd-catalysed Buchwald–Hartwig C–N cross-couplings.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DreherDoyleRXN</span></code>: The <code class="docutils literal notranslate"><span class="pre">DreherDoyle</span></code> dataset as a single reaction SMARTS column.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Suzuki-Miyaura</span></code>: Data from <a class="reference external" href="https://www.science.org/doi/10.1126/science.aap9112">A platform for automated nanomole-scale reaction screening and micromole-scale synthesis in flow. Science, 2018</a>. The task is to predict the yields for 5760 Pd-catalysed Suzuki-Miyaura C-C cross-couplings.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Suzuki-MiyauraRXN</span></code>: The <code class="docutils literal notranslate"><span class="pre">Suzuki-Miyaura</span></code> dataset as a single reaction SMARTS column.</p></li>
+</ul>
+<p>You can load them by calling the <code class="docutils literal notranslate"><span class="pre">load_benchmark</span></code> function with the corresponding argument. Alternatively, you can simply load your own dataset by calling the <code class="docutils literal notranslate"><span class="pre">read_csv(path,</span> <span class="pre">reactant_column,</span> <span class="pre">label_column)</span></code> with the path to your dataset and the name of your label column instead. The <code class="docutils literal notranslate"><span class="pre">reactant_column</span></code> argument can either be a single reaction SMARTS column or a list of SMILES columns.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gauche.dataloader</span> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader" title="gauche.dataloader.reaction_loader.ReactionLoader"><span class="n">ReactionLoader</span></a>
+
+<span class="c1"># load a benchmark dataset</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader" title="gauche.dataloader.reaction_loader.ReactionLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader" title="gauche.dataloader.reaction_loader.ReactionLoader"><span class="n">ReactionLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader.load_benchmark" title="gauche.dataloader.reaction_loader.ReactionLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"DreherDoyleRXN"</span><span class="p">)</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">loader</span><span class="o">.</span><span class="n">labels</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0    Clc1ccccn1.Cc1ccc(N)cc1.O=S(=O)(O[#46]1c2ccccc...
+1    Brc1ccccn1.Cc1ccc(N)cc1.O=S(=O)(O[#46]1c2ccccc...
+2    CCc1ccc(I)cc1.Cc1ccc(N)cc1.O=S(=O)(O[#46]1c2cc...
+3    FC(F)(F)c1ccc(Cl)cc1.Cc1ccc(N)cc1.O=S(=O)(O[#4...
+4    COc1ccc(Cl)cc1.Cc1ccc(N)cc1.O=S(=O)(O[#46]1c2c...
+Name: rxn, dtype: object
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[70.41045785],
+       [11.06445724],
+       [10.22354965],
+       [20.0833829 ],
+       [ 0.49266271]])
+</pre></div></div>
+</div>
+<p>We can now use the <code class="docutils literal notranslate"><span class="pre">loader.featurize</span></code> function to featurise the SMILES/SMARTS. GAUCHE comes with a number of built-in featurisers that you can use:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ohe</span></code>: A one-hot encoding that specifies which of the components in the different reactant and reagent categories is present. In the Buchwald-Hartwig example, the OHE would describe which of the aryl halides, Buchwald ligands, bases and additives are used in the reaction</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">drfp</span></code>: The <a class="reference external" href="https://github.com/reymond-group/drfp">differential reaction fingerprint</a>; constructed by taking the symmetric difference of the sets containing the molecular substructures on both sides of the reaction arrow. Reagents are added to the reactants. (Only works for reaction SMARTS).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rxnfp</span></code>: A <a class="reference external" href="https://github.com/rxn4chemistry/rxnfp">data-driven reaction fingerprint</a> using Transformer models such as BERT and trained in a supervised or an unsupervised fashion on reaction SMILES. (Only works for reaction SMARTS).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bag_of_smiles</span></code>: A bag of characters representation of the reaction SMARTS. (Only works for reaction SMARTS).</p></li>
+</ul>
+<p>When calling the <code class="docutils literal notranslate"><span class="pre">loader.featurize</span></code> function, we can additionally specify a range of keyword arguments that are passed to the featuriser. For a full list of keyword arguments, please refer to the <a class="reference external" href="https://leojklarner.github.io/gauche/modules/representations.html">documentation</a>.</p>
+<p>If drfp requirement is not satisfied you can run</p>
+<p><code class="docutils literal notranslate"><span class="pre">!pip</span> <span class="pre">install</span> <span class="pre">drfp</span></code></p>
+<p>in the next cell.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader.featurize" title="gauche.dataloader.reaction_loader.ReactionLoader.featurize"><span class="n">loader</span><span class="o">.</span><span class="n">featurize</span></a><span class="p">(</span><span class="s2">"drfp"</span><span class="p">)</span>
+<span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[0., 0., 0., ..., 1., 0., 0.],
+       [0., 0., 0., ..., 0., 0., 0.],
+       [0., 0., 0., ..., 0., 0., 0.],
+       [0., 0., 0., ..., 0., 0., 0.],
+       [0., 0., 0., ..., 1., 0., 0.]])
+</pre></div></div>
+</div>
+<p>We can again pass any custom featuriser that maps a list of SMILES or a reaction SMARTS string to a list of feature vectors. For example, we can take the length of of the reaction SMARTS string.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load dataset again to undo featurisation</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader" title="gauche.dataloader.reaction_loader.ReactionLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader" title="gauche.dataloader.reaction_loader.ReactionLoader"><span class="n">ReactionLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader.load_benchmark" title="gauche.dataloader.reaction_loader.ReactionLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"DreherDoyleRXN"</span><span class="p">)</span>
+
+<span class="c1"># define custom featurisation function</span>
+<span class="k">def</span> <span class="nf">smiles_length</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
+
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.reaction_loader.ReactionLoader.featurize" title="gauche.dataloader.reaction_loader.ReactionLoader.featurize"><span class="n">loader</span><span class="o">.</span><span class="n">featurize</span></a><span class="p">(</span><span class="n">smiles_length</span><span class="p">)</span>
+<span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[274, 277, 212, 207, 257]
+</pre></div></div>
+</div>
+</section>
+</section>
+</article>
+</div>
+<footer>
+<div class="related-pages">
+<a class="next-page" href="gp_regression_on_molecules.html">
+<div class="page-info">
+<div class="context">
+<span>Next</span>
+</div>
+<div class="title">GP Regression on Molecules</div>
+</div>
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+</a>
+<a class="prev-page" href="../index.html">
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+<div class="page-info">
+<div class="context">
+<span>Previous</span>
+</div>
+<div class="title">Home</div>
+</div>
+</a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+<div class="copyright">
+                Copyright © 2022, Ryan Rhys-Griffiths
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+</div>
+<div class="right-details">
+</div>
+</div>
+</footer>
+</div>
+<aside class="toc-drawer">
+<div class="toc-sticky toc-scroll">
+<div class="toc-title-container">
+<span class="toc-title">
+            On this page
+          </span>
+</div>
+<div class="toc-tree-container">
+<div class="toc-tree">
+<ul>
+<li><a class="reference internal" href="#">Loading and Featurising Molecular Data</a><ul>
+<li><a class="reference internal" href="#Molecular-Property-Prediction">Molecular Property Prediction</a></li>
+<li><a class="reference internal" href="#Reaction-Yield-Prediction">Reaction Yield Prediction</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+<script src="../_static/doctools.js?v=888ff710"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=f281be69"></script>
+<script src="../_static/tabs.js?v=3ee01567"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>

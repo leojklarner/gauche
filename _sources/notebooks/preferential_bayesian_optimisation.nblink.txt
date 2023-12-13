@@ -1,0 +1,3 @@
+{
+    "path": "../../../notebooks/Preferential Bayesian Optimisation.ipynb"
+}

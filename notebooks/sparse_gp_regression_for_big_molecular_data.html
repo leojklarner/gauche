@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+
+<html class="no-js" data-content_root="../" lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="light dark" name="color-scheme"/><meta content="width=device-width, initial-scale=1" name="viewport">
+<meta content="Sparse GP Regression on Molecules" property="og:title"/>
+<meta content="website" property="og:type"/>
+<meta content="notebooks/sparse_gp_regression_for_big_molecular_data.html" property="og:url"/>
+<meta content="GAUCHE" property="og:site_name"/>
+<meta content="An example notebook for sparse GP regression to enable scalability to large molecular datasests. Sparse GP Regression on the Lipophilicity Dataset: We define our experiment parameters. In this case..." property="og:description"/>
+<meta content="1146" property="og:image:width"/>
+<meta content="600" property="og:image:height"/>
+<meta content="/_images/social_previews/summary_notebooks_sparse_gp_regression_for_big_molecular_data_6dae7e1c.png" property="og:image"/>
+<meta content="An example notebook for sparse GP regression to enable scalability to large molecular datasests. Sparse GP Regression on the Lipophilicity Dataset: We define..." property="og:image:alt"/>
+<meta content="An example notebook for sparse GP regression to enable scalability to large molecular datasests. Sparse GP Regression on the Lipophilicity Dataset: We define our experiment parameters. In this case..." name="description"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<link href="../genindex.html" rel="index" title="Index"/><link href="../search.html" rel="search" title="Search"/><link href="multitask_gp_regression_on_molecules.html" rel="next" title="Multitask GP Regression on Molecules"/><link href="bayesian_optimisation_over_molecules.html" rel="prev" title="Bayesian Optimisation Over Molecules"/>
+<!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+<title>Sparse GP Regression on Molecules - GAUCHE documentation</title>
+<link href="../_static/pygments.css?v=a746c00c" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo.css?v=135e06be" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/tabs.css?v=4c969af8" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-codeautolink.css?v=125d5c1c" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo-extensions.css?v=36a5483c" rel="stylesheet" type="text/css"/>
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></meta></head>
+<body>
+<script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+<symbol id="svg-toc" viewbox="0 0 24 24">
+<title>Contents</title>
+<svg fill="currentColor" stroke="currentColor" stroke-width="0" viewbox="0 0 1024 1024">
+<path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"></path>
+</svg>
+</symbol>
+<symbol id="svg-menu" viewbox="0 0 24 24">
+<title>Menu</title>
+<svg class="feather-menu" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<line x1="3" x2="21" y1="12" y2="12"></line>
+<line x1="3" x2="21" y1="6" y2="6"></line>
+<line x1="3" x2="21" y1="18" y2="18"></line>
+</svg>
+</symbol>
+<symbol id="svg-arrow-right" viewbox="0 0 24 24">
+<title>Expand</title>
+<svg class="feather-chevron-right" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</symbol>
+<symbol id="svg-sun" viewbox="0 0 24 24">
+<title>Light mode</title>
+<svg class="feather-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="5"></circle>
+<line x1="12" x2="12" y1="1" y2="3"></line>
+<line x1="12" x2="12" y1="21" y2="23"></line>
+<line x1="4.22" x2="5.64" y1="4.22" y2="5.64"></line>
+<line x1="18.36" x2="19.78" y1="18.36" y2="19.78"></line>
+<line x1="1" x2="3" y1="12" y2="12"></line>
+<line x1="21" x2="23" y1="12" y2="12"></line>
+<line x1="4.22" x2="5.64" y1="19.78" y2="18.36"></line>
+<line x1="18.36" x2="19.78" y1="5.64" y2="4.22"></line>
+</svg>
+</symbol>
+<symbol id="svg-moon" viewbox="0 0 24 24">
+<title>Dark mode</title>
+<svg class="icon-tabler-moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+</svg>
+</symbol>
+<symbol id="svg-sun-half" viewbox="0 0 24 24">
+<title>Auto light/dark mode</title>
+<svg class="icon-tabler-shadow" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M13 12h5"></path>
+<path d="M13 15h4"></path>
+<path d="M13 18h1"></path>
+<path d="M13 9h4"></path>
+<path d="M13 6h1"></path>
+</svg>
+</symbol>
+</svg>
+<input class="sidebar-toggle" id="__navigation" name="__navigation" type="checkbox"/>
+<input class="sidebar-toggle" id="__toc" name="__toc" type="checkbox"/>
+<label class="overlay sidebar-overlay" for="__navigation">
+<div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+<div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+<div class="page">
+<header class="mobile-header">
+<div class="header-left">
+<label class="nav-overlay-icon" for="__navigation">
+<div class="visually-hidden">Toggle site navigation sidebar</div>
+<i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+</label>
+</div>
+<div class="header-center">
+<a href="../index.html"><div class="brand">GAUCHE  documentation</div></a>
+</div>
+<div class="header-right">
+<div class="theme-toggle-container theme-toggle-header">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-header-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+</header>
+<aside class="sidebar-drawer">
+<div class="sidebar-container">
+<div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+<span class="sidebar-brand-text">GAUCHE  documentation</span>
+</a><form action="../search.html" class="sidebar-search-container" method="get" role="search">
+<input aria-label="Search" class="sidebar-search" name="q" placeholder="Search"/>
+<input name="check_keywords" type="hidden" value="yes"/>
+<input name="area" type="hidden" value="default"/>
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="loading_and_featurising_molecules.html">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="molecular_preference_learning.html">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_ssk_gp.html">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_gnn_on_molecules.html">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/kernels.html">gauche.kernels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/representations.html">gauche.representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataloader.html">gauche.dataloader</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<div class="main">
+<div class="content">
+<div class="article-container">
+<a class="back-to-top muted-link" href="#">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+</svg>
+<span>Back to top</span>
+</a>
+<div class="content-icon-container">
+<div class="theme-toggle-container theme-toggle-content">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-content-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+<article role="main">
+<section id="Sparse-GP-Regression-on-Molecules">
+<h1>Sparse GP Regression on Molecules<a class="headerlink" href="#Sparse-GP-Regression-on-Molecules" title="Link to this heading">#</a></h1>
+<p>An example notebook for sparse GP regression to enable scalability to large molecular datasests.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Imports</span>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#module-warnings" title="warnings"><span class="nn">warnings</span></a>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#warnings.filterwarnings" title="warnings.filterwarnings"><span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span></a><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span> <span class="c1"># Turn off Graphein warnings</span>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/time.html#module-time" title="time"><span class="nn">time</span></a>
+
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">import</span> <span class="nn">gpytorch</span>
+<span class="kn">from</span> <span class="nn">mordred</span> <span class="kn">import</span> <span class="n">Calculator</span><span class="p">,</span> <span class="n">descriptors</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="numpy"><span class="nn">numpy</span></a> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">rdkit</span> <span class="kn">import</span> <span class="n">Chem</span>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition" title="sklearn.decomposition"><span class="nn">sklearn.decomposition</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="sklearn.decomposition._pca.PCA"><span class="n">PCA</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.model_selection" title="sklearn.model_selection"><span class="nn">sklearn.model_selection</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics" title="sklearn.metrics"><span class="nn">sklearn.metrics</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="sklearn.metrics.r2_score"><span class="n">r2_score</span></a><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error" title="sklearn.metrics.mean_squared_error"><span class="n">mean_squared_error</span></a><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.preprocessing" title="sklearn.preprocessing"><span class="nn">sklearn.preprocessing</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler" title="sklearn.preprocessing._data.StandardScaler"><span class="n">StandardScaler</span></a>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/torch.html#module-torch" title="torch"><span class="nn">torch</span></a>
+
+<span class="kn">from</span> <span class="nn">gauche.dataloader</span> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#module-gauche.dataloader.data_utils" title="gauche.dataloader.data_utils"><span class="nn">gauche.dataloader.data_utils</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.data_utils.transform_data" title="gauche.dataloader.data_utils.transform_data"><span class="n">transform_data</span></a>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We define our sparse GP model using and inducing point kernel wrapped around the RQ kernel</span>
+
+<span class="kn">from</span> <span class="nn">gpytorch.means</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">ScaleKernel</span><span class="p">,</span> <span class="n">InducingPointKernel</span><span class="p">,</span> <span class="n">RQKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+
+<span class="k">class</span> <span class="nc">SparseGPModel</span><span class="p">(</span><span class="n">gpytorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ExactGP</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">):</span>
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#super" title="super"><span class="nb">super</span></a><span class="p">(</span><span class="n">SparseGPModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span><span class="n">RQKernel</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">InducingPointKernel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_covar_module</span><span class="p">,</span> <span class="n">inducing_points</span><span class="o">=</span><span class="n">train_x</span><span class="p">[:</span><span class="mi">100</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="Sparse-GP-Regression-on-the-Lipophilicity-Dataset">
+<h2>Sparse GP Regression on the Lipophilicity Dataset<a class="headerlink" href="#Sparse-GP-Regression-on-the-Lipophilicity-Dataset" title="Link to this heading">#</a></h2>
+<p>We define our experiment parameters. In this case we are working on the large lipophilicity dataset [1] containing 4200 molecules.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Regression experiments parameters, number of random splits and split size</span>
+
+<span class="n">n_trials</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">test_set_size</span> <span class="o">=</span> <span class="mf">0.2</span>
+</pre></div>
+</div>
+</div>
+<p>Load the Lipophilicity Dataset via the DataLoaderMP class which contains several molecular property prediction benchmark datasets!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the Lipophilicity dataset</span>
+
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark" title="gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"Lipophilicity"</span><span class="p">)</span>
+
+<span class="c1"># Mordred descriptor computation is expensive</span>
+<span class="n">calc</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">ignore_3D</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span> <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">]</span>
+<span class="n">t0</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/time.html#time.time" title="time.time"><span class="n">time</span><span class="o">.</span><span class="n">time</span></a><span class="p">()</span>
+<span class="n">X_mordred</span> <span class="o">=</span> <span class="p">[</span><span class="n">calc</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span> <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">]</span>
+<span class="n">t1</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/time.html#time.time" title="time.time"><span class="n">time</span><span class="o">.</span><span class="n">time</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'Mordred descriptor computation takes </span><span class="si">{</span><span class="n">t1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">}</span><span class="s1"> seconds'</span><span class="p">)</span>
+<span class="n">X_mordred</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">X_mordred</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64"><span class="n">np</span><span class="o">.</span><span class="n">float64</span></a><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">labels</span>
+
+<span class="sd">"""Collect nan indices"""</span>
+
+<span class="n">nan_dims</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">X_mordred</span><span class="p">)):</span>
+    <span class="n">nan_indices</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#list" title="list"><span class="nb">list</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.where.html#numpy.where" title="numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.isnan.html#numpy.isnan" title="numpy.isnan"><span class="n">np</span><span class="o">.</span><span class="n">isnan</span></a><span class="p">(</span><span class="n">X_mordred</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]))[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">nan_indices</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nan_dims</span><span class="p">:</span>
+            <span class="n">nan_dims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+
+<span class="n">X_mordred</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.delete.html#numpy.delete" title="numpy.delete"><span class="n">np</span><span class="o">.</span><span class="n">delete</span></a><span class="p">(</span><span class="n">X_mordred</span><span class="p">,</span> <span class="n">nan_dims</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Mordred descriptor computation takes 639.975240945816 seconds
+</pre></div></div>
+</div>
+</section>
+<section id="Model-Evaluation">
+<h2>Model Evaluation<a class="headerlink" href="#Model-Evaluation" title="Link to this heading">#</a></h2>
+<p>Here we define a training/evaluation loop assessing performance using the root mean-square error (RMSE), mean average error (MAE), and <span class="math notranslate nohighlight">\(R^2\)</span> metrics. The <code class="docutils literal notranslate"><span class="pre">evaluate_model</span></code> function also computes the GP confidence-error curve which will be explained below.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#module-warnings" title="warnings"><span class="nn">warnings</span></a>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#warnings.filterwarnings" title="warnings.filterwarnings"><span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span></a><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span> <span class="c1"># Turn off GPyTorch warnings</span>
+
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/index.html#module-matplotlib" title="matplotlib"><span class="nn">matplotlib</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/pyplot_summary.html#module-matplotlib.pyplot" title="matplotlib.pyplot"><span class="n">pyplot</span></a> <span class="k">as</span> <span class="n">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+
+
+<span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Helper function for model evaluation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: n x d NumPy array of inputs representing molecules</span>
+<span class="sd">        y: n x 1 NumPy array of output labels</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        regression metrics and confidence-error curve plot.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># initialise performance metric lists</span>
+    <span class="n">r2_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rmse_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">mae_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># We pre-allocate array for plotting confidence-error curves</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_set_size</span><span class="p">)</span>  <span class="c1"># To get test set size</span>
+    <span class="n">n_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+
+    <span class="n">mae_confidence_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.zeros.html#numpy.zeros" title="numpy.zeros"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">n_test</span><span class="p">))</span>
+
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Beginning training loop...'</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">):</span>
+
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'Starting trial </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_set_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+
+        <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler" title="sklearn.preprocessing._data.StandardScaler"><span class="n">scaler</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler" title="sklearn.preprocessing._data.StandardScaler"><span class="n">StandardScaler</span></a><span class="p">()</span>
+        <span class="n">X_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.TransformerMixin.html#sklearn.base.TransformerMixin.fit_transform" title="sklearn.base.TransformerMixin.fit_transform"><span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span></a><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+        <span class="n">X_test</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="sklearn.decomposition._pca.PCA"><span class="n">pca_mordred</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="sklearn.decomposition._pca.PCA"><span class="n">PCA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">51</span><span class="p">)</span>
+        <span class="n">X_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.TransformerMixin.html#sklearn.base.TransformerMixin.fit_transform" title="sklearn.base.TransformerMixin.fit_transform"><span class="n">pca_mordred</span><span class="o">.</span><span class="n">fit_transform</span></a><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+        <span class="n">X_test</span> <span class="o">=</span> <span class="n">pca_mordred</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+
+        <span class="c1">#  We standardise the outputs</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">y_scaler</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.data_utils.transform_data" title="gauche.dataloader.data_utils.transform_data"><span class="n">transform_data</span></a><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+
+        <span class="c1"># Convert numpy arrays to PyTorch tensors and flatten the label vectors</span>
+        <span class="n">X_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64"><span class="n">np</span><span class="o">.</span><span class="n">float64</span></a><span class="p">))</span>
+        <span class="n">X_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64"><span class="n">np</span><span class="o">.</span><span class="n">float64</span></a><span class="p">))</span>
+        <span class="n">y_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">y_train</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="c1"># initialise GP likelihood and model</span>
+        <span class="n">likelihood</span> <span class="o">=</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">likelihoods</span><span class="o">.</span><span class="n">GaussianLikelihood</span><span class="p">()</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">SparseGPModel</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">)</span>
+
+        <span class="c1"># Find optimal model hyperparameters</span>
+        <span class="c1"># "Loss" for GPs - the marginal log likelihood</span>
+        <span class="n">mll</span> <span class="o">=</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">mlls</span><span class="o">.</span><span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+        <span class="c1"># Use the BoTorch utility for fitting GPs in order to use the LBFGS-B optimiser (recommended)</span>
+        <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+        <span class="c1"># Get into evaluation (predictive posterior) mode</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="n">likelihood</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="c1"># mean and variance GP prediction</span>
+        <span class="n">f_pred</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">f_pred</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">y_var</span> <span class="o">=</span> <span class="n">f_pred</span><span class="o">.</span><span class="n">variance</span>
+
+        <span class="c1"># Transform back to real data space to compute metrics and detach gradients. Must unsqueeze dimension</span>
+        <span class="c1"># to make compatible with inverse_transform in scikit-learn version &gt; 1</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y_pred</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Compute scores for confidence curve plotting.</span>
+
+        <span class="n">ranked_confidence_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.argsort.html#numpy.argsort" title="numpy.argsort"><span class="n">np</span><span class="o">.</span><span class="n">argsort</span></a><span class="p">(</span><span class="n">y_var</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)):</span>
+
+            <span class="c1"># Construct the MAE error for each level of confidence</span>
+
+            <span class="n">conf</span> <span class="o">=</span> <span class="n">ranked_confidence_list</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">mae</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">[</span><span class="n">conf</span><span class="p">],</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">conf</span><span class="p">])</span>
+            <span class="n">mae_confidence_list</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">mae</span>
+
+        <span class="c1"># Output Standardised RMSE and RMSE on Train Set</span>
+        <span class="n">y_train</span> <span class="o">=</span> <span class="n">y_train</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">y_pred_train</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">train_rmse_stan</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error" title="sklearn.metrics.mean_squared_error"><span class="n">mean_squared_error</span></a><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_pred_train</span><span class="p">))</span>
+        <span class="n">train_rmse</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error" title="sklearn.metrics.mean_squared_error"><span class="n">mean_squared_error</span></a><span class="p">(</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y_train</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+                                                <span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y_pred_train</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))))</span>
+
+        <span class="c1"># Compute R^2, RMSE and MAE on Test set</span>
+        <span class="n">score</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="sklearn.metrics.r2_score"><span class="n">r2_score</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">rmse</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error" title="sklearn.metrics.mean_squared_error"><span class="n">mean_squared_error</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+        <span class="n">mae</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+
+        <span class="n">r2_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+        <span class="n">rmse_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">)</span>
+        <span class="n">mae_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mae</span><span class="p">)</span>
+
+    <span class="n">r2_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">)</span>
+    <span class="n">rmse_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">)</span>
+    <span class="n">mae_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">)</span>
+
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">mean R^2: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"mean RMSE: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"mean MAE: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">))))</span>
+
+    <span class="c1"># Plot confidence-error curves</span>
+
+    <span class="c1"># 1e-14 instead of 0 to for numerical reasons!</span>
+    <span class="n">confidence_percentiles</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.arange.html#numpy.arange" title="numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mf">1e-14</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">))</span>
+
+    <span class="c1"># We plot the Mean-absolute error confidence-error curves</span>
+
+    <span class="n">mae_mean</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">mae_confidence_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mae_std</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">mae_confidence_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">mae_mean</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.flip.html#numpy.flip" title="numpy.flip"><span class="n">np</span><span class="o">.</span><span class="n">flip</span></a><span class="p">(</span><span class="n">mae_mean</span><span class="p">)</span>
+    <span class="n">mae_std</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.flip.html#numpy.flip" title="numpy.flip"><span class="n">np</span><span class="o">.</span><span class="n">flip</span></a><span class="p">(</span><span class="n">mae_std</span><span class="p">)</span>
+
+    <span class="c1"># 1 sigma errorbars</span>
+
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">mae_mean</span> <span class="o">-</span> <span class="n">mae_std</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">mae_mean</span> <span class="o">+</span> <span class="n">mae_std</span>
+
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">confidence_percentiles</span><span class="p">,</span> <span class="n">mae_mean</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'mean'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html#matplotlib.pyplot.fill_between" title="matplotlib.pyplot.fill_between"><span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span></a><span class="p">(</span><span class="n">confidence_percentiles</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">'Confidence Percentile'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">'MAE (nm)'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.ylim.html#matplotlib.pyplot.ylim" title="matplotlib.pyplot.ylim"><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span></a><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.max.html#numpy.max" title="numpy.max"><span class="n">np</span><span class="o">.</span><span class="n">max</span></a><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.xlim.html#matplotlib.pyplot.xlim" title="matplotlib.pyplot.xlim"><span class="n">plt</span><span class="o">.</span><span class="n">xlim</span></a><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">((</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">))])</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.yticks.html#matplotlib.pyplot.yticks" title="matplotlib.pyplot.yticks"><span class="n">plt</span><span class="o">.</span><span class="n">yticks</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.arange.html#numpy.arange" title="numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.max.html#numpy.max" title="numpy.max"><span class="n">np</span><span class="o">.</span><span class="n">max</span></a><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">rmse_list</span><span class="p">,</span> <span class="n">mae_list</span>
+</pre></div>
+</div>
+</div>
+<p>Check the perfomance achieved by our sparse GP model.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rmse_mordred</span><span class="p">,</span> <span class="n">mae_mordred</span> <span class="o">=</span> <span class="n">evaluate_model</span><span class="p">(</span><span class="n">X_mordred</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Beginning training loop...
+Starting trial 0
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[14], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> rmse_mordred, mae_mordred <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">evaluate_model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">X_mordred</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">y</span><span class="ansi-yellow-bg">)</span>
+
+Cell <span class="ansi-green-fg">In[13], line 63</span>, in <span class="ansi-cyan-fg">evaluate_model</span><span class="ansi-blue-fg">(X, y)</span>
+<span class="ansi-green-intense-fg ansi-bold">     60</span> mll <span style="color: rgb(98,98,98)">=</span> gpytorch<span style="color: rgb(98,98,98)">.</span>mlls<span style="color: rgb(98,98,98)">.</span>ExactMarginalLogLikelihood(likelihood, model)
+<span class="ansi-green-intense-fg ansi-bold">     62</span> <span style="color: rgb(95,135,135)"># Use the BoTorch utility for fitting GPs in order to use the LBFGS-B optimiser (recommended)</span>
+<span class="ansi-green-fg">---&gt; 63</span> <span class="ansi-yellow-bg">fit_gpytorch_model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">mll</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     65</span> <span style="color: rgb(95,135,135)"># Get into evaluation (predictive posterior) mode</span>
+<span class="ansi-green-intense-fg ansi-bold">     66</span> model<span style="color: rgb(98,98,98)">.</span>eval()
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/fit.py:164</span>, in <span class="ansi-cyan-fg">fit_gpytorch_model</span><span class="ansi-blue-fg">(mll, optimizer, optimizer_kwargs, exclude, max_retries, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    158</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> (
+<span class="ansi-green-intense-fg ansi-bold">    159</span>     nullcontext()
+<span class="ansi-green-intense-fg ansi-bold">    160</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> exclude <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-intense-fg ansi-bold">    161</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> requires_grad_ctx(mll, assignments<span style="color: rgb(98,98,98)">=</span>{name: <span class="ansi-bold" style="color: rgb(0,135,0)">False</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> name <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> exclude})
+<span class="ansi-green-intense-fg ansi-bold">    162</span> ):
+<span class="ansi-green-intense-fg ansi-bold">    163</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 164</span>         mll <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">fit_gpytorch_mll</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    165</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">mll</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    166</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">optimizer</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">optimizer</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    167</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">optimizer_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">optimizer_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    168</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    169</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    170</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> ModelFittingError <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> err:
+<span class="ansi-green-intense-fg ansi-bold">    171</span>         warn(<span style="color: rgb(0,135,0)">str</span>(err), <span class="ansi-bold" style="color: rgb(215,95,95)">RuntimeWarning</span>)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/fit.py:105</span>, in <span class="ansi-cyan-fg">fit_gpytorch_mll</span><span class="ansi-blue-fg">(mll, closure, optimizer, closure_kwargs, optimizer_kwargs, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    102</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> optimizer <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:  <span style="color: rgb(95,135,135)"># defer to per-method defaults</span>
+<span class="ansi-green-intense-fg ansi-bold">    103</span>     kwargs[<span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">optimizer</span><span style="color: rgb(175,0,0)">"</span>] <span style="color: rgb(98,98,98)">=</span> optimizer
+<span class="ansi-green-fg">--&gt; 105</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">FitGPyTorchMLL</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    106</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">mll</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    107</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">mll</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">likelihood</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    108</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">mll</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    109</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    110</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">closure_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">closure_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    111</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">optimizer_kwargs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">optimizer_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    112</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    113</span> <span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/utils/dispatcher.py:93</span>, in <span class="ansi-cyan-fg">Dispatcher.__call__</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     91</span> func <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>(types<span style="color: rgb(98,98,98)">=</span>types)
+<span class="ansi-green-intense-fg ansi-bold">     92</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">---&gt; 93</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">func</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     94</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> MDNotImplementedError:
+<span class="ansi-green-intense-fg ansi-bold">     95</span>     <span style="color: rgb(95,135,135)"># Traverses registered methods in order, yields whenever a match is found</span>
+<span class="ansi-green-intense-fg ansi-bold">     96</span>     funcs <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>dispatch_iter(<span style="color: rgb(98,98,98)">*</span>types)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/fit.py:252</span>, in <span class="ansi-cyan-fg">_fit_fallback</span><span class="ansi-blue-fg">(mll, _, __, closure, optimizer, closure_kwargs, optimizer_kwargs, max_attempts, warning_handler, caught_exception_types, **ignore)</span>
+<span class="ansi-green-intense-fg ansi-bold">    250</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> catch_warnings(record<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>) <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> warning_list, debug(<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>):
+<span class="ansi-green-intense-fg ansi-bold">    251</span>     simplefilter(<span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">always</span><span style="color: rgb(175,0,0)">"</span>, category<span style="color: rgb(98,98,98)">=</span>OptimizationWarning)
+<span class="ansi-green-fg">--&gt; 252</span>     <span class="ansi-yellow-bg">optimizer</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">mll</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">optimizer_kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    254</span> <span style="color: rgb(95,135,135)"># Resolved warnings and determine whether or not to retry</span>
+<span class="ansi-green-intense-fg ansi-bold">    255</span> done <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/optim/fit.py:92</span>, in <span class="ansi-cyan-fg">fit_gpytorch_mll_scipy</span><span class="ansi-blue-fg">(mll, parameters, bounds, closure, closure_kwargs, method, options, callback, timeout_sec)</span>
+<span class="ansi-green-intense-fg ansi-bold">     89</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> closure_kwargs <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">     90</span>     closure <span style="color: rgb(98,98,98)">=</span> partial(closure, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>closure_kwargs)
+<span class="ansi-green-fg">---&gt; 92</span> result <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">scipy_minimize</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">     93</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     94</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">parameters</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">parameters</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     95</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">bounds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">bounds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     96</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     97</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     98</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">callback</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">callback</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     99</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">timeout_sec</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">timeout_sec</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    100</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    101</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> result<span style="color: rgb(98,98,98)">.</span>status <span style="color: rgb(98,98,98)">!=</span> OptimizationStatus<span style="color: rgb(98,98,98)">.</span>SUCCESS:
+<span class="ansi-green-intense-fg ansi-bold">    102</span>     warn(
+<span class="ansi-green-intense-fg ansi-bold">    103</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">`scipy_minimize` terminated with status </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>result<span style="color: rgb(98,98,98)">.</span>status<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">, displaying</span><span style="color: rgb(175,0,0)">"</span>
+<span class="ansi-green-intense-fg ansi-bold">    104</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)"> original message from `scipy.optimize.minimize`: </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>result<span style="color: rgb(98,98,98)">.</span>message<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">"</span>,
+<span class="ansi-green-intense-fg ansi-bold">    105</span>         OptimizationWarning,
+<span class="ansi-green-intense-fg ansi-bold">    106</span>     )
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/optim/core.py:109</span>, in <span class="ansi-cyan-fg">scipy_minimize</span><span class="ansi-blue-fg">(closure, parameters, bounds, callback, x0, method, options, timeout_sec)</span>
+<span class="ansi-green-intense-fg ansi-bold">    101</span>         result <span style="color: rgb(98,98,98)">=</span> OptimizationResult(
+<span class="ansi-green-intense-fg ansi-bold">    102</span>             step<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">next</span>(call_counter),
+<span class="ansi-green-intense-fg ansi-bold">    103</span>             fval<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">float</span>(wrapped_closure(x)[<span style="color: rgb(98,98,98)">0</span>]),
+<span class="ansi-green-intense-fg ansi-bold">    104</span>             status<span style="color: rgb(98,98,98)">=</span>OptimizationStatus<span style="color: rgb(98,98,98)">.</span>RUNNING,
+<span class="ansi-green-intense-fg ansi-bold">    105</span>             runtime<span style="color: rgb(98,98,98)">=</span>monotonic() <span style="color: rgb(98,98,98)">-</span> start_time,
+<span class="ansi-green-intense-fg ansi-bold">    106</span>         )
+<span class="ansi-green-intense-fg ansi-bold">    107</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> callback(parameters, result)  <span style="color: rgb(95,135,135)"># pyre-ignore [29]</span>
+<span class="ansi-green-fg">--&gt; 109</span> raw <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">minimize_with_timeout</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    110</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">wrapped_closure</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    111</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">wrapped_closure</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">if</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">x0</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">is</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">else</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">x0</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">astype</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">np_float64</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">copy</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    112</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">jac</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    113</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">bounds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">bounds_np</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    114</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    115</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    116</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">callback</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">wrapped_callback</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    117</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">timeout_sec</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">timeout_sec</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    118</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    120</span> <span style="color: rgb(95,135,135)"># Post-processing and outcome handling</span>
+<span class="ansi-green-intense-fg ansi-bold">    121</span> wrapped_closure<span style="color: rgb(98,98,98)">.</span>state <span style="color: rgb(98,98,98)">=</span> asarray(raw<span style="color: rgb(98,98,98)">.</span>x)  <span style="color: rgb(95,135,135)"># set parameter state to optimal values</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/optim/utils/timeout.py:80</span>, in <span class="ansi-cyan-fg">minimize_with_timeout</span><span class="ansi-blue-fg">(fun, x0, args, method, jac, hess, hessp, bounds, constraints, tol, callback, options, timeout_sec)</span>
+<span class="ansi-green-intense-fg ansi-bold">     77</span>     wrapped_callback <span style="color: rgb(98,98,98)">=</span> callback
+<span class="ansi-green-intense-fg ansi-bold">     79</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">---&gt; 80</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">optimize</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">minimize</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">     81</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">fun</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">fun</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     82</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">x0</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">x0</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     83</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     84</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     85</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">jac</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">jac</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     86</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">hess</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">hess</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     87</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">hessp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">hessp</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     88</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">bounds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">bounds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     89</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">constraints</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">constraints</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     90</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">tol</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">tol</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     91</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">callback</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">wrapped_callback</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     92</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     93</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     94</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> OptimizationTimeoutError <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">     95</span>     msg <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">Optimization timed out after </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>e<span style="color: rgb(98,98,98)">.</span>runtime<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> seconds.</span><span style="color: rgb(175,0,0)">"</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_minimize.py:710</span>, in <span class="ansi-cyan-fg">minimize</span><span class="ansi-blue-fg">(fun, x0, args, method, jac, hess, hessp, bounds, constraints, tol, callback, options)</span>
+<span class="ansi-green-intense-fg ansi-bold">    707</span>     res <span style="color: rgb(98,98,98)">=</span> _minimize_newtoncg(fun, x0, args, jac, hess, hessp, callback,
+<span class="ansi-green-intense-fg ansi-bold">    708</span>                              <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>options)
+<span class="ansi-green-intense-fg ansi-bold">    709</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> meth <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(175,0,0)">'</span><span style="color: rgb(175,0,0)">l-bfgs-b</span><span style="color: rgb(175,0,0)">'</span>:
+<span class="ansi-green-fg">--&gt; 710</span>     res <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">_minimize_lbfgsb</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">fun</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">x0</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">jac</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">bounds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    711</span> <span class="ansi-yellow-bg">                           </span><span class="ansi-yellow-bg">callback</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">callback</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    712</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> meth <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(175,0,0)">'</span><span style="color: rgb(175,0,0)">tnc</span><span style="color: rgb(175,0,0)">'</span>:
+<span class="ansi-green-intense-fg ansi-bold">    713</span>     res <span style="color: rgb(98,98,98)">=</span> _minimize_tnc(fun, x0, args, jac, bounds, callback<span style="color: rgb(98,98,98)">=</span>callback,
+<span class="ansi-green-intense-fg ansi-bold">    714</span>                         <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>options)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_lbfgsb_py.py:365</span>, in <span class="ansi-cyan-fg">_minimize_lbfgsb</span><span class="ansi-blue-fg">(fun, x0, args, jac, bounds, disp, maxcor, ftol, gtol, eps, maxfun, maxiter, iprint, callback, maxls, finite_diff_rel_step, **unknown_options)</span>
+<span class="ansi-green-intense-fg ansi-bold">    359</span> task_str <span style="color: rgb(98,98,98)">=</span> task<span style="color: rgb(98,98,98)">.</span>tobytes()
+<span class="ansi-green-intense-fg ansi-bold">    360</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> task_str<span style="color: rgb(98,98,98)">.</span>startswith(<span style="color: rgb(175,0,0)">b</span><span style="color: rgb(175,0,0)">'</span><span style="color: rgb(175,0,0)">FG</span><span style="color: rgb(175,0,0)">'</span>):
+<span class="ansi-green-intense-fg ansi-bold">    361</span>     <span style="color: rgb(95,135,135)"># The minimization routine wants f and g at the current x.</span>
+<span class="ansi-green-intense-fg ansi-bold">    362</span>     <span style="color: rgb(95,135,135)"># Note that interruptions due to maxfun are postponed</span>
+<span class="ansi-green-intense-fg ansi-bold">    363</span>     <span style="color: rgb(95,135,135)"># until the completion of the current minimization iteration.</span>
+<span class="ansi-green-intense-fg ansi-bold">    364</span>     <span style="color: rgb(95,135,135)"># Overwrite f and g:</span>
+<span class="ansi-green-fg">--&gt; 365</span>     f, g <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">func_and_grad</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    366</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> task_str<span style="color: rgb(98,98,98)">.</span>startswith(<span style="color: rgb(175,0,0)">b</span><span style="color: rgb(175,0,0)">'</span><span style="color: rgb(175,0,0)">NEW_X</span><span style="color: rgb(175,0,0)">'</span>):
+<span class="ansi-green-intense-fg ansi-bold">    367</span>     <span style="color: rgb(95,135,135)"># new iteration</span>
+<span class="ansi-green-intense-fg ansi-bold">    368</span>     n_iterations <span style="color: rgb(98,98,98)">+</span><span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(98,98,98)">1</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_differentiable_functions.py:285</span>, in <span class="ansi-cyan-fg">ScalarFunction.fun_and_grad</span><span class="ansi-blue-fg">(self, x)</span>
+<span class="ansi-green-intense-fg ansi-bold">    283</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> np<span style="color: rgb(98,98,98)">.</span>array_equal(x, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>x):
+<span class="ansi-green-intense-fg ansi-bold">    284</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_update_x_impl(x)
+<span class="ansi-green-fg">--&gt; 285</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_update_fun</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    286</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_update_grad()
+<span class="ansi-green-intense-fg ansi-bold">    287</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>f, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>g
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_differentiable_functions.py:251</span>, in <span class="ansi-cyan-fg">ScalarFunction._update_fun</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    249</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">_update_fun</span>(<span style="color: rgb(0,135,0)">self</span>):
+<span class="ansi-green-intense-fg ansi-bold">    250</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>f_updated:
+<span class="ansi-green-fg">--&gt; 251</span>         <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_update_fun_impl</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    252</span>         <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>f_updated <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_differentiable_functions.py:155</span>, in <span class="ansi-cyan-fg">ScalarFunction.__init__.&lt;locals&gt;.update_fun</span><span class="ansi-blue-fg">()</span>
+<span class="ansi-green-intense-fg ansi-bold">    154</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">update_fun</span>():
+<span class="ansi-green-fg">--&gt; 155</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>f <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">fun_wrapped</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">x</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_differentiable_functions.py:137</span>, in <span class="ansi-cyan-fg">ScalarFunction.__init__.&lt;locals&gt;.fun_wrapped</span><span class="ansi-blue-fg">(x)</span>
+<span class="ansi-green-intense-fg ansi-bold">    133</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>nfev <span style="color: rgb(98,98,98)">+</span><span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(98,98,98)">1</span>
+<span class="ansi-green-intense-fg ansi-bold">    134</span> <span style="color: rgb(95,135,135)"># Send a copy because the user may overwrite it.</span>
+<span class="ansi-green-intense-fg ansi-bold">    135</span> <span style="color: rgb(95,135,135)"># Overwriting results in undefined behaviour because</span>
+<span class="ansi-green-intense-fg ansi-bold">    136</span> <span style="color: rgb(95,135,135)"># fun(self.x) will change self.x, with the two no longer linked.</span>
+<span class="ansi-green-fg">--&gt; 137</span> fx <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">fun</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">np</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">copy</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    138</span> <span style="color: rgb(95,135,135)"># Make sure the function returns a true scalar</span>
+<span class="ansi-green-intense-fg ansi-bold">    139</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> np<span style="color: rgb(98,98,98)">.</span>isscalar(fx):
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_optimize.py:77</span>, in <span class="ansi-cyan-fg">MemoizeJac.__call__</span><span class="ansi-blue-fg">(self, x, *args)</span>
+<span class="ansi-green-intense-fg ansi-bold">     75</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__call__</span>(<span style="color: rgb(0,135,0)">self</span>, x, <span style="color: rgb(98,98,98)">*</span>args):
+<span class="ansi-green-intense-fg ansi-bold">     76</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">""" returns the function value """</span>
+<span class="ansi-green-fg">---&gt; 77</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compute_if_needed</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     78</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_value
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/scipy/optimize/_optimize.py:71</span>, in <span class="ansi-cyan-fg">MemoizeJac._compute_if_needed</span><span class="ansi-blue-fg">(self, x, *args)</span>
+<span class="ansi-green-intense-fg ansi-bold">     69</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> np<span style="color: rgb(98,98,98)">.</span>all(x <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>x) <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_value <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>jac <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">     70</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>x <span style="color: rgb(98,98,98)">=</span> np<span style="color: rgb(98,98,98)">.</span>asarray(x)<span style="color: rgb(98,98,98)">.</span>copy()
+<span class="ansi-green-fg">---&gt; 71</span>     fg <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">fun</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     72</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>jac <span style="color: rgb(98,98,98)">=</span> fg[<span style="color: rgb(98,98,98)">1</span>]
+<span class="ansi-green-intense-fg ansi-bold">     73</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_value <span style="color: rgb(98,98,98)">=</span> fg[<span style="color: rgb(98,98,98)">0</span>]
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/optim/closures/core.py:150</span>, in <span class="ansi-cyan-fg">NdarrayOptimizationClosure.__call__</span><span class="ansi-blue-fg">(self, state, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    147</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>state <span style="color: rgb(98,98,98)">=</span> state
+<span class="ansi-green-intense-fg ansi-bold">    149</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 150</span>     value_tensor, grad_tensors <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">closure</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    151</span>     value <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>as_array(value_tensor)
+<span class="ansi-green-intense-fg ansi-bold">    152</span>     grads <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_get_gradient_ndarray(fill_value<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>fill_value)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/optim/closures/core.py:66</span>, in <span class="ansi-cyan-fg">ForwardBackwardClosure.__call__</span><span class="ansi-blue-fg">(self, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     64</span> values <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>forward(<span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)
+<span class="ansi-green-intense-fg ansi-bold">     65</span> value <span style="color: rgb(98,98,98)">=</span> values <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>reducer <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>reducer(values)
+<span class="ansi-green-fg">---&gt; 66</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">backward</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">value</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     68</span> grads <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">tuple</span>(param<span style="color: rgb(98,98,98)">.</span>grad <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> param <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>parameters<span style="color: rgb(98,98,98)">.</span>values())
+<span class="ansi-green-intense-fg ansi-bold">     69</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>callback:
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/torch/_tensor.py:492</span>, in <span class="ansi-cyan-fg">Tensor.backward</span><span class="ansi-blue-fg">(self, gradient, retain_graph, create_graph, inputs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    482</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> has_torch_function_unary(<span style="color: rgb(0,135,0)">self</span>):
+<span class="ansi-green-intense-fg ansi-bold">    483</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> handle_torch_function(
+<span class="ansi-green-intense-fg ansi-bold">    484</span>         Tensor<span style="color: rgb(98,98,98)">.</span>backward,
+<span class="ansi-green-intense-fg ansi-bold">    485</span>         (<span style="color: rgb(0,135,0)">self</span>,),
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    490</span>         inputs<span style="color: rgb(98,98,98)">=</span>inputs,
+<span class="ansi-green-intense-fg ansi-bold">    491</span>     )
+<span class="ansi-green-fg">--&gt; 492</span> <span class="ansi-yellow-bg">torch</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">autograd</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">backward</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    493</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">gradient</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">retain_graph</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">create_graph</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">inputs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">inputs</span>
+<span class="ansi-green-intense-fg ansi-bold">    494</span> <span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/torch/autograd/__init__.py:251</span>, in <span class="ansi-cyan-fg">backward</span><span class="ansi-blue-fg">(tensors, grad_tensors, retain_graph, create_graph, grad_variables, inputs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    246</span>     retain_graph <span style="color: rgb(98,98,98)">=</span> create_graph
+<span class="ansi-green-intense-fg ansi-bold">    248</span> <span style="color: rgb(95,135,135)"># The reason we repeat the same comment below is that</span>
+<span class="ansi-green-intense-fg ansi-bold">    249</span> <span style="color: rgb(95,135,135)"># some Python versions print out the first line of a multi-line function</span>
+<span class="ansi-green-intense-fg ansi-bold">    250</span> <span style="color: rgb(95,135,135)"># calls in the traceback and some print out the last line</span>
+<span class="ansi-green-fg">--&gt; 251</span> <span class="ansi-yellow-bg">Variable</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_execution_engine</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">run_backward</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">  </span><span class="ansi-yellow-bg" style="color: rgb(95,135,135)"># Calls into the C++ engine to run the backward pass</span>
+<span class="ansi-green-intense-fg ansi-bold">    252</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">tensors</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    253</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">grad_tensors_</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    254</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">retain_graph</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    255</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">create_graph</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    256</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">inputs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    257</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">allow_unreachable</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    258</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">accumulate_grad</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    259</span> <span class="ansi-yellow-bg">)</span>
+
+<span class="ansi-red-fg">KeyboardInterrupt</span>:
+</pre></div></div>
+</div>
+</section>
+<section id="References">
+<h2>References<a class="headerlink" href="#References" title="Link to this heading">#</a></h2>
+<p>[1] Anna Gaulton, Louisa J Bellis, A Patricia Bento, Jon Chambers, Mark Davies, Anne Hersey, Yvonne Light, Shaun McGlinchey, David Michalovich, Bissan Al-Lazikani, et al. <a class="reference external" href="https://pubmed.ncbi.nlm.nih.gov/21948594/">ChEMBL: A large-scale bioactivity database for drug discovery</a>. Nucleic Acids Research, 2012.</p>
+<p>[2] Bajusz, D., Rácz, A. and Héberger, K., 2015. <a class="reference external" href="https://jcheminf.biomedcentral.com/articles/10.1186/s13321-015-0069-3">Why is Tanimoto index an appropriate choice for fingerprint-based similarity calculations?</a>. Journal of Cheminformatics], 7(1), pp.1-13.</p>
+</section>
+</section>
+</article>
+</div>
+<footer>
+<div class="related-pages">
+<a class="next-page" href="multitask_gp_regression_on_molecules.html">
+<div class="page-info">
+<div class="context">
+<span>Next</span>
+</div>
+<div class="title">Multitask GP Regression on Molecules</div>
+</div>
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+</a>
+<a class="prev-page" href="bayesian_optimisation_over_molecules.html">
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+<div class="page-info">
+<div class="context">
+<span>Previous</span>
+</div>
+<div class="title">Bayesian Optimisation Over Molecules</div>
+</div>
+</a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+<div class="copyright">
+                Copyright © 2022, Ryan Rhys-Griffiths
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+</div>
+<div class="right-details">
+</div>
+</div>
+</footer>
+</div>
+<aside class="toc-drawer">
+<div class="toc-sticky toc-scroll">
+<div class="toc-title-container">
+<span class="toc-title">
+            On this page
+          </span>
+</div>
+<div class="toc-tree-container">
+<div class="toc-tree">
+<ul>
+<li><a class="reference internal" href="#">Sparse GP Regression on Molecules</a><ul>
+<li><a class="reference internal" href="#Sparse-GP-Regression-on-the-Lipophilicity-Dataset">Sparse GP Regression on the Lipophilicity Dataset</a></li>
+<li><a class="reference internal" href="#Model-Evaluation">Model Evaluation</a></li>
+<li><a class="reference internal" href="#References">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+<script src="../_static/doctools.js?v=888ff710"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=f281be69"></script>
+<script src="../_static/tabs.js?v=3ee01567"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>

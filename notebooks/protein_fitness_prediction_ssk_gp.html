@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+
+<html class="no-js" data-content_root="../" lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="light dark" name="color-scheme"/><meta content="width=device-width, initial-scale=1" name="viewport">
+<meta content="GP Regression on Protein Sequences: Subsequence String Kernel" property="og:title"/>
+<meta content="website" property="og:type"/>
+<meta content="notebooks/protein_fitness_prediction_ssk_gp.html" property="og:url"/>
+<meta content="GAUCHE" property="og:site_name"/>
+<meta content="An example notebook for string kernel-based GP regression on a dataset of protein sequences using the subsequence string kernel (SSK) model of [1, 2]. For the bag-of-amino acids representation of t..." property="og:description"/>
+<meta content="1146" property="og:image:width"/>
+<meta content="600" property="og:image:height"/>
+<meta content="/_images/social_previews/summary_notebooks_protein_fitness_prediction_ssk_gp_8c9963e3.png" property="og:image"/>
+<meta content="An example notebook for string kernel-based GP regression on a dataset of protein sequences using the subsequence string kernel (SSK) model of [1, 2]. For th..." property="og:image:alt"/>
+<meta content="An example notebook for string kernel-based GP regression on a dataset of protein sequences using the subsequence string kernel (SSK) model of [1, 2]. For the bag-of-amino acids representation of t..." name="description"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<link href="../genindex.html" rel="index" title="Index"/><link href="../search.html" rel="search" title="Search"/><link href="bayesian_gnn_on_molecules.html" rel="next" title="Bayesian GNNs for Molecular Property Prediction"/><link href="protein_fitness_prediction_bag_of_amino_acids.html" rel="prev" title="GP Regression on Protein Sequences: Bag of Amino Acids"/>
+<!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+<title>GP Regression on Protein Sequences: Subsequence String Kernel - GAUCHE documentation</title>
+<link href="../_static/pygments.css?v=a746c00c" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo.css?v=135e06be" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/tabs.css?v=4c969af8" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-codeautolink.css?v=125d5c1c" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo-extensions.css?v=36a5483c" rel="stylesheet" type="text/css"/>
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></meta></head>
+<body>
+<script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+<symbol id="svg-toc" viewbox="0 0 24 24">
+<title>Contents</title>
+<svg fill="currentColor" stroke="currentColor" stroke-width="0" viewbox="0 0 1024 1024">
+<path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"></path>
+</svg>
+</symbol>
+<symbol id="svg-menu" viewbox="0 0 24 24">
+<title>Menu</title>
+<svg class="feather-menu" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<line x1="3" x2="21" y1="12" y2="12"></line>
+<line x1="3" x2="21" y1="6" y2="6"></line>
+<line x1="3" x2="21" y1="18" y2="18"></line>
+</svg>
+</symbol>
+<symbol id="svg-arrow-right" viewbox="0 0 24 24">
+<title>Expand</title>
+<svg class="feather-chevron-right" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</symbol>
+<symbol id="svg-sun" viewbox="0 0 24 24">
+<title>Light mode</title>
+<svg class="feather-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="5"></circle>
+<line x1="12" x2="12" y1="1" y2="3"></line>
+<line x1="12" x2="12" y1="21" y2="23"></line>
+<line x1="4.22" x2="5.64" y1="4.22" y2="5.64"></line>
+<line x1="18.36" x2="19.78" y1="18.36" y2="19.78"></line>
+<line x1="1" x2="3" y1="12" y2="12"></line>
+<line x1="21" x2="23" y1="12" y2="12"></line>
+<line x1="4.22" x2="5.64" y1="19.78" y2="18.36"></line>
+<line x1="18.36" x2="19.78" y1="5.64" y2="4.22"></line>
+</svg>
+</symbol>
+<symbol id="svg-moon" viewbox="0 0 24 24">
+<title>Dark mode</title>
+<svg class="icon-tabler-moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+</svg>
+</symbol>
+<symbol id="svg-sun-half" viewbox="0 0 24 24">
+<title>Auto light/dark mode</title>
+<svg class="icon-tabler-shadow" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M13 12h5"></path>
+<path d="M13 15h4"></path>
+<path d="M13 18h1"></path>
+<path d="M13 9h4"></path>
+<path d="M13 6h1"></path>
+</svg>
+</symbol>
+</svg>
+<input class="sidebar-toggle" id="__navigation" name="__navigation" type="checkbox"/>
+<input class="sidebar-toggle" id="__toc" name="__toc" type="checkbox"/>
+<label class="overlay sidebar-overlay" for="__navigation">
+<div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+<div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+<div class="page">
+<header class="mobile-header">
+<div class="header-left">
+<label class="nav-overlay-icon" for="__navigation">
+<div class="visually-hidden">Toggle site navigation sidebar</div>
+<i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+</label>
+</div>
+<div class="header-center">
+<a href="../index.html"><div class="brand">GAUCHE  documentation</div></a>
+</div>
+<div class="header-right">
+<div class="theme-toggle-container theme-toggle-header">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-header-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+</header>
+<aside class="sidebar-drawer">
+<div class="sidebar-container">
+<div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+<span class="sidebar-brand-text">GAUCHE  documentation</span>
+</a><form action="../search.html" class="sidebar-search-container" method="get" role="search">
+<input aria-label="Search" class="sidebar-search" name="q" placeholder="Search"/>
+<input name="check_keywords" type="hidden" value="yes"/>
+<input name="area" type="hidden" value="default"/>
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="loading_and_featurising_molecules.html">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sparse_gp_regression_for_big_molecular_data.html">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="molecular_preference_learning.html">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_gnn_on_molecules.html">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/kernels.html">gauche.kernels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/representations.html">gauche.representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataloader.html">gauche.dataloader</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<div class="main">
+<div class="content">
+<div class="article-container">
+<a class="back-to-top muted-link" href="#">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+</svg>
+<span>Back to top</span>
+</a>
+<div class="content-icon-container">
+<div class="theme-toggle-container theme-toggle-content">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-content-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+<article role="main">
+<section id="GP-Regression-on-Protein-Sequences:-Subsequence-String-Kernel">
+<h1>GP Regression on Protein Sequences: Subsequence String Kernel<a class="headerlink" href="#GP-Regression-on-Protein-Sequences:-Subsequence-String-Kernel" title="Link to this heading">#</a></h1>
+<p>An example notebook for string kernel-based GP regression on a dataset of protein sequences using the subsequence string kernel (SSK) model of [1, 2]. For the bag-of-amino acids representation of the protein sequence (analagous to the bag-of-SMILES model for molecules) see the ‘protein fitness prediction - bag of amino acids notebook’. The protein dataset consists of 151 sequences with a ‘fitness’ function (target label) of the melting point in degrees Celcius. The dataset is collated from
+values reported in references [3,4,5]. The sequences are each of length 290 and so it is recommended that a GPU is used in conjunction with the SSK kernel.</p>
+<p>In contrast to the bag of amino acids notebook, we do not report results on 20 random train/test splits because this would be too computationally intensive for the SSK kernel.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Imports"""</span>
+
+<span class="c1"># Turn off Graphein warnings</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#module-warnings" title="warnings"><span class="nn">warnings</span></a>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#warnings.filterwarnings" title="warnings.filterwarnings"><span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span></a><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms</span> <span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Standardize</span>
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/pyplot_summary.html#module-matplotlib.pyplot" title="matplotlib.pyplot"><span class="nn">matplotlib.pyplot</span></a> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="numpy"><span class="nn">numpy</span></a> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pandas.pydata.org/docs/index.html#module-pandas" title="pandas"><span class="nn">pandas</span></a> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.model_selection" title="sklearn.model_selection"><span class="nn">sklearn.model_selection</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics" title="sklearn.metrics"><span class="nn">sklearn.metrics</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="sklearn.metrics.r2_score"><span class="n">r2_score</span></a><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/torch.html#module-torch" title="torch"><span class="nn">torch</span></a>
+
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#module-gauche.dataloader.data_utils" title="gauche.dataloader.data_utils"><span class="nn">gauche.dataloader.data_utils</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.data_utils.transform_data" title="gauche.dataloader.data_utils.transform_data"><span class="n">transform_data</span></a>
+<span class="kn">from</span> <span class="nn">gauche.kernels.string_kernels.sskkernel</span> <span class="kn">import</span> <span class="n">pad</span><span class="p">,</span> <span class="n">encode_string</span><span class="p">,</span> <span class="n">build_one_hot</span><span class="p">,</span> <a class="sphinx-codeautolink-a" href="../modules/kernels.html#gauche.kernels.string_kernels.SubsequenceStringKernel" title="gauche.kernels.string_kernels.sskkernel.SubsequenceStringKernel"><span class="n">SubsequenceStringKernel</span></a>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""CPU/GPU"""</span>
+
+<a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensor_attributes.html#torch.device" title="torch.device"><span class="n">device</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensor_attributes.html#torch.device" title="torch.device"><span class="n">torch</span><span class="o">.</span><span class="n">device</span></a><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.cuda.is_available.html#torch.cuda.is_available" title="torch.cuda.is_available"><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span></a><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
+<span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensor_attributes.html#torch.device" title="torch.device"><span class="n">device</span></a><span class="p">}</span>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="n">tkwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{'dtype': torch.float32, 'device': device(type='cpu')}
+</pre></div></div>
+</div>
+<section id="The-Petase-Dataset">
+<h2>The Petase Dataset<a class="headerlink" href="#The-Petase-Dataset" title="Link to this heading">#</a></h2>
+<p>The dataset consists of a set of petase protein sequences with amino acid chains of length 290. An example sequence is given below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MNFPRASRLMQAAVLGGLMAVSAAATAQTNPYARGPPPTAASLEASAGPFTVRSFTVSRPSGYGAGTVYYPTNAGGTVGAIAIVPGYTARQSSIKWWGPRLASHGFVVITIDTNSTLDQPSSRSSQQMAALRQVASLNGTSSSPIYGKVDTARMGVMGWSMGGGGSLISAANNPSLKAAAPQAPWDSSTNFSSVTVPTLIFACENDSIAPVNSSALPIYDSMSRNAKQFLEINGGSHSCANSGNSNQALIGKKGVAWMKRFMDNDTRYSTFACENPNSTRVSDFRTANCS
+</pre></div>
+</div>
+<p>For such long sequences the SSK kernel can struggle computationally and so a “bag of amino acids” model is also compared.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Regression experiments parameters, number of random splits and split size"""</span>
+
+<span class="n">n_trials</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">test_set_size</span> <span class="o">=</span> <span class="mf">0.2</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Load the petase dataset"""</span>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/sys.html#module-sys" title="sys"><span class="nn">sys</span></a>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'..'</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html#pandas.read_csv" title="pandas.read_csv"><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span></a><span class="p">(</span><span class="s1">'../gauche/datasets/proteins/petase_151_mutants.csv'</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'sequence'</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'fitness'</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'len(sequences) </span><span class="si">{</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s1"> | len(targets) </span><span class="si">{</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+len(sequences) 151 | len(targets) 151
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Compute the required sequence properties for modelling with the SSK kernel GP."""</span>
+
+<span class="n">maxlen</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.max.html#numpy.max" title="numpy.max"><span class="n">np</span><span class="o">.</span><span class="n">max</span></a><span class="p">([</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+<span class="c1"># get alphabet of characters used in candidate set (to init SSK)</span>
+<span class="n">alphabet</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#list" title="list"><span class="nb">list</span></a><span class="p">({</span><span class="n">l</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">x</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">word</span><span class="p">})</span>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'alphabet </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">alphabet</span><span class="si">}</span><span class="s1"> </span><span class="se">\n</span><span class="s1"> length of alphabet </span><span class="si">{</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'maxlen </span><span class="si">{</span><span class="n">maxlen</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+alphabet
+ ['F', 'N', 'E', 'Y', 'A', 'K', 'S', 'P', 'M', 'G', 'R', 'I', 'H', 'Q', 'C', 'W', 'L', 'D', 'V', 'T']
+ length of alphabet 20
+maxlen 290
+</pre></div></div>
+</div>
+</section>
+<section id="GP-Regression-on-the-Petase-Dataset">
+<h2>GP Regression on the Petase Dataset<a class="headerlink" href="#GP-Regression-on-the-Petase-Dataset" title="Link to this heading">#</a></h2>
+<p>First we define the GP model for protein sequences.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Process the inputs x to the string kernel GPs"""</span>
+
+<span class="c1"># Compute one-hot encodings and an integer index for the given amino acid alphabet</span>
+<span class="n">embds</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">build_one_hot</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
+<span class="n">embds</span> <span class="o">=</span> <span class="n">embds</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+
+<span class="c1"># Process the string inputs to the SSK model</span>
+<span class="n">x</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.cat.html#torch.cat" title="torch.cat"><span class="n">torch</span><span class="o">.</span><span class="n">cat</span></a><span class="p">([</span><span class="n">pad</span><span class="p">(</span><span class="n">encode_string</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">index</span><span class="p">),</span> <span class="n">maxlen</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Compute the train/test split."""</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_set_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+<span class="n">X_test</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+<span class="n">y_train</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+<span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Intialize and fit the models"""</span>
+
+<span class="c1"># Likelihood function</span>
+<span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
+    <span class="n">noise_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)),</span>
+    <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Covariance function</span>
+<span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="../modules/kernels.html#gauche.kernels.string_kernels.SubsequenceStringKernel" title="gauche.kernels.string_kernels.sskkernel.SubsequenceStringKernel"><span class="n">SubsequenceStringKernel</span></a><span class="p">(</span><span class="n">embds</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">,</span> <span class="n">maxlen</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+
+
+<span class="n">ssk_gp_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+    <span class="n">train_X</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span>
+    <span class="n">train_Y</span><span class="o">=</span><span class="n">y_train</span><span class="p">,</span>
+    <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
+    <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">ssk_gp_model</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">ssk_gp_model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">)</span>
+<span class="c1"># ideally we can optimize over the kernel hyper-parameters of the string kernel</span>
+<span class="c1"># however, the gpu memory usage in batch (GPU) version of the kernel is quite high</span>
+<span class="c1"># while the standard non-batch version is relatively slow for kernel evaluation.</span>
+<span class="c1"># Nevertheless, the kernel is very robust to choices of the different hypers.</span>
+<span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">raw_order_coefs</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">raw_match_decay</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">raw_gap_decay</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+ExactMarginalLogLikelihood(
+  (likelihood): GaussianLikelihood(
+    (noise_covar): HomoskedasticNoise(
+      (noise_prior): GammaPrior()
+      (raw_noise_constraint): GreaterThan(1.000E-04)
+    )
+  )
+  (model): SingleTaskGP(
+    (likelihood): GaussianLikelihood(
+      (noise_covar): HomoskedasticNoise(
+        (noise_prior): GammaPrior()
+        (raw_noise_constraint): GreaterThan(1.000E-04)
+      )
+    )
+    (mean_module): ConstantMean()
+    (covar_module): ScaleKernel(
+      (base_kernel): SubsequenceStringKernel(
+        (raw_gap_decay_constraint): Interval(0.000E+00, 1.000E+00)
+        (raw_match_decay_constraint): Interval(0.000E+00, 1.000E+00)
+        (raw_order_coefs_constraint): Interval(0.000E+00, 1.000E+00)
+      )
+      (raw_outputscale_constraint): Positive()
+    )
+    (outcome_transform): Standardize()
+  )
+)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Evaluate the trained model."""</span>
+
+<span class="n">posterior</span> <span class="o">=</span> <span class="n">ssk_gp_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+<span class="n">posterior_std</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.sqrt.html#torch.sqrt" title="torch.sqrt"><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+
+<span class="n">r2</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="sklearn.metrics.r2_score"><span class="n">r2_score</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">posterior_mean</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a><span class="p">(</span><span class="n">posterior_mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">y_test</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[9], line 3</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span style="color: rgb(175,0,0)">"""Evaluate the trained model."""</span>
+<span class="ansi-green-fg">----&gt; 3</span> posterior <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">ssk_gp_model</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">posterior</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">X_test</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span> posterior_mean <span style="color: rgb(98,98,98)">=</span> posterior<span style="color: rgb(98,98,98)">.</span>mean<span style="color: rgb(98,98,98)">.</span>cpu()<span style="color: rgb(98,98,98)">.</span>detach()
+<span class="ansi-green-intense-fg ansi-bold">      5</span> posterior_std <span style="color: rgb(98,98,98)">=</span> torch<span style="color: rgb(98,98,98)">.</span>sqrt(posterior<span style="color: rgb(98,98,98)">.</span>variance<span style="color: rgb(98,98,98)">.</span>cpu()<span style="color: rgb(98,98,98)">.</span>detach())
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/botorch/models/gpytorch.py:383</span>, in <span class="ansi-cyan-fg">BatchedMultiOutputGPyTorchModel.posterior</span><span class="ansi-blue-fg">(self, X, output_indices, observation_noise, posterior_transform, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    377</span>     X, output_dim_idx <span style="color: rgb(98,98,98)">=</span> add_output_dim(
+<span class="ansi-green-intense-fg ansi-bold">    378</span>         X<span style="color: rgb(98,98,98)">=</span>X, original_batch_shape<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_input_batch_shape
+<span class="ansi-green-intense-fg ansi-bold">    379</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    380</span> <span style="color: rgb(95,135,135)"># NOTE: BoTorch's GPyTorchModels also inherit from GPyTorch's ExactGP, thus</span>
+<span class="ansi-green-intense-fg ansi-bold">    381</span> <span style="color: rgb(95,135,135)"># self(X) calls GPyTorch's ExactGP's __call__, which computes the posterior,</span>
+<span class="ansi-green-intense-fg ansi-bold">    382</span> <span style="color: rgb(95,135,135)"># rather than e.g. SingleTaskGP's forward, which computes the prior.</span>
+<span class="ansi-green-fg">--&gt; 383</span> mvn <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">X</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    384</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> observation_noise <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>:
+<span class="ansi-green-intense-fg ansi-bold">    385</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_num_outputs <span style="color: rgb(98,98,98)">&gt;</span> <span style="color: rgb(98,98,98)">1</span>:
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/models/exact_gp.py:333</span>, in <span class="ansi-cyan-fg">ExactGP.__call__</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    328</span> <span style="color: rgb(95,135,135)"># Make the prediction</span>
+<span class="ansi-green-intense-fg ansi-bold">    329</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> settings<span style="color: rgb(98,98,98)">.</span>cg_tolerance(settings<span style="color: rgb(98,98,98)">.</span>eval_cg_tolerance<span style="color: rgb(98,98,98)">.</span>value()):
+<span class="ansi-green-intense-fg ansi-bold">    330</span>     (
+<span class="ansi-green-intense-fg ansi-bold">    331</span>         predictive_mean,
+<span class="ansi-green-intense-fg ansi-bold">    332</span>         predictive_covar,
+<span class="ansi-green-fg">--&gt; 333</span>     ) <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">prediction_strategy</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">exact_prediction</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">full_mean</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">full_covar</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    335</span> <span style="color: rgb(95,135,135)"># Reshape predictive mean to match the appropriate event shape</span>
+<span class="ansi-green-intense-fg ansi-bold">    336</span> predictive_mean <span style="color: rgb(98,98,98)">=</span> predictive_mean<span style="color: rgb(98,98,98)">.</span>view(<span style="color: rgb(98,98,98)">*</span>batch_shape, <span style="color: rgb(98,98,98)">*</span>test_shape)<span style="color: rgb(98,98,98)">.</span>contiguous()
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/models/exact_prediction_strategies.py:289</span>, in <span class="ansi-cyan-fg">DefaultPredictionStrategy.exact_prediction</span><span class="ansi-blue-fg">(self, joint_mean, joint_covar)</span>
+<span class="ansi-green-intense-fg ansi-bold">    285</span>     test_test_covar <span style="color: rgb(98,98,98)">=</span> joint_covar[<span style="color: rgb(98,98,98)">.</span><span style="color: rgb(98,98,98)">.</span><span style="color: rgb(98,98,98)">.</span>, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>num_train :, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>num_train :]
+<span class="ansi-green-intense-fg ansi-bold">    286</span>     test_train_covar <span style="color: rgb(98,98,98)">=</span> joint_covar[<span style="color: rgb(98,98,98)">.</span><span style="color: rgb(98,98,98)">.</span><span style="color: rgb(98,98,98)">.</span>, <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>num_train :, : <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>num_train]
+<span class="ansi-green-intense-fg ansi-bold">    288</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> (
+<span class="ansi-green-fg">--&gt; 289</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">exact_predictive_mean</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">test_mean</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">test_train_covar</span><span class="ansi-yellow-bg">)</span>,
+<span class="ansi-green-intense-fg ansi-bold">    290</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>exact_predictive_covar(test_test_covar, test_train_covar),
+<span class="ansi-green-intense-fg ansi-bold">    291</span> )
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/models/exact_prediction_strategies.py:306</span>, in <span class="ansi-cyan-fg">DefaultPredictionStrategy.exact_predictive_mean</span><span class="ansi-blue-fg">(self, test_mean, test_train_covar)</span>
+<span class="ansi-green-intense-fg ansi-bold">    294</span> <span style="color: rgb(175,0,0)">"""</span>
+<span class="ansi-green-intense-fg ansi-bold">    295</span> <span style="color: rgb(175,0,0)">Computes the posterior predictive covariance of a GP</span>
+<span class="ansi-green-intense-fg ansi-bold">    296</span>
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    300</span> <span style="color: rgb(175,0,0)">:return: The predictive posterior mean of the test points</span>
+<span class="ansi-green-intense-fg ansi-bold">    301</span> <span style="color: rgb(175,0,0)">"""</span>
+<span class="ansi-green-intense-fg ansi-bold">    302</span> <span style="color: rgb(95,135,135)"># NOTE TO FUTURE SELF:</span>
+<span class="ansi-green-intense-fg ansi-bold">    303</span> <span style="color: rgb(95,135,135)"># You **cannot* use addmv here, because test_train_covar may not actually be a non lazy tensor even for an exact</span>
+<span class="ansi-green-intense-fg ansi-bold">    304</span> <span style="color: rgb(95,135,135)"># GP, and using addmv requires you to to_dense test_train_covar, which is obviously a huge no-no!</span>
+<span class="ansi-green-fg">--&gt; 306</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(<span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">mean_cache</span><span style="color: rgb(98,98,98)">.</span>shape) <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(98,98,98)">4</span>:
+<span class="ansi-green-intense-fg ansi-bold">    307</span>     res <span style="color: rgb(98,98,98)">=</span> (test_train_covar <span style="color: rgb(98,98,98)">@</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>mean_cache<span style="color: rgb(98,98,98)">.</span>squeeze(<span style="color: rgb(98,98,98)">1</span>)<span style="color: rgb(98,98,98)">.</span>unsqueeze(<span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">1</span>))<span style="color: rgb(98,98,98)">.</span>squeeze(<span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">1</span>)
+<span class="ansi-green-intense-fg ansi-bold">    308</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/utils/memoize.py:59</span>, in <span class="ansi-cyan-fg">_cached.&lt;locals&gt;.g</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     57</span> kwargs_pkl <span style="color: rgb(98,98,98)">=</span> pickle<span style="color: rgb(98,98,98)">.</span>dumps(kwargs)
+<span class="ansi-green-intense-fg ansi-bold">     58</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> _is_in_cache(<span style="color: rgb(0,135,0)">self</span>, cache_name, <span style="color: rgb(98,98,98)">*</span>args, kwargs_pkl<span style="color: rgb(98,98,98)">=</span>kwargs_pkl):
+<span class="ansi-green-fg">---&gt; 59</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> _add_to_cache(<span style="color: rgb(0,135,0)">self</span>, cache_name, <span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>, <span style="color: rgb(98,98,98)">*</span>args, kwargs_pkl<span style="color: rgb(98,98,98)">=</span>kwargs_pkl)
+<span class="ansi-green-intense-fg ansi-bold">     60</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> _get_from_cache(<span style="color: rgb(0,135,0)">self</span>, cache_name, <span style="color: rgb(98,98,98)">*</span>args, kwargs_pkl<span style="color: rgb(98,98,98)">=</span>kwargs_pkl)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/models/exact_prediction_strategies.py:256</span>, in <span class="ansi-cyan-fg">DefaultPredictionStrategy.mean_cache</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    253</span> train_mean, train_train_covar <span style="color: rgb(98,98,98)">=</span> mvn<span style="color: rgb(98,98,98)">.</span>loc, mvn<span style="color: rgb(98,98,98)">.</span>lazy_covariance_matrix
+<span class="ansi-green-intense-fg ansi-bold">    255</span> train_labels_offset <span style="color: rgb(98,98,98)">=</span> (<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>train_labels <span style="color: rgb(98,98,98)">-</span> train_mean)<span style="color: rgb(98,98,98)">.</span>unsqueeze(<span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">1</span>)
+<span class="ansi-green-fg">--&gt; 256</span> mean_cache <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">train_train_covar</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">evaluate_kernel</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span style="color: rgb(98,98,98)">.</span>solve(train_labels_offset)<span style="color: rgb(98,98,98)">.</span>squeeze(<span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">1</span>)
+<span class="ansi-green-intense-fg ansi-bold">    258</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> settings<span style="color: rgb(98,98,98)">.</span>detach_test_caches<span style="color: rgb(98,98,98)">.</span>on():
+<span class="ansi-green-intense-fg ansi-bold">    259</span>     mean_cache <span style="color: rgb(98,98,98)">=</span> mean_cache<span style="color: rgb(98,98,98)">.</span>detach()
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/linear_operator/operators/added_diag_linear_operator.py:209</span>, in <span class="ansi-cyan-fg">AddedDiagLinearOperator.evaluate_kernel</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    208</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">evaluate_kernel</span>(<span style="color: rgb(0,135,0)">self</span>):
+<span class="ansi-green-fg">--&gt; 209</span>     added_diag_linear_op <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">representation_tree</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>(<span style="color: rgb(98,98,98)">*</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>representation())
+<span class="ansi-green-intense-fg ansi-bold">    210</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> added_diag_linear_op<span style="color: rgb(98,98,98)">.</span>_linear_op <span style="color: rgb(98,98,98)">+</span> added_diag_linear_op<span style="color: rgb(98,98,98)">.</span>_diag_tensor
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/linear_operator/operators/_linear_operator.py:2064</span>, in <span class="ansi-cyan-fg">LinearOperator.representation_tree</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2054</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">representation_tree</span>(<span style="color: rgb(0,135,0)">self</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> LinearOperatorRepresentationTree:
+<span class="ansi-green-intense-fg ansi-bold">   2055</span> <span style="color: rgb(188,188,188)">    </span><span style="color: rgb(175,0,0)">"""</span>
+<span class="ansi-green-intense-fg ansi-bold">   2056</span> <span style="color: rgb(175,0,0)">    Returns a</span>
+<span class="ansi-green-intense-fg ansi-bold">   2057</span> <span style="color: rgb(175,0,0)">    :obj:`linear_operator.operators.LinearOperatorRepresentationTree` tree</span>
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">   2062</span> <span style="color: rgb(175,0,0)">    including all subobjects. This is used internally.</span>
+<span class="ansi-green-intense-fg ansi-bold">   2063</span> <span style="color: rgb(175,0,0)">    """</span>
+<span class="ansi-green-fg">-&gt; 2064</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">LinearOperatorRepresentationTree</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/linear_operator/operators/linear_operator_representation_tree.py:15</span>, in <span class="ansi-cyan-fg">LinearOperatorRepresentationTree.__init__</span><span class="ansi-blue-fg">(self, linear_op)</span>
+<span class="ansi-green-intense-fg ansi-bold">     13</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> arg <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> itertools<span style="color: rgb(98,98,98)">.</span>chain(linear_op<span style="color: rgb(98,98,98)">.</span>_args, linear_op<span style="color: rgb(98,98,98)">.</span>_differentiable_kwargs<span style="color: rgb(98,98,98)">.</span>values()):
+<span class="ansi-green-intense-fg ansi-bold">     14</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">hasattr</span>(arg, <span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">representation</span><span style="color: rgb(175,0,0)">"</span>) <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">callable</span>(arg<span style="color: rgb(98,98,98)">.</span>representation):  <span style="color: rgb(95,135,135)"># Is it a lazy tensor?</span>
+<span class="ansi-green-fg">---&gt; 15</span>         representation_size <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">len</span>(<span class="ansi-yellow-bg">arg</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">representation</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>)
+<span class="ansi-green-intense-fg ansi-bold">     16</span>         <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>children<span style="color: rgb(98,98,98)">.</span>append((<span style="color: rgb(0,135,0)">slice</span>(counter, counter <span style="color: rgb(98,98,98)">+</span> representation_size, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>), arg<span style="color: rgb(98,98,98)">.</span>representation_tree()))
+<span class="ansi-green-intense-fg ansi-bold">     17</span>         counter <span style="color: rgb(98,98,98)">+</span><span style="color: rgb(98,98,98)">=</span> representation_size
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/lazy/lazy_evaluated_kernel_tensor.py:397</span>, in <span class="ansi-cyan-fg">LazyEvaluatedKernelTensor.representation</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    393</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">super</span>()<span style="color: rgb(98,98,98)">.</span>representation()
+<span class="ansi-green-intense-fg ansi-bold">    394</span> <span style="color: rgb(95,135,135)"># Otherwise, we'll evaluate the kernel (or at least its LinearOperator representation) and use its</span>
+<span class="ansi-green-intense-fg ansi-bold">    395</span> <span style="color: rgb(95,135,135)"># representation</span>
+<span class="ansi-green-intense-fg ansi-bold">    396</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">--&gt; 397</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">evaluate_kernel</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span style="color: rgb(98,98,98)">.</span>representation()
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/utils/memoize.py:59</span>, in <span class="ansi-cyan-fg">_cached.&lt;locals&gt;.g</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     57</span> kwargs_pkl <span style="color: rgb(98,98,98)">=</span> pickle<span style="color: rgb(98,98,98)">.</span>dumps(kwargs)
+<span class="ansi-green-intense-fg ansi-bold">     58</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> _is_in_cache(<span style="color: rgb(0,135,0)">self</span>, cache_name, <span style="color: rgb(98,98,98)">*</span>args, kwargs_pkl<span style="color: rgb(98,98,98)">=</span>kwargs_pkl):
+<span class="ansi-green-fg">---&gt; 59</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> _add_to_cache(<span style="color: rgb(0,135,0)">self</span>, cache_name, <span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>, <span style="color: rgb(98,98,98)">*</span>args, kwargs_pkl<span style="color: rgb(98,98,98)">=</span>kwargs_pkl)
+<span class="ansi-green-intense-fg ansi-bold">     60</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> _get_from_cache(<span style="color: rgb(0,135,0)">self</span>, cache_name, <span style="color: rgb(98,98,98)">*</span>args, kwargs_pkl<span style="color: rgb(98,98,98)">=</span>kwargs_pkl)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/lazy/lazy_evaluated_kernel_tensor.py:25</span>, in <span class="ansi-cyan-fg">recall_grad_state.&lt;locals&gt;.wrapped</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     22</span> <span style="color: rgb(175,0,255)">@functools</span><span style="color: rgb(98,98,98)">.</span>wraps(method)
+<span class="ansi-green-intense-fg ansi-bold">     23</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">wrapped</span>(<span style="color: rgb(0,135,0)">self</span>, <span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs):
+<span class="ansi-green-intense-fg ansi-bold">     24</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> torch<span style="color: rgb(98,98,98)">.</span>set_grad_enabled(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_is_grad_enabled):
+<span class="ansi-green-fg">---&gt; 25</span>         output <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">method</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     26</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> output
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/lazy/lazy_evaluated_kernel_tensor.py:355</span>, in <span class="ansi-cyan-fg">LazyEvaluatedKernelTensor.evaluate_kernel</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    353</span>     temp_active_dims <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>kernel<span style="color: rgb(98,98,98)">.</span>active_dims
+<span class="ansi-green-intense-fg ansi-bold">    354</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>kernel<span style="color: rgb(98,98,98)">.</span>active_dims <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-fg">--&gt; 355</span>     res <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">kernel</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    356</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">x1</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    357</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">x2</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    358</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">diag</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    359</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">last_dim_is_batch</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">last_dim_is_batch</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    360</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">params</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    361</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    362</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>kernel<span style="color: rgb(98,98,98)">.</span>active_dims <span style="color: rgb(98,98,98)">=</span> temp_active_dims
+<span class="ansi-green-intense-fg ansi-bold">    364</span> <span style="color: rgb(95,135,135)"># Check the size of the output</span>
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/kernels/kernel.py:530</span>, in <span class="ansi-cyan-fg">Kernel.__call__</span><span class="ansi-blue-fg">(self, x1, x2, diag, last_dim_is_batch, **params)</span>
+<span class="ansi-green-intense-fg ansi-bold">    527</span>     res <span style="color: rgb(98,98,98)">=</span> LazyEvaluatedKernelTensor(x1_, x2_, kernel<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span>, last_dim_is_batch<span style="color: rgb(98,98,98)">=</span>last_dim_is_batch, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>params)
+<span class="ansi-green-intense-fg ansi-bold">    528</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    529</span>     res <span style="color: rgb(98,98,98)">=</span> to_linear_operator(
+<span class="ansi-green-fg">--&gt; 530</span>         <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">super</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">Kernel</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,255)">__call__</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x1_</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">x2_</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">last_dim_is_batch</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">last_dim_is_batch</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">params</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    531</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    532</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> res
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/module.py:31</span>, in <span class="ansi-cyan-fg">Module.__call__</span><span class="ansi-blue-fg">(self, *inputs, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     30</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__call__</span>(<span style="color: rgb(0,135,0)">self</span>, <span style="color: rgb(98,98,98)">*</span>inputs, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> Union[Tensor, Distribution, LinearOperator]:
+<span class="ansi-green-fg">---&gt; 31</span>     outputs <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">forward</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">inputs</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     32</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(outputs, <span style="color: rgb(0,135,0)">list</span>):
+<span class="ansi-green-intense-fg ansi-bold">     33</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> [_validate_module_outputs(output) <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> output <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> outputs]
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gpytorch/kernels/scale_kernel.py:109</span>, in <span class="ansi-cyan-fg">ScaleKernel.forward</span><span class="ansi-blue-fg">(self, x1, x2, last_dim_is_batch, diag, **params)</span>
+<span class="ansi-green-intense-fg ansi-bold">    108</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">forward</span>(<span style="color: rgb(0,135,0)">self</span>, x1, x2, last_dim_is_batch<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, diag<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>params):
+<span class="ansi-green-fg">--&gt; 109</span>     orig_output <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">base_kernel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">forward</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x1</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">x2</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">diag</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">diag</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">last_dim_is_batch</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">last_dim_is_batch</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">params</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    110</span>     outputscales <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>outputscale
+<span class="ansi-green-intense-fg ansi-bold">    111</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> last_dim_is_batch:
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gauche/kernels/string_kernels/sskkernel.py:192</span>, in <span class="ansi-cyan-fg">SubsequenceStringKernel.forward</span><span class="ansi-blue-fg">(self, X1, X2, diag, **params)</span>
+<span class="ansi-green-intense-fg ansi-bold">    188</span>         K[batch_idx, :, :] <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_compute_kernel(
+<span class="ansi-green-intense-fg ansi-bold">    189</span>             X1[batch_idx], X2[batch_idx]
+<span class="ansi-green-intense-fg ansi-bold">    190</span>         )
+<span class="ansi-green-intense-fg ansi-bold">    191</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">--&gt; 192</span>     K <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compute_kernel</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">X1</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">X2</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">params</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    193</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> diag <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">True</span>:
+<span class="ansi-green-intense-fg ansi-bold">    194</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> torch<span style="color: rgb(98,98,98)">.</span>diag(K)
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gauche/kernels/string_kernels/sskkernel.py:221</span>, in <span class="ansi-cyan-fg">SubsequenceStringKernel._compute_kernel</span><span class="ansi-blue-fg">(self, X1, X2, **params)</span>
+<span class="ansi-green-intense-fg ansi-bold">    219</span> X1_batch <span style="color: rgb(98,98,98)">=</span> X1<span style="color: rgb(98,98,98)">.</span>index_select(dim<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">0</span>, index<span style="color: rgb(98,98,98)">=</span>X1_batch_indicies)
+<span class="ansi-green-intense-fg ansi-bold">    220</span> X2_batch <span style="color: rgb(98,98,98)">=</span> X2<span style="color: rgb(98,98,98)">.</span>index_select(dim<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">0</span>, index<span style="color: rgb(98,98,98)">=</span>X2_batch_indicies)
+<span class="ansi-green-fg">--&gt; 221</span> k_result <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_k</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">X1_batch</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">X2_batch</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    222</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> j <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">range</span>(<span style="color: rgb(98,98,98)">0</span>, <span style="color: rgb(0,135,0)">len</span>(tuples_batch)):
+<span class="ansi-green-intense-fg ansi-bold">    223</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> (
+<span class="ansi-green-intense-fg ansi-bold">    224</span>         <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>normalize
+<span class="ansi-green-intense-fg ansi-bold">    225</span>         <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> X1_diag_Ks[tuples_batch[j][<span style="color: rgb(98,98,98)">0</span>]] <span style="color: rgb(98,98,98)">!=</span> <span style="color: rgb(98,98,98)">0</span>
+<span class="ansi-green-intense-fg ansi-bold">    226</span>         <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> X2_diag_Ks[tuples_batch[j][<span style="color: rgb(98,98,98)">1</span>]] <span style="color: rgb(98,98,98)">!=</span> <span style="color: rgb(98,98,98)">0</span>
+<span class="ansi-green-intense-fg ansi-bold">    227</span>     ):
+
+File <span class="ansi-green-fg">~/miniconda3/envs/gauche/lib/python3.11/site-packages/gauche/kernels/string_kernels/sskkernel.py:267</span>, in <span class="ansi-cyan-fg">SubsequenceStringKernel._k</span><span class="ansi-blue-fg">(self, s1, s2)</span>
+<span class="ansi-green-intense-fg ansi-bold">    265</span>     aux <span style="color: rgb(98,98,98)">=</span> aux2 <span style="color: rgb(98,98,98)">*</span> match_sq
+<span class="ansi-green-intense-fg ansi-bold">    266</span>     aux <span style="color: rgb(98,98,98)">=</span> aux<span style="color: rgb(98,98,98)">.</span>transpose(<span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">2</span>, <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">1</span>) <span style="color: rgb(98,98,98)">@</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>D
+<span class="ansi-green-fg">--&gt; 267</span>     Kp<span style="color: rgb(98,98,98)">.</span>append(<span class="ansi-yellow-bg">aux</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">transpose</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">-</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">2</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">-</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">1</span><span class="ansi-yellow-bg">)</span>)
+<span class="ansi-green-intense-fg ansi-bold">    269</span> Kp <span style="color: rgb(98,98,98)">=</span> torch<span style="color: rgb(98,98,98)">.</span>cat([x<span style="color: rgb(98,98,98)">.</span>unsqueeze(<span style="color: rgb(98,98,98)">0</span>) <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> x <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> Kp], dim<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">0</span>)
+<span class="ansi-green-intense-fg ansi-bold">    270</span> final_aux1 <span style="color: rgb(98,98,98)">=</span> S <span style="color: rgb(98,98,98)">*</span> Kp
+
+<span class="ansi-red-fg">KeyboardInterrupt</span>:
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sd">"""Plot the R^2"""</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">posterior_mean</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Test set $R^2 = </span><span class="si">{</span><span class="n">r2</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">$'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.unique.html#numpy.unique" title="numpy.unique"><span class="n">np</span><span class="o">.</span><span class="n">unique</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.poly1d.html#numpy.poly1d" title="numpy.poly1d"><span class="n">np</span><span class="o">.</span><span class="n">poly1d</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html#numpy.polyfit" title="numpy.polyfit"><span class="n">np</span><span class="o">.</span><span class="n">polyfit</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">posterior_mean</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.unique.html#numpy.unique" title="numpy.unique"><span class="n">np</span><span class="o">.</span><span class="n">unique</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)),</span> <span class="n">color</span><span class="o">=</span><span class="s1">'k'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.4</span><span class="p">))</span>
+<br/></pre></div>
+</div>
+</div>
+</section>
+<section id="References">
+<h2>References<a class="headerlink" href="#References" title="Link to this heading">#</a></h2>
+<p>[1] Lodhi, H., Saunders, C., Shawe-Taylor, J., Cristianini, N. and Watkins, C., 2002. <a class="reference external" href="https://jmlr.csail.mit.edu/papers/volume2/lodhi02a/lodhi02a.pdf">Text classification using string kernels</a>. The Journal of Machine Learning Research, pp.419-444.</p>
+<p>[2] Cancedda, N., Gaussier, E., Goutte, C. and Renders, J.M., 2003. <a class="reference external" href="https://www.jmlr.org/papers/volume3/cancedda03a/cancedda03a.pdf">Word sequence kernels.</a> The Journal of Machine Learning Research, pp.1059-1082.</p>
+<p>[3] Cui, Y., Chen, Y., Liu, X., Dong, S., Tian, Y.E., Qiao, Y., Mitra, R., Han, J., Li, C., Han, X. and Liu, W., 2021. <a class="reference external" href="https://pubs.acs.org/doi/abs/10.1021/acscatal.0c05126">Computational redesign of a PETase for plastic biodegradation under ambient condition by the GRAPE strategy</a>. ACS Catalysis, 11(3), pp.1340-1350.</p>
+<p>[4] Liu, B., He, L., Wang, L., Li, T., Li, C., Liu, H., Luo, Y. and Bao, R., 2018. <a class="reference external" href="https://chemistry-europe.onlinelibrary.wiley.com/doi/abs/10.1002/cbic.201800097">Protein crystallography and site‐direct mutagenesis analysis of the poly (ethylene terephthalate) hydrolase PETase from Ideonella sakaiensis</a>. ChemBioChem, 19(14), pp.1471-1475.</p>
+<p>[5] Joo, S., Cho, I.J., Seo, H., Son, H.F., Sagong, H.Y., Shin, T.J., Choi, S.Y., Lee, S.Y. and Kim, K.J., 2018. <a class="reference external" href="https://www.nature.com/articles/s41467-018-02881-1">Structural insight into molecular mechanism of poly (ethylene terephthalate) degradation</a>. Nature communications, 9(1), p.382.</p>
+</section>
+</section>
+</article>
+</div>
+<footer>
+<div class="related-pages">
+<a class="next-page" href="bayesian_gnn_on_molecules.html">
+<div class="page-info">
+<div class="context">
+<span>Next</span>
+</div>
+<div class="title">Bayesian GNNs for Molecular Property Prediction</div>
+</div>
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+</a>
+<a class="prev-page" href="protein_fitness_prediction_bag_of_amino_acids.html">
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+<div class="page-info">
+<div class="context">
+<span>Previous</span>
+</div>
+<div class="title">GP Regression on Protein Sequences: Bag of Amino Acids</div>
+</div>
+</a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+<div class="copyright">
+                Copyright © 2022, Ryan Rhys-Griffiths
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+</div>
+<div class="right-details">
+</div>
+</div>
+</footer>
+</div>
+<aside class="toc-drawer">
+<div class="toc-sticky toc-scroll">
+<div class="toc-title-container">
+<span class="toc-title">
+            On this page
+          </span>
+</div>
+<div class="toc-tree-container">
+<div class="toc-tree">
+<ul>
+<li><a class="reference internal" href="#">GP Regression on Protein Sequences: Subsequence String Kernel</a><ul>
+<li><a class="reference internal" href="#The-Petase-Dataset">The Petase Dataset</a></li>
+<li><a class="reference internal" href="#GP-Regression-on-the-Petase-Dataset">GP Regression on the Petase Dataset</a></li>
+<li><a class="reference internal" href="#References">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+<script src="../_static/doctools.js?v=888ff710"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=f281be69"></script>
+<script src="../_static/tabs.js?v=3ee01567"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>

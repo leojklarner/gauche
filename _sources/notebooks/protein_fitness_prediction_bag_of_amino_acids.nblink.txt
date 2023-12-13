@@ -1,0 +1,3 @@
+{
+    "path": "../../../notebooks/Protein Fitness Prediction - Bag of Amino Acids.ipynb"
+}

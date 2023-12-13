@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+
+<html class="no-js" data-content_root="../" lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="light dark" name="color-scheme"/><meta content="width=device-width, initial-scale=1" name="viewport">
+<meta content="Bayesian GNNs for Molecular Property Prediction" property="og:title"/>
+<meta content="website" property="og:type"/>
+<meta content="notebooks/bayesian_gnn_on_molecules.html" property="og:url"/>
+<meta content="GAUCHE" property="og:site_name"/>
+<meta content="In this notebook, we will train Bayesian GNNs and compare their regression performance to GPs. We will compare the molecular property prediction performance of Bayesian GNNs, inspired by Hwang et a..." property="og:description"/>
+<meta content="1146" property="og:image:width"/>
+<meta content="600" property="og:image:height"/>
+<meta content="/_images/social_previews/summary_notebooks_bayesian_gnn_on_molecules_084ac8d6.png" property="og:image"/>
+<meta content="In this notebook, we will train Bayesian GNNs and compare their regression performance to GPs. We will compare the molecular property prediction performance..." property="og:image:alt"/>
+<meta content="In this notebook, we will train Bayesian GNNs and compare their regression performance to GPs. We will compare the molecular property prediction performance of Bayesian GNNs, inspired by Hwang et a..." name="description"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<link href="../genindex.html" rel="index" title="Index"/><link href="../search.html" rel="search" title="Search"/><link href="../modules/kernels.html" rel="next" title="gauche.kernels"/><link href="protein_fitness_prediction_ssk_gp.html" rel="prev" title="GP Regression on Protein Sequences: Subsequence String Kernel"/>
+<!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+<title>Bayesian GNNs for Molecular Property Prediction - GAUCHE documentation</title>
+<link href="../_static/pygments.css?v=a746c00c" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo.css?v=135e06be" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/tabs.css?v=4c969af8" rel="stylesheet" type="text/css"/>
+<link href="../_static/sphinx-codeautolink.css?v=125d5c1c" rel="stylesheet" type="text/css"/>
+<link href="../_static/nbsphinx-code-cells.css" rel="stylesheet" type="text/css"/>
+<link href="../_static/styles/furo-extensions.css?v=36a5483c" rel="stylesheet" type="text/css"/>
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></meta></head>
+<body>
+<script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+<symbol id="svg-toc" viewbox="0 0 24 24">
+<title>Contents</title>
+<svg fill="currentColor" stroke="currentColor" stroke-width="0" viewbox="0 0 1024 1024">
+<path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"></path>
+</svg>
+</symbol>
+<symbol id="svg-menu" viewbox="0 0 24 24">
+<title>Menu</title>
+<svg class="feather-menu" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<line x1="3" x2="21" y1="12" y2="12"></line>
+<line x1="3" x2="21" y1="6" y2="6"></line>
+<line x1="3" x2="21" y1="18" y2="18"></line>
+</svg>
+</symbol>
+<symbol id="svg-arrow-right" viewbox="0 0 24 24">
+<title>Expand</title>
+<svg class="feather-chevron-right" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</symbol>
+<symbol id="svg-sun" viewbox="0 0 24 24">
+<title>Light mode</title>
+<svg class="feather-sun" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="5"></circle>
+<line x1="12" x2="12" y1="1" y2="3"></line>
+<line x1="12" x2="12" y1="21" y2="23"></line>
+<line x1="4.22" x2="5.64" y1="4.22" y2="5.64"></line>
+<line x1="18.36" x2="19.78" y1="18.36" y2="19.78"></line>
+<line x1="1" x2="3" y1="12" y2="12"></line>
+<line x1="21" x2="23" y1="12" y2="12"></line>
+<line x1="4.22" x2="5.64" y1="19.78" y2="18.36"></line>
+<line x1="18.36" x2="19.78" y1="5.64" y2="4.22"></line>
+</svg>
+</symbol>
+<symbol id="svg-moon" viewbox="0 0 24 24">
+<title>Dark mode</title>
+<svg class="icon-tabler-moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+</svg>
+</symbol>
+<symbol id="svg-sun-half" viewbox="0 0 24 24">
+<title>Auto light/dark mode</title>
+<svg class="icon-tabler-shadow" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 0h24v24H0z" fill="none" stroke="none"></path>
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M13 12h5"></path>
+<path d="M13 15h4"></path>
+<path d="M13 18h1"></path>
+<path d="M13 9h4"></path>
+<path d="M13 6h1"></path>
+</svg>
+</symbol>
+</svg>
+<input class="sidebar-toggle" id="__navigation" name="__navigation" type="checkbox"/>
+<input class="sidebar-toggle" id="__toc" name="__toc" type="checkbox"/>
+<label class="overlay sidebar-overlay" for="__navigation">
+<div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+<div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+<div class="page">
+<header class="mobile-header">
+<div class="header-left">
+<label class="nav-overlay-icon" for="__navigation">
+<div class="visually-hidden">Toggle site navigation sidebar</div>
+<i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+</label>
+</div>
+<div class="header-center">
+<a href="../index.html"><div class="brand">GAUCHE  documentation</div></a>
+</div>
+<div class="header-right">
+<div class="theme-toggle-container theme-toggle-header">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-header-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+</header>
+<aside class="sidebar-drawer">
+<div class="sidebar-container">
+<div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+<span class="sidebar-brand-text">GAUCHE  documentation</span>
+</a><form action="../search.html" class="sidebar-search-container" method="get" role="search">
+<input aria-label="Search" class="sidebar-search" name="q" placeholder="Search"/>
+<input name="check_keywords" type="hidden" value="yes"/>
+<input name="area" type="hidden" value="default"/>
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="loading_and_featurising_molecules.html">Loading and Featurising Molecular Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_regression_on_molecules.html">GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bayesian_optimisation_over_molecules.html">Bayesian Optimisation Over Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sparse_gp_regression_for_big_molecular_data.html">Sparse GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multitask_gp_regression_on_molecules.html">Multitask GP Regression on Molecules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="molecular_preference_learning.html">Learning an Objective Function through Interaction with a Human Chemist</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferential_bayesian_optimisation.html">Preferential Bayesian Optimisation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_bag_of_amino_acids.html">GP Regression on Protein Sequences: Bag of Amino Acids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protein_fitness_prediction_ssk_gp.html">GP Regression on Protein Sequences: Subsequence String Kernel</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Bayesian GNNs for Molecular Property Prediction</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/kernels.html">gauche.kernels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/representations.html">gauche.representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dataloader.html">gauche.dataloader</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<div class="main">
+<div class="content">
+<div class="article-container">
+<a class="back-to-top muted-link" href="#">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+</svg>
+<span>Back to top</span>
+</a>
+<div class="content-icon-container">
+<div class="theme-toggle-container theme-toggle-content">
+<button class="theme-toggle">
+<div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+<svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+<svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+<svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+</button>
+</div>
+<label class="toc-overlay-icon toc-content-icon" for="__toc">
+<div class="visually-hidden">Toggle table of contents sidebar</div>
+<i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+</label>
+</div>
+<article role="main">
+<section id="Bayesian-GNNs-for-Molecular-Property-Prediction">
+<h1>Bayesian GNNs for Molecular Property Prediction<a class="headerlink" href="#Bayesian-GNNs-for-Molecular-Property-Prediction" title="Link to this heading">#</a></h1>
+<p><strong>In this notebook, we will train Bayesian GNNs and compare their regression performance to GPs.</strong></p>
+<p>We will compare the molecular property prediction performance of Bayesian GNNs, inspired by Hwang et al. 2020 (<a class="reference external" href="https://pubs.acs.org/doi/abs/10.1021/acs.jcim.0c00416">https://pubs.acs.org/doi/abs/10.1021/acs.jcim.0c00416</a>). The feature extractor used here is the GIN architecture, with the same graph features used in the graph kernel experiments. Here we rely on a final Bayesian linear layers from Bayesian-Torch (<a class="reference external" href="https://github.com/IntelLabs/bayesian-torch">https://github.com/IntelLabs/bayesian-torch</a>).</p>
+<p>The densely connected final layer will have weight <em>distributions</em> rather than deterministic weights. The uncertainty of the model will be obtained by repeatedly sampling the network for predictions. We recommend using the CUDA to increase the speed of training the GNN.</p>
+<section id="Install-and-import-dependencies">
+<h2>Install and import dependencies<a class="headerlink" href="#Install-and-import-dependencies" title="Link to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># install gauche and other dependencies</span>
+
+<span class="o">%%capture</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">gauche</span><span class="p">[</span><span class="n">graphs</span><span class="p">]</span> <span class="n">bayesian</span><span class="o">-</span><span class="n">torch</span> <span class="n">torch_geometric</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'..'</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/copy.html#module-copy" title="copy"><span class="nn">copy</span></a>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#module-warnings" title="warnings"><span class="nn">warnings</span></a>
+<a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/warnings.html#warnings.filterwarnings" title="warnings.filterwarnings"><span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span></a><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+
+<span class="c1"># import sklearn</span>
+<span class="kn">from</span> <span class="nn">gauche.dataloader</span> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#module-gauche.dataloader.data_utils" title="gauche.dataloader.data_utils"><span class="nn">gauche.dataloader.data_utils</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.data_utils.transform_data" title="gauche.dataloader.data_utils.transform_data"><span class="n">transform_data</span></a>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pandas.pydata.org/docs/index.html#module-pandas" title="pandas"><span class="nn">pandas</span></a> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="numpy"><span class="nn">numpy</span></a> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">rdkit.Chem.AllChem</span> <span class="k">as</span> <span class="nn">Chem</span>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/pyplot_summary.html#module-matplotlib.pyplot" title="matplotlib.pyplot"><span class="nn">matplotlib.pyplot</span></a> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://docs.scipy.org/doc/scipy/reference/stats.html#module-scipy.stats" title="scipy.stats"><span class="nn">scipy.stats</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.norm.html#scipy.stats.norm" title="scipy.stats.norm"><span class="n">norm</span></a>
+
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.model_selection" title="sklearn.model_selection"><span class="nn">sklearn.model_selection</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a>
+<span class="kn">from</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics" title="sklearn.metrics"><span class="nn">sklearn.metrics</span></a> <span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error" title="sklearn.metrics.mean_squared_error"><span class="n">mean_squared_error</span></a><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="sklearn.metrics.r2_score"><span class="n">r2_score</span></a>
+
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/torch.html#module-torch" title="torch"><span class="nn">torch</span></a>
+<span class="kn">import</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/nn.html#module-torch.nn" title="torch.nn"><span class="nn">torch.nn</span></a> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="kn">from</span> <span class="nn">torch_geometric.data</span> <span class="kn">import</span> <span class="n">Data</span>
+<span class="kn">from</span> <span class="nn">torch_geometric.nn</span> <span class="kn">import</span> <span class="n">MessagePassing</span><span class="p">,</span> <span class="n">global_mean_pool</span>
+<span class="kn">from</span> <span class="nn">torch_geometric.loader</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">torch_geometric.utils</span> <span class="kn">import</span> <span class="n">add_self_loops</span>
+<span class="kn">from</span> <span class="nn">bayesian_torch.layers</span> <span class="kn">import</span> <span class="n">LinearFlipout</span><span class="p">,</span> <span class="n">LinearReparameterization</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Featurise-Molecules-and-PyTorch-Geometric-Graphs">
+<h2>Featurise Molecules and PyTorch Geometric Graphs<a class="headerlink" href="#Featurise-Molecules-and-PyTorch-Geometric-Graphs" title="Link to this heading">#</a></h2>
+<p>To train GNNs on molecular data, we first need to featurise the molecules and convert them into PyTorch Geometric Data objects. We will represent each molecule as a graph with atoms as nodes and bonds as edges, using element numbers and chirality as node features and bond type and E/Z double bond stereo information as edge labels. To apply this featuriser to the benchmark datasets, we will simply provide it as a custom featuriser to the <code class="docutils literal notranslate"><span class="pre">MolPropLoader().featurize</span></code> function.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># define a custom PyTorch Geometric featuriser that captures</span>
+<span class="c1"># element number, bond types and chirality</span>
+
+<span class="n">allowable_features</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"possible_atomic_num_list"</span><span class="p">:</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#list" title="list"><span class="nb">list</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">119</span><span class="p">)),</span>
+    <span class="s2">"possible_chirality_list"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">ChiralType</span><span class="o">.</span><span class="n">CHI_UNSPECIFIED</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">ChiralType</span><span class="o">.</span><span class="n">CHI_TETRAHEDRAL_CW</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">ChiralType</span><span class="o">.</span><span class="n">CHI_TETRAHEDRAL_CCW</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">ChiralType</span><span class="o">.</span><span class="n">CHI_OTHER</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">"possible_bonds"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">SINGLE</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">TRIPLE</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondType</span><span class="o">.</span><span class="n">AROMATIC</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="c1"># (E)/(Z) double bond stereo information</span>
+    <span class="s2">"possible_bond_dirs"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondDir</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondDir</span><span class="o">.</span><span class="n">ENDUPRIGHT</span><span class="p">,</span>
+        <span class="n">Chem</span><span class="o">.</span><span class="n">rdchem</span><span class="o">.</span><span class="n">BondDir</span><span class="o">.</span><span class="n">ENDDOWNRIGHT</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+<span class="c1"># define constants for featurisation and embedding</span>
+<span class="n">num_atom_type</span> <span class="o">=</span> <span class="mi">120</span>  <span class="c1"># including the extra mask tokens</span>
+<span class="n">num_chirality_tag</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">num_bond_type</span> <span class="o">=</span> <span class="mi">6</span>  <span class="c1"># including aromatic and self-loop edge, and extra masked tokens</span>
+<span class="n">num_bond_direction</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">self_loop_token</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># bond type for self-loop edge</span>
+<span class="n">masked_bond_token</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># bond type for masked edges</span>
+
+
+<span class="k">def</span> <span class="nf">mol_to_pyg</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    A featuriser that accepts an smiles STRING and</span>
+<span class="sd">    converts it to a PyTorch Geometric data object that</span>
+<span class="sd">    is compatible with the GNN modules below.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        smiles: SMILES string</span>
+<span class="sd">    Returns: PyTorch Geometric data object</span>
+<span class="sd">    """</span>
+
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+
+    <span class="c1"># derive atom features: atomic number + chirality tag</span>
+    <span class="n">atom_features</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetAtoms</span><span class="p">():</span>
+        <span class="n">atom_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">allowable_features</span><span class="p">[</span><span class="s2">"possible_atomic_num_list"</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                    <span class="n">atom</span><span class="o">.</span><span class="n">GetAtomicNum</span><span class="p">()</span>
+                <span class="p">),</span>
+                <span class="n">allowable_features</span><span class="p">[</span><span class="s2">"possible_chirality_list"</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                    <span class="n">atom</span><span class="o">.</span><span class="n">GetChiralTag</span><span class="p">()</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="n">atom_features</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">atom_features</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+
+    <span class="c1"># derive bond features: bond type + bond direction</span>
+    <span class="c1"># PyTorch Geometric only uses directed edges,</span>
+    <span class="c1"># so feature information needs to be added twice</span>
+    <span class="n">edge_index</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">edge_attr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">bond</span> <span class="ow">in</span> <span class="n">mol</span><span class="o">.</span><span class="n">GetBonds</span><span class="p">():</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetBeginAtomIdx</span><span class="p">()</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">bond</span><span class="o">.</span><span class="n">GetEndAtomIdx</span><span class="p">()</span>
+        <span class="n">edge_index</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+        <span class="n">edge_index</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+        <span class="c1"># calculate edge features and append them to feature list</span>
+        <span class="n">edge_feature</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">allowable_features</span><span class="p">[</span><span class="s2">"possible_bonds"</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">bond</span><span class="o">.</span><span class="n">GetBondType</span><span class="p">()),</span>
+            <span class="n">allowable_features</span><span class="p">[</span><span class="s2">"possible_bond_dirs"</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">bond</span><span class="o">.</span><span class="n">GetBondDir</span><span class="p">()),</span>
+        <span class="p">]</span>
+        <span class="n">edge_attr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge_feature</span><span class="p">)</span>
+        <span class="n">edge_attr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge_feature</span><span class="p">)</span>
+
+    <span class="c1"># set data.edge_index: Graph connectivity in COO format with shape [2, num_edges]</span>
+    <span class="n">edge_index</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">edge_index</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+
+    <span class="c1"># set data.edge_attr: Edge feature matrix with shape [num_edges, num_edge_features]</span>
+    <span class="n">edge_attr</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">edge_attr</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Data</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">atom_features</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="o">=</span><span class="n">edge_attr</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load PhotoSwitch dataset and apply mol_to_pyg featuriser</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="s2">"Photoswitch"</span>
+
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">loader</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader" title="gauche.dataloader.molprop_loader.MolPropLoader"><span class="n">MolPropLoader</span></a><span class="p">()</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark" title="gauche.dataloader.molprop_loader.MolPropLoader.load_benchmark"><span class="n">loader</span><span class="o">.</span><span class="n">load_benchmark</span></a><span class="p">(</span><span class="s2">"Photoswitch"</span><span class="p">)</span>
+<a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.molprop_loader.MolPropLoader.featurize" title="gauche.dataloader.molprop_loader.MolPropLoader.featurize"><span class="n">loader</span><span class="o">.</span><span class="n">featurize</span></a><span class="p">(</span><span class="k">lambda</span> <span class="n">smiles</span><span class="p">:</span> <span class="p">[</span><span class="n">mol_to_pyg</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Found 13 invalid labels [nan nan nan nan nan nan nan nan nan nan nan nan nan] at indices [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 158]
+To turn validation off, use dataloader.read_csv(..., validate=False).
+</pre></div></div>
+</div>
+</section>
+<section id="Define-GIN-Layers-and-GNN">
+<h2>Define GIN Layers and GNN<a class="headerlink" href="#Define-GIN-Layers-and-GNN" title="Link to this heading">#</a></h2>
+<p>Next, we need to define the GNN architecture. We will use Graph Isomorphism Network (GIN) convolutions from <a class="reference external" href="https://arxiv.org/abs/1810.00826">Xu et al., How Powerful are Graph Neural Networks?</a> defined in the <code class="docutils literal notranslate"><span class="pre">GINConv</span></code> class. The <code class="docutils literal notranslate"><span class="pre">GNN</span></code> class stacks multiple <code class="docutils literal notranslate"><span class="pre">GINConv</span></code> layers and applies batch normalisation and a final linear layer to map the node representations to the desired output dimension.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">GINConv</span><span class="p">(</span><span class="n">MessagePassing</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Extension of the Graph Isomorphism Network to incorporate</span>
+<span class="sd">    edge information by concatenating edge embeddings.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">emb_dim</span><span class="p">,</span> <span class="n">aggr</span><span class="o">=</span><span class="s2">"add"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Initialise GIN convolutional layer.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            emb_dim: latent node embedding dimension</span>
+<span class="sd">            aggr: aggregation procedure</span>
+<span class="sd">        """</span>
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#super" title="super"><span class="nb">super</span></a><span class="p">(</span><span class="n">GINConv</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="torch.nn.modules.container.Sequential"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span></a><span class="p">(</span>
+            <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Linear.html#torch.nn.Linear" title="torch.nn.modules.linear.Linear"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span></a><span class="p">(</span><span class="n">emb_dim</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">emb_dim</span><span class="p">),</span>
+            <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.ReLU.html#torch.nn.ReLU" title="torch.nn.modules.activation.ReLU"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span></a><span class="p">(),</span>
+            <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Linear.html#torch.nn.Linear" title="torch.nn.modules.linear.Linear"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span></a><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">emb_dim</span><span class="p">,</span> <span class="n">emb_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">edge_embedding1</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Embedding.html#torch.nn.Embedding" title="torch.nn.modules.sparse.Embedding"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span></a><span class="p">(</span><span class="n">num_bond_type</span><span class="p">,</span> <span class="n">emb_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edge_embedding2</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Embedding.html#torch.nn.Embedding" title="torch.nn.modules.sparse.Embedding"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span></a><span class="p">(</span><span class="n">num_bond_direction</span><span class="p">,</span> <span class="n">emb_dim</span><span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/nn.init.html#torch.nn.init.xavier_uniform_" title="torch.nn.init.xavier_uniform_"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edge_embedding1</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/nn.init.html#torch.nn.init.xavier_uniform_" title="torch.nn.init.xavier_uniform_"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edge_embedding2</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggr</span> <span class="o">=</span> <span class="n">aggr</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Message passing and aggregation function</span>
+<span class="sd">        of the adapted GIN convolutional layer.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x: node features</span>
+<span class="sd">            edge_index: adjacency list</span>
+<span class="sd">            edge_attr: edge features</span>
+<span class="sd">        Returns: transformed and aggregated node embeddings</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># add self loops to edge index</span>
+        <span class="n">edge_index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">add_self_loops</span><span class="p">(</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+        <span class="c1"># update edge attributes to represent self-loop edges</span>
+        <span class="n">self_loop_attr</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.zeros.html#torch.zeros" title="torch.zeros"><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">self_loop_attr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">self_loop_token</span>
+        <span class="n">self_loop_attr</span> <span class="o">=</span> <span class="n">self_loop_attr</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">edge_attr</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+            <span class="n">edge_attr</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="p">)</span>
+        <span class="n">edge_attr</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.cat.html#torch.cat" title="torch.cat"><span class="n">torch</span><span class="o">.</span><span class="n">cat</span></a><span class="p">((</span><span class="n">edge_attr</span><span class="p">,</span> <span class="n">self_loop_attr</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># generate edge embeddings and propagate</span>
+        <span class="n">edge_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_embedding1</span><span class="p">(</span>
+            <span class="n">edge_attr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_embedding2</span><span class="p">(</span><span class="n">edge_attr</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_attr</span><span class="o">=</span><span class="n">edge_embeddings</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_j</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">x_j</span> <span class="o">+</span> <span class="n">edge_attr</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggr_out</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">aggr_out</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">GNN</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module" title="torch.nn.modules.module.Module"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span></a><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Combine multiple GNN layers into a network.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">gnn_type</span><span class="o">=</span><span class="s2">"gin"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Compose convolution layers into GNN. Pretrained parameters</span>
+<span class="sd">        exist for a 5-layer network with 300 hidden units.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            num_layers: number of convolution layers</span>
+<span class="sd">            embed_dim: dimension of node embeddings</span>
+<span class="sd">            gnn_type: type of convolutional layer to use</span>
+<span class="sd">        """</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embed_dim</span> <span class="o">=</span> <span class="n">embed_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gnn_type</span> <span class="o">=</span> <span class="n">gnn_type</span>
+
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#super" title="super"><span class="nb">super</span></a><span class="p">(</span><span class="n">GNN</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># initialise label embeddings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_embedding1</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Embedding.html#torch.nn.Embedding" title="torch.nn.modules.sparse.Embedding"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span></a><span class="p">(</span><span class="n">num_atom_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_embedding2</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Embedding.html#torch.nn.Embedding" title="torch.nn.modules.sparse.Embedding"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span></a><span class="p">(</span>
+            <span class="n">num_chirality_tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_dim</span>
+        <span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/nn.init.html#torch.nn.init.xavier_uniform_" title="torch.nn.init.xavier_uniform_"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_embedding1</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/nn.init.html#torch.nn.init.xavier_uniform_" title="torch.nn.init.xavier_uniform_"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_embedding2</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># initialise GNN layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gnns</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="torch.nn.modules.container.ModuleList"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span></a><span class="p">()</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">gnn_type</span> <span class="o">==</span> <span class="s2">"gin"</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gnns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GINConv</span><span class="p">(</span><span class="n">emb_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_dim</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="NotImplementedError"><span class="ne">NotImplementedError</span></a><span class="p">(</span><span class="s2">"Invalid GNN layer type."</span><span class="p">)</span>
+
+        <span class="c1"># initialise BatchNorm layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norms</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.ModuleList.html#torch.nn.ModuleList" title="torch.nn.modules.container.ModuleList"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span></a><span class="p">()</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_norms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.BatchNorm1d.html#torch.nn.BatchNorm1d" title="torch.nn.modules.batchnorm.BatchNorm1d"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_dim</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Forward function of the GNN class that takes a PyTorch geometric</span>
+<span class="sd">        representation of a molecule or a batch of molecules</span>
+<span class="sd">        and generates the node embeddings for each atom.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x: node features</span>
+<span class="sd">            edge_index: adjacency list</span>
+<span class="sd">            edge_attr: edge features</span>
+<span class="sd">        Returns: tensor of num_nodes x embedding_dim embeddings</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># x[:, 0] corresponds to 'possible_atomic_num_list',</span>
+        <span class="c1"># x[:, 1] corresponds to 'possible_chirality_list'</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_embedding1</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_embedding2</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="c1"># x are atom features of the molecule and edge_attr the atomic features of the molecule</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gnns</span><span class="p">[</span><span class="n">layer</span><span class="p">](</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norms</span><span class="p">[</span><span class="n">layer</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">layer</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.functional.relu.html#torch.nn.functional.relu" title="torch.nn.functional.relu"><span class="n">F</span><span class="o">.</span><span class="n">relu</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">x</span></a><span class="p">)</span>
+
+        <span class="k">return</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensors.html#torch.Tensor" title="torch.Tensor"><span class="n">x</span></a>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Construct-the-Bayesian-GNN-module-and-define-the-training-and-evaluation-protocol">
+<h2>Construct the Bayesian GNN module and define the training and evaluation protocol<a class="headerlink" href="#Construct-the-Bayesian-GNN-module-and-define-the-training-and-evaluation-protocol" title="Link to this heading">#</a></h2>
+<p>Finally, we will define the Bayesian GNN module that takes the node-wise representations from the GNN, combines them into a graph-level representation and applies the <code class="docutils literal notranslate"><span class="pre">LinearReparameterization</span></code> layer from <code class="docutils literal notranslate"><span class="pre">bayesian_torch</span></code> to define the final Bayesian linear layer. We will also define the training and evaluation protocol for the Bayesian GNNs: These are similar to the ones you might use for deterministic GNNs, with the difference that we can draw multiple sample from the distribution over
+network weights to obtain predictions and uncertainty estimates.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">BayesianGNN</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module" title="torch.nn.modules.module.Module"><span class="n">nn</span><span class="o">.</span><span class="n">Module</span></a><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">gnn_type</span><span class="o">=</span><span class="s1">'gin'</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#super" title="super"><span class="nb">super</span></a><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gnn</span> <span class="o">=</span> <span class="n">GNN</span><span class="p">(</span><span class="n">num_layers</span><span class="o">=</span><span class="n">num_layers</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="n">embed_dim</span><span class="p">,</span> <span class="n">gnn_type</span><span class="o">=</span><span class="n">gnn_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pooling</span> <span class="o">=</span> <span class="n">global_mean_pool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bayes_layer</span> <span class="o">=</span> <span class="n">LinearReparameterization</span><span class="p">(</span><span class="n">embed_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">,</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">edge_attr</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">batch</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gnn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_attr</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pooling</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># bayesian layer</span>
+        <span class="n">kl_sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">kl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bayes_layer</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="n">kl_sum</span> <span class="o">+=</span> <span class="n">kl</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">kl_sum</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">nlpd</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_std</span><span class="p">):</span>
+    <span class="n">nld</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">std</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#zip" title="zip"><span class="nb">zip</span></a><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">y_std</span><span class="o">.</span><span class="n">ravel</span><span class="p">()):</span>
+        <span class="n">nld</span>  <span class="o">+=</span> <span class="o">-</span><a class="sphinx-codeautolink-a" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.norm.html#scipy.stats.norm" title="scipy.stats.norm"><span class="n">norm</span></a><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nld</span> <span class="o">/</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">regressor</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">samples</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="n">regressor</span><span class="p">(</span><span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="n">samples</span><span class="p">)]</span>
+    <span class="n">preds</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.stack.html#torch.stack" title="torch.stack"><span class="n">torch</span><span class="o">.</span><span class="n">stack</span></a><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">means</span><span class="p">,</span> <span class="n">var</span>
+
+<span class="k">def</span> <span class="nf">graph_append_label</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#zip" title="zip"><span class="nb">zip</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">G</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">n_trials</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">kld_beta</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">test_set_size</span> <span class="o">=</span> <span class="mf">0.2</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+
+    <span class="n">r2_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rmse_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">mae_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nlpd_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># We pre-allocate array for plotting confidence-error curves</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_set_size</span><span class="p">)</span>  <span class="c1"># To get test set size</span>
+    <span class="n">n_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+
+    <span class="n">mae_confidence_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.zeros.html#numpy.zeros" title="numpy.zeros"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">((</span><span class="n">n_trials</span><span class="p">,</span> <span class="n">n_test</span><span class="p">))</span>
+
+    <span class="n">device</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensor_attributes.html#torch.device" title="torch.device"><span class="n">torch</span><span class="o">.</span><span class="n">device</span></a><span class="p">(</span><span class="s1">'cuda'</span><span class="p">)</span> <span class="k">if</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.cuda.is_available.html#torch.cuda.is_available" title="torch.cuda.is_available"><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span></a><span class="p">()</span> <span class="k">else</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/tensor_attributes.html#torch.device" title="torch.device"><span class="n">torch</span><span class="o">.</span><span class="n">device</span></a><span class="p">(</span><span class="s1">'cpu'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'Device being used: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Beginning training loop...'</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">):</span>
+
+        <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'Starting trial </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+        <span class="c1"># split data and perform standardization</span>
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split" title="sklearn.model_selection.train_test_split"><span class="n">train_test_split</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_set_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">y_scaler</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="../modules/dataloader.html#gauche.dataloader.data_utils.transform_data" title="gauche.dataloader.data_utils.transform_data"><span class="n">transform_data</span></a><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+
+        <span class="c1"># include y in the pyg graph structure</span>
+        <span class="n">G_train</span> <span class="o">=</span> <span class="n">graph_append_label</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="n">G_test</span> <span class="o">=</span> <span class="n">graph_append_label</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+
+        <span class="n">dataloader_train</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">G_train</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dataloader_test</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">G_test</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">G_test</span><span class="p">))</span>
+
+        <span class="c1"># initialize model and optimizer</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">BayesianGNN</span><span class="p">(</span><span class="n">gnn_type</span><span class="o">=</span><span class="s1">'gin'</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.optim.Adam.html#torch.optim.Adam" title="torch.optim.adam.Adam"><span class="n">optimizer</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.optim.Adam.html#torch.optim.Adam" title="torch.optim.adam.Adam"><span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span></a><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+        <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.MSELoss.html#torch.nn.MSELoss" title="torch.nn.modules.loss.MSELoss"><span class="n">criterion</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.MSELoss.html#torch.nn.MSELoss" title="torch.nn.modules.loss.MSELoss"><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span></a><span class="p">()</span>
+
+        <span class="n">training_loss</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">status</span> <span class="o">=</span> <span class="p">{}</span>
+        <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/constants.html#numpy.inf" title="numpy.inf"><span class="n">best_loss</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/constants.html#numpy.inf" title="numpy.inf"><span class="n">np</span><span class="o">.</span><span class="n">inf</span></a>
+        <span class="n">patience</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><span class="n">n_epochs</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">pbar</span><span class="p">:</span>
+            <span class="n">running_kld_loss</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">running_mse_loss</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">running_loss</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">dataloader_train</span><span class="p">:</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+                <span class="n">output</span><span class="p">,</span> <span class="n">kl</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+                <span class="c1"># calculate loss with kl term for Bayesian layers</span>
+                <span class="n">target</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+                <span class="n">mse_loss</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.MSELoss.html#torch.nn.MSELoss" title="torch.nn.modules.loss.MSELoss"><span class="n">criterion</span></a><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">mse_loss</span> <span class="o">+</span> <span class="n">kl</span> <span class="o">*</span> <span class="n">kld_beta</span> <span class="o">/</span> <span class="n">batch_size</span>
+
+                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+                <span class="n">running_mse_loss</span> <span class="o">+=</span> <span class="n">mse_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="n">running_kld_loss</span> <span class="o">+=</span> <span class="n">kl</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="n">running_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+            <span class="n">status</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="s1">'Epoch'</span><span class="p">:</span> <span class="n">epoch</span><span class="p">,</span>
+                <span class="s1">'loss'</span><span class="p">:</span> <span class="n">running_loss</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">dataloader_train</span><span class="p">),</span>
+                <span class="s1">'kl'</span><span class="p">:</span> <span class="n">running_kld_loss</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">dataloader_train</span><span class="p">),</span>
+                <span class="s1">'mse'</span><span class="p">:</span> <span class="n">running_mse_loss</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">dataloader_train</span><span class="p">)</span>
+            <span class="p">})</span>
+            <span class="n">training_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">set_postfix</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+
+            <span class="k">with</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.no_grad.html#torch.no_grad" title="torch.autograd.grad_mode.no_grad"><span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span></a><span class="p">():</span>
+                <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">dataloader_test</span><span class="p">:</span>
+                    <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_var</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                    <span class="n">target</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.tensor.html#torch.tensor" title="torch.tensor"><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+                    <span class="n">val_loss</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.nn.MSELoss.html#torch.nn.MSELoss" title="torch.nn.modules.loss.MSELoss"><span class="n">criterion</span></a><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+                    <span class="n">val_loss</span> <span class="o">=</span> <span class="n">val_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                    <span class="n">status</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">'val_loss'</span><span class="p">:</span> <span class="n">val_loss</span><span class="p">})</span>
+
+                <span class="k">if</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/constants.html#numpy.inf" title="numpy.inf"><span class="n">best_loss</span></a> <span class="o">&gt;</span> <span class="n">val_loss</span><span class="p">:</span>
+                    <span class="n">best_loss</span> <span class="o">=</span> <span class="n">val_loss</span>
+                    <span class="n">best_model</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="copy.deepcopy"><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span></a><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">patience</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'Early stopping reached! Best validation loss </span><span class="si">{</span><span class="n">best_loss</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+            <span class="n">pbar</span><span class="o">.</span><span class="n">set_postfix</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+
+        <span class="c1"># Get into evaluation (predictive posterior) mode</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">best_model</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="k">with</span> <a class="sphinx-codeautolink-a" href="https://pytorch.org/docs/master/generated/torch.no_grad.html#torch.no_grad" title="torch.autograd.grad_mode.no_grad"><span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span></a><span class="p">():</span>
+            <span class="c1"># mean and variance by sampling</span>
+            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">dataloader_test</span><span class="p">:</span>
+                <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_var</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+                <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="n">y_var</span> <span class="o">=</span> <span class="n">y_var</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+        <span class="n">uq_nlpd</span> <span class="o">=</span> <span class="n">nlpd</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><span class="n">y_var</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">'NLPD: </span><span class="si">{</span><span class="n">uq_nlpd</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+        <span class="c1"># Transform back to real data space to compute metrics and detach gradients.</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+
+        <span class="c1"># Compute scores for confidence curve plotting.</span>
+        <span class="n">ranked_confidence_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.argsort.html#numpy.argsort" title="numpy.argsort"><span class="n">np</span><span class="o">.</span><span class="n">argsort</span></a><span class="p">(</span><span class="n">y_var</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/stdtypes.html#range" title="range"><span class="nb">range</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)):</span>
+
+            <span class="c1"># Construct the MAE error for each level of confidence</span>
+            <span class="n">conf</span> <span class="o">=</span> <span class="n">ranked_confidence_list</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">mae</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">[</span><span class="n">conf</span><span class="p">],</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">conf</span><span class="p">])</span>
+            <span class="n">mae_confidence_list</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">mae</span>
+
+        <span class="c1"># Compute R^2, RMSE and MAE on Test set</span>
+        <span class="n">score</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="sklearn.metrics.r2_score"><span class="n">r2_score</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">rmse</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error" title="sklearn.metrics.mean_squared_error"><span class="n">mean_squared_error</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+        <span class="n">mae</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html#sklearn.metrics.mean_absolute_error" title="sklearn.metrics.mean_absolute_error"><span class="n">mean_absolute_error</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+
+        <span class="n">r2_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+        <span class="n">rmse_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rmse</span><span class="p">)</span>
+        <span class="n">mae_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mae</span><span class="p">)</span>
+        <span class="n">nlpd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uq_nlpd</span><span class="p">)</span>
+
+    <span class="n">r2_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">)</span>
+    <span class="n">rmse_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">)</span>
+    <span class="n">mae_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">)</span>
+    <span class="n">nlpd_list</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array" title="numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">nlpd_list</span><span class="p">)</span>
+
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">mean R^2: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">r2_list</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"mean RMSE: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">rmse_list</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"mean MAE: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">mae_list</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">(</span><span class="s2">"mean NLPD: </span><span class="si">{:.4f}</span><span class="s2"> +- </span><span class="si">{:.4f}</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">nlpd_list</span><span class="p">),</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">nlpd_list</span><span class="p">)</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html#numpy.sqrt" title="numpy.sqrt"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">nlpd_list</span><span class="p">))))</span>
+    <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#print" title="print"><span class="nb">print</span></a><span class="p">()</span>
+
+    <span class="c1"># Plot confidence-error curves</span>
+
+    <span class="c1"># 1e-14 instead of 0 to for numerical reasons!</span>
+    <span class="n">confidence_percentiles</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.arange.html#numpy.arange" title="numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mf">1e-14</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="o">/</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">))</span>
+
+    <span class="c1"># We plot the Mean-absolute error confidence-error curves</span>
+
+    <span class="n">mae_mean</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html#numpy.mean" title="numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">mae_confidence_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mae_std</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">mae_confidence_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">mae_mean</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.flip.html#numpy.flip" title="numpy.flip"><span class="n">np</span><span class="o">.</span><span class="n">flip</span></a><span class="p">(</span><span class="n">mae_mean</span><span class="p">)</span>
+    <span class="n">mae_std</span> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.flip.html#numpy.flip" title="numpy.flip"><span class="n">np</span><span class="o">.</span><span class="n">flip</span></a><span class="p">(</span><span class="n">mae_std</span><span class="p">)</span>
+
+    <span class="c1"># 1 sigma errorbars</span>
+
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">mae_mean</span> <span class="o">-</span> <span class="n">mae_std</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">mae_mean</span> <span class="o">+</span> <span class="n">mae_std</span>
+
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure"><span class="n">fig</span></a> <span class="o">=</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">confidence_percentiles</span><span class="p">,</span> <span class="n">mae_mean</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'mean'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html#matplotlib.pyplot.fill_between" title="matplotlib.pyplot.fill_between"><span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span></a><span class="p">(</span><span class="n">confidence_percentiles</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">'Confidence Percentile'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">'MAE'</span><span class="p">)</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.ylim.html#matplotlib.pyplot.ylim" title="matplotlib.pyplot.ylim"><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span></a><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://numpy.org/doc/stable/reference/generated/numpy.max.html#numpy.max" title="numpy.max"><span class="n">np</span><span class="o">.</span><span class="n">max</span></a><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.xlim.html#matplotlib.pyplot.xlim" title="matplotlib.pyplot.xlim"><span class="n">plt</span><span class="o">.</span><span class="n">xlim</span></a><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">((</span><a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <a class="sphinx-codeautolink-a" href="https://docs.python.org/3/library/functions.html#len" title="len"><span class="nb">len</span></a><span class="p">(</span><span class="n">y_test</span><span class="p">))])</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'confidence_percentiles'</span><span class="p">:</span> <span class="n">confidence_percentiles</span><span class="p">,</span>
+        <span class="s1">'mae_mean'</span><span class="p">:</span> <span class="n">mae_mean</span><span class="p">,</span>
+        <span class="s1">'mae_std'</span><span class="p">:</span> <span class="n">mae_std</span><span class="p">,</span>
+        <span class="s1">'mae'</span><span class="p">:</span> <span class="n">mae_list</span><span class="p">,</span>
+        <span class="s1">'rmse'</span><span class="p">:</span> <span class="n">rmse_list</span><span class="p">,</span>
+        <span class="s1">'r2'</span><span class="p">:</span> <span class="n">r2_list</span><span class="p">,</span>
+        <span class="s1">'nlpd'</span><span class="p">:</span> <span class="n">nlpd_list</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <a class="sphinx-codeautolink-a" href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure"><span class="n">fig</span></a>
+<br/></pre></div>
+</div>
+</div>
+</section>
+<section id="Run-the-training-and-evaluation-loop">
+<h2>Run the training and evaluation loop<a class="headerlink" href="#Run-the-training-and-evaluation-loop" title="Link to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="p">,</span> <span class="n">fig</span> <span class="o">=</span> <span class="n">evaluate_model</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">loader</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">n_trials</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kld_beta</span><span class="o">=</span><span class="mf">50.0</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Device being used: cuda
+
+Beginning training loop...
+Starting trial 0
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 47%|████▋     | 142/300 [02:00&lt;02:14,  1.18it/s, Epoch=142, loss=3.74, kl=1.33, mse=1.66, val_loss=0.30306697]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.11581621319055557
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.7891262299567953
+Starting trial 1
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 69%|██████▊   | 206/300 [02:35&lt;01:11,  1.32it/s, Epoch=206, loss=3.04, kl=1.03, mse=1.43, val_loss=0.19800645]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.1911984235048294
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.9329165919360254
+Starting trial 2
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 35%|███▍      | 104/300 [01:19&lt;02:29,  1.31it/s, Epoch=104, loss=3.31, kl=1.7, mse=0.646, val_loss=0.29850987]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.22155441343784332
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.9101015414270804
+Starting trial 3
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 24%|██▍       | 72/300 [00:55&lt;02:54,  1.30it/s, Epoch=72, loss=4.45, kl=1.89, mse=1.49, val_loss=0.1720525]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.15270735323429108
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.513528300588651
+Starting trial 4
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 22%|██▏       | 66/300 [00:50&lt;03:00,  1.30it/s, Epoch=66, loss=3.92, kl=1.73, mse=1.22, val_loss=0.5326283]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.3228945732116699
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 1.683367726229072
+Starting trial 5
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 53%|█████▎    | 158/300 [02:02&lt;01:50,  1.29it/s, Epoch=158, loss=3.21, kl=1.09, mse=1.5, val_loss=0.3413453]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.2585623860359192
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.9266979137971999
+Starting trial 6
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 30%|███       | 91/300 [01:08&lt;02:38,  1.32it/s, Epoch=91, loss=3.96, kl=1.75, mse=1.21, val_loss=0.38592163]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.2153647243976593
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.6858583467681377
+Starting trial 7
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 53%|█████▎    | 158/300 [01:59&lt;01:47,  1.32it/s, Epoch=158, loss=2.86, kl=1.22, mse=0.95, val_loss=0.32246053]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.1867567002773285
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.996825519470283
+Starting trial 8
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 300/300 [03:47&lt;00:00,  1.32it/s, Epoch=299, loss=2.2, kl=0.876, mse=0.828, val_loss=0.25577274]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 1.02045369536678
+Starting trial 9
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 25%|██▌       | 75/300 [00:56&lt;02:50,  1.32it/s, Epoch=75, loss=3.63, kl=1.99, mse=0.516, val_loss=0.24762282]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Early stopping reached! Best validation loss 0.16555529832839966
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NLPD: 0.5259638768835783
+
+mean R^2: 0.7894 +- 0.0227
+mean RMSE: 29.7135 +- 1.3321
+mean MAE: 21.4297 +- 0.9820
+
+mean NLPD: 0.8985 +- 0.0993
+
+
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_bayesian_gnn_on_molecules_14_39.png" src="../_images/notebooks_bayesian_gnn_on_molecules_14_39.png"/>
+</div>
+</div>
+<p>For graph features input, the results for the Bayesian GNN are below for the various datasets:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>Photoswitch</p></th>
+<th class="head"><p>Freesolv</p></th>
+<th class="head"><p>ESOL</p></th>
+<th class="head"><p>Lipophilicity</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>R2</p></td>
+<td><p>0.8048 +- 0.0155</p></td>
+<td><p>0.7884 +- 0.0056</p></td>
+<td><p>0.8224 +- 0.0044</p></td>
+<td><p>0.6208 +- 0.0199</p></td>
+</tr>
+<tr class="row-odd"><td><p>RMSE</p></td>
+<td><p>28.5302 +- 1.2050</p></td>
+<td><p>0.9610 +- 0.0148</p></td>
+<td><p>0.8800 +- 0.0098</p></td>
+<td><p>0.7317 +- 0.0175</p></td>
+</tr>
+<tr class="row-even"><td><p>MAE</p></td>
+<td><p>20.7182 +- 0.9928</p></td>
+<td><p>0.7264 +- 0.0161</p></td>
+<td><p>0.6622 +- 0.0079</p></td>
+<td><p>0.5328 +- 0.0111</p></td>
+</tr>
+<tr class="row-odd"><td><p>NLPD</p></td>
+<td><p>0.9960 +- 0.1286</p></td>
+<td><p>1.0060 +- 0.0153</p></td>
+<td><p>1.6990 +- 0.1085</p></td>
+<td><p>1.1406 +- 0.0120</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+</article>
+</div>
+<footer>
+<div class="related-pages">
+<a class="next-page" href="../modules/kernels.html">
+<div class="page-info">
+<div class="context">
+<span>Next</span>
+</div>
+<div class="title">gauche.kernels</div>
+</div>
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+</a>
+<a class="prev-page" href="protein_fitness_prediction_ssk_gp.html">
+<svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+<div class="page-info">
+<div class="context">
+<span>Previous</span>
+</div>
+<div class="title">GP Regression on Protein Sequences: Subsequence String Kernel</div>
+</div>
+</a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+<div class="copyright">
+                Copyright © 2022, Ryan Rhys-Griffiths
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+</div>
+<div class="right-details">
+</div>
+</div>
+</footer>
+</div>
+<aside class="toc-drawer">
+<div class="toc-sticky toc-scroll">
+<div class="toc-title-container">
+<span class="toc-title">
+            On this page
+          </span>
+</div>
+<div class="toc-tree-container">
+<div class="toc-tree">
+<ul>
+<li><a class="reference internal" href="#">Bayesian GNNs for Molecular Property Prediction</a><ul>
+<li><a class="reference internal" href="#Install-and-import-dependencies">Install and import dependencies</a></li>
+<li><a class="reference internal" href="#Featurise-Molecules-and-PyTorch-Geometric-Graphs">Featurise Molecules and PyTorch Geometric Graphs</a></li>
+<li><a class="reference internal" href="#Define-GIN-Layers-and-GNN">Define GIN Layers and GNN</a></li>
+<li><a class="reference internal" href="#Construct-the-Bayesian-GNN-module-and-define-the-training-and-evaluation-protocol">Construct the Bayesian GNN module and define the training and evaluation protocol</a></li>
+<li><a class="reference internal" href="#Run-the-training-and-evaluation-loop">Run the training and evaluation loop</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+<script src="../_static/doctools.js?v=888ff710"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=f281be69"></script>
+<script src="../_static/tabs.js?v=3ee01567"></script>
+<script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
