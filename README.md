@@ -185,13 +185,12 @@ pred_means, pred_vars = preds.mean, preds.variance
 If GAUCHE is useful for your work please consider citing the following paper:
 
 ```bibtex
-@misc{griffiths2022gauche,
-      title={GAUCHE: A Library for Gaussian Processes in Chemistry}, 
-      author={Ryan-Rhys Griffiths and Leo Klarner and Henry B. Moss and Aditya Ravuri and Sang Truong and Bojana Rankovic and Yuanqi Du and Arian Jamasb and Julius Schwartz and Austin Tripp and Gregory Kell and Anthony Bourached and Alex Chan and Jacob Moss and Chengzhi Guo and Alpha A. Lee and Philippe Schwaller and Jian Tang},
-      year={2022},
-      eprint={2212.04450},
-      archivePrefix={arXiv},
-      primaryClass={physics.chem-ph}
+@article{griffiths2024gauche,
+  title={{GAUCHE}: A library for {Gaussian} processes in chemistry},
+  author={Griffiths, Ryan-Rhys and Klarner, Leo and Moss, Henry and Ravuri, Aditya and Truong, Sang and Du, Yuanqi and Stanton, Samuel and Tom, Gary and Rankovic, Bojana and Jamasb, Arian and others},
+  journal={Advances in Neural Information Processing Systems},
+  volume={36},
+  year={2024}
 }
 
 ```
