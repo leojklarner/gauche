@@ -29,14 +29,14 @@ def load_class(module_name: str, class_name: str) -> Any:
     try:
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
-    except ImportError as e:
+    except ImportError as err:
         raise ImportError(
-            f"Module {module_name} could not be loaded: {str(e)}"
-        )
-    except AttributeError as e:
+            f"Module {module_name} could not be loaded: {str(err)}"
+        ) from err
+    except AttributeError as err:
         raise AttributeError(
-            f"Class {class_name} not found in {module_name}: {str(e)}"
-        )
+            f"Class {class_name} not found in {module_name}: {str(err)}"
+        ) from err
 
 
 class NonTensorialInputs:
