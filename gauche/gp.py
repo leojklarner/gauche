@@ -1,3 +1,17 @@
+"""
+Implements the SIGP model, a custom Gaussian Process for non-tensorial inputs.
+
+Key components:
+- load_class: Dynamically loads classes from modules.
+- NonTensorialInputs: Container for non-tensor data (e.g., graphs).
+- SIGP: Custom ExactGP allowing non-tensorial inputs.
+
+Provides functionality for handling non-tensorial inputs, saving/loading models,
+and working with graph kernels in Gaussian Process models.
+
+Extends GPyTorch's ExactGP for structured, non-tensor inputs like graphs.
+"""
+
 import importlib
 from copy import copy, deepcopy
 from typing import Any, Optional
